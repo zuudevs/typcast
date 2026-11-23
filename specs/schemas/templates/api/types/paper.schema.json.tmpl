@@ -1,15 +1,17 @@
 {
-	"type": "object",
-	"properties": {
-		"paper": { 
-			"type": "object",
-			"properties": {
-				"paper": { 
-					"type": "string",
-					"enum": <./data/enums/paper-variants.csv:Variant>
-				},
-				"margin": { "$ref": "#/$defs/bound" }
-			}
-		}
-	}
+  "type": "object",
+  "properties": {
+    "paper": {
+      "type": "object",
+      "properties": {
+        "paper": {
+          "type": "string",
+          "enum": <../../../../catalogs/enums/paper-variants.csv:Variant>
+        },
+        "margin": {
+          "$ref": "#/$defs/bound"
+        }
+      }
+    }
+  }
 }

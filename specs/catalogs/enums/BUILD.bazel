@@ -1,0 +1,18 @@
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+exports_files([
+    "alignment-values.csv",
+    "length-suffixes.csv",
+    "paper-variants.csv",
+])
+
+filegroup(
+    name = "enum_catalogs",
+    srcs = [
+        "alignment-values.csv",
+        "length-suffixes.csv",
+        "paper-variants.csv",
+    ],
+)

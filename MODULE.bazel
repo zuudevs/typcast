@@ -1,10 +1,9 @@
-
 module(
     name = "typcast",
     version = "0.1.0",
 )
 
-# Python
+# Python build rules and a hermetic Python 3.14 toolchain.
 bazel_dep(
     name = "rules_python",
     version = "2.5.1",
@@ -23,13 +22,18 @@ python.toolchain(
     python_version = "3.14",
 )
 
-# JavaScript / Node.js
+use_repo(
+    python,
+    "python_3_14",
+)
+
+# JavaScript build rules.
 bazel_dep(
     name = "aspect_rules_js",
     version = "3.6.1",
 )
 
-# TypeScript
+# TypeScript build rules and the TypeScript compiler repository.
 bazel_dep(
     name = "aspect_rules_ts",
     version = "3.10.1",

@@ -1,1 +1,21 @@
-MODULE.bazel.lock
+# Bazel output symlinks
+/bazel-*
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# JavaScript / TypeScript
+node_modules/
+.pnpm-store/
+dist/
+coverage/
+
+# Tooling
+.aspect/
+.DS_Store
