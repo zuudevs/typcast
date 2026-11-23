@@ -9,6 +9,16 @@ bazel_dep(
     version = "2.5.1",
 )
 
+# Require explicit __init__.py files instead of generating them implicitly.
+rules_python_config = use_extension(
+    "@rules_python//python/extensions:config.bzl",
+    "config",
+)
+
+rules_python_config.explicit_init_py(
+    default = True,
+)
+
 python = use_extension(
     "@rules_python//python/extensions:python.bzl",
     "python",

@@ -9,6 +9,7 @@ py_test(
     srcs = [
         "test_generator.py",
     ],
+    main = "test_generator.py",
     deps = [
         "//tools/codegen:typcast_codegen_lib",
     ],
