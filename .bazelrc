@@ -1,0 +1,6 @@
+startup --windows_enable_symlinks
+
+build --show_result=10
+
+test --test_output=errors
+test --test_summary=detailed

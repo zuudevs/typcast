@@ -1,0 +1,9 @@
+Value,Details
+"start","Aligns at the start of the text direction."
+"end","Aligns at the end of the text direction."
+"left","Align at the left."
+"center","Aligns in the middle, horizontally."
+"right","Aligns at the right."
+"top","Aligns at the top."
+"horizon","Aligns in the middle, vertically."
+"bottom","Align at the bottom."

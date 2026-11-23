@@ -1,0 +1,82 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+  	"$id": "https://typcast.local/schemas/validation.schema.json",
+	"type": "object",
+	"required": ["version", "page", "contents"],
+	"properties": {
+		"version": {
+			"type": "string",
+			"pattern": "^\\d+\\.\\d+\\.\\d+$"
+		},
+		"page": {
+			"type": "object",
+			"properties": {
+				"paper": { 
+					"type": "object",
+					"properties": {
+						"paper": { "$ref": "#/$defs/paper-variant" },
+						"margin": { "$ref": "#/$defs/bound" }
+					}
+				}
+			}
+		},
+		"modules": {
+			"type": "object",
+			"required": ["name"],
+			"properties": {
+				"name": { "type": "string" },
+				"exports": { 
+					"type": "array",
+					"items": { 
+						"type": "string",
+						"default": "*"
+					}
+				}
+			}
+		},
+		"contents": {
+			"type": "array",
+			"items": {
+				"type": "object",
+				"properties": {
+					"call": { "$ref": "#/$typst-api/$types/alignment" }
+				}
+			}
+		}
+	},
+	"$defs": {
+		"relative-length": {
+			"type": "object",
+			"properties": {
+				"value": { "type": "number" },
+				"unit": { 
+					"type": "string", 
+					"enum": ["%", "fr"]
+				}
+			}
+		},
+		"absolute-length": {
+			"type": "object",
+			"properties": {
+				"value": { "type": "number" },
+				"unit": { 
+					"type": "string", 
+					"enum": ["pt", "em", "in", "cm"]
+				}
+			}
+		},
+		"bound": {
+			"type": "object",
+			"properties": {
+				"left": { "$schema": "./schemas/utilities/bound.schema.json" },
+				"top": { "$ref": "#/$defs/absolute-length" },
+				"right": { "$ref": "#/$defs/absolute-length" },
+				"bottom": { "$ref": "#/$defs/absolute-length" }
+			}
+		},
+		"paper-variant": {
+			"type": "string",
+			"enum": []
+		}
+	}
+}
