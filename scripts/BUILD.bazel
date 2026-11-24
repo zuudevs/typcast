@@ -1,0 +1,26 @@
+load("@rules_python//python:defs.bzl", "py_test")
+
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+# The documents that the checks read. The group lives in the root package so
+# that a new document is a deliberate addition to the gate.
+py_test(
+    name = "docs_checks",
+    size = "small",
+    srcs = [
+        "__init__.py",
+        "validate_docs.py",
+    ],
+    main = "validate_docs.py",
+    data = [
+        "//:docs_sources",
+        "//specs/schemas:BUILD.bazel",
+        "//specs/schemas:validator.schema.json",
+        "//specs/schemas/definitions:bound.schema.json",
+        "//specs/schemas/templates/api/types:alignment.schema.json.tmpl",
+        "//specs/schemas/templates/api/types:length.schema.json.tmpl",
+        "//specs/schemas/templates/api/types:paper.schema.json.tmpl",
+    ],
+)

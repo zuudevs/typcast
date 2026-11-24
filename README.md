@@ -38,6 +38,12 @@ Run all tests:
 bazel test //...
 ```
 
+Run the documentation, requirement, and decision checks:
+
+```shell
+bazel test //scripts:docs_checks
+```
+
 Build the complete set of currently available JSON Schema artifacts:
 
 ```shell

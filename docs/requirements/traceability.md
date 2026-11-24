@@ -33,7 +33,7 @@ change impact analysis.
 | CI/CD | `development/ci-cd.md` | `CI-001` to `CI-026` | Workflow review. |
 | Release | `development/release.md` | `REL-001` to `REL-031` | Release checklist. |
 | Security | `development/security.md` | `SEC-001` to `SEC-025` | Security review. |
-| Documentation | `development/documentation.md` | `DOC-001` to `DOC-020` | Docs gate. |
+| Documentation | `development/documentation.md` | `DOC-001` to `DOC-021` | Docs gate. |
 | Governance | `governance/contributing.md` | `GOV-001` to `GOV-021` | Repository settings. |
 | Traceability | This document | `TRACE-001` to `TRACE-005` | Review. |
 
@@ -122,11 +122,13 @@ a target for the MVP and is not yet verified in the repository.
 | Requirement | Evidence | Verified by |
 |---|---|---|
 | `BUILD-010` | The generator accepts absolute input and output paths and creates the output parent directory. | Manual run documented in `development/build.md`; `test_output_parent_directory_is_created` in `//tools/codegen/tests:unit_tests`. |
+| `BUILD-017` | The documentation checks run with the hermetic Python toolchain and need no SDK installation and no network access. | `//scripts:docs_checks`; `scripts/validate_docs.py` uses the standard library only. |
 | `BUILD-016` | `//specs/schemas/templates/api/types:schema_templates` and `//specs/catalogs/enums:enum_catalogs` were removed; `schema_bundle` remains the bundle entry point. | `bazel query "rdeps(//..., //specs/schemas:schema_bundle)"` and `bazel build //...`. |
 | `SCH-011` | `read_csv_column` rejects an empty value in the selected column. | `test_empty_value_in_selected_column_reports_an_error` in `//tools/codegen/tests:unit_tests`. |
 | `SCH-012` | `read_csv_column` skips fully blank rows. | `test_fully_blank_rows_are_skipped` in `//tools/codegen/tests:unit_tests`. |
 | `DOC-015` | The root `README.md` uses standard code fences and LF line endings. | Documentation validation script run on 2026-11-24. |
 | `DOC-016` | `.gitattributes` pins LF for text files and `.editorconfig` pins UTF-8, LF, final newline, and indentation. | Files present at the repository root. |
+| `DOC-021` | `scripts/validate_docs.py` validates the documents, the requirement index, the ADR index, and the schema references with the standard library only. | `//scripts:docs_checks`; 53 files and 439 requirements checked with 0 errors. |
 | `SEC-002` | The Apache-2.0 license text is present at the repository root. | `LICENSE`, compared byte for byte with the canonical Apache-2.0 text. |
 | `SEC-003` | The vulnerability reporting policy is present at the repository root. | `SECURITY.md`. |
 | `GOV-019` | Contributions are accepted under Apache-2.0. | `LICENSE`. |

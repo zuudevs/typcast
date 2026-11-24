@@ -58,7 +58,7 @@ Jobs:
 5. Schema validation.
 6. Contract and golden tests.
 7. Cross-language parity tests.
-8. Documentation gate for changed files.
+8. Repository checks: `bazel test //scripts:docs_checks`.
 9. Dependency and secret scanning where available.
 
 Permissions:

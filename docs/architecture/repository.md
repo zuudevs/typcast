@@ -26,7 +26,7 @@ creating circular dependencies.
 | `tests/integration/` | Compiler, filesystem, and install tests. | Placeholder directory. |
 | `examples/python/` | Python examples. | Placeholder directory. |
 | `examples/typescript/` | TypeScript examples. | Placeholder directory. |
-| `scripts/` | Repository automation. | Placeholder directory. |
+| `scripts/` | Repository automation. | Documentation and requirement checks. |
 | `docs/` | Product, architecture, contract, and engineering docs. | This document set. |
 | `.github/PULL_REQUEST_TEMPLATE.md` | The single pull request template. | Present. |
 | `.github/workflows/` | CI and release workflows. | Placeholder only. |
@@ -133,6 +133,7 @@ Current targets include:
 | `//tools/codegen:typcast_codegen` | Generator binary. |
 | `//tools/codegen:typcast_codegen_lib` | Generator library. |
 | `//tools/codegen/tests:unit_tests` | Seven generator unit tests. |
+| `//scripts:docs_checks` | Documentation, requirement, and decision checks. |
 | `//specs/schemas:schema_bundle` | Five staged or generated schema files. |
 | `//packages/python:typcast` | Python library placeholder. |
 | `//packages/typescript:typcast` | TypeScript project placeholder. |

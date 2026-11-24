@@ -38,6 +38,12 @@ Run all tests:
 bazel test //...
 ```
 
+Run the documentation, requirement, and decision checks:
+
+```shell
+bazel test //scripts:docs_checks
+```
+
 Build the schema bundle:
 
 ```shell
@@ -64,10 +70,11 @@ root.
 
 | Check | Result |
 |---|---|
-| `bazel build //...` | Pass, 12 targets. |
-| `bazel test //...` | Pass, 1 test target, 7 unittest cases. |
+| `bazel build //...` | Pass, 14 targets. |
+| `bazel test //...` | Pass, 2 test targets, 7 unittest cases and 1 documentation check. |
 | `bazel build //specs/schemas:schema_bundle` | Pass, 5 schema files. |
-| `bazel query "kind(rule, //...)"` | 12 rules; 1 test target. |
+| `bazel test //scripts:docs_checks` | Pass, 53 files and 439 requirements checked, 0 errors. |
+| `bazel query "kind(rule, //...)"` | 14 rules; 2 test targets. |
 | `--test_filter` on the unittest target | Ignored; all 7 cases run. |
 
 The schema bundle contains:
@@ -83,13 +90,15 @@ bazel-bin/specs/schemas/
 
 ## Current targets
 
-`bazel query "kind(rule, //...)"` reports 12 rules. All of them:
+`bazel query "kind(rule, //...)"` reports 14 rules. All of them:
 
 | Target | Kind | Purpose |
 |---|---|---|
 | `//tools/codegen:typcast_codegen` | `py_binary` | Generator CLI. |
 | `//tools/codegen:typcast_codegen_lib` | `py_library` | Generator library. |
 | `//tools/codegen/tests:unit_tests` | `py_test` | Seven generator tests. |
+| `//scripts:docs_checks` | `py_test` | Documentation, requirement, and decision checks. |
+| `//:docs_sources` | `filegroup` | The documents that the checks read. |
 | `//specs/schemas:validator_schema` | `typcast_schema_copy` | Stage the root schema. |
 | `//specs/schemas:alignment_schema` | `typcast_json_schema` | Generate alignment schema. |
 | `//specs/schemas:length_schema` | `typcast_json_schema` | Generate length schema. |
@@ -233,7 +242,7 @@ The artifact requirements for the packaging targets are defined in
 | BUILD-014 | The packaging targets MUST be `//packages/python:wheel`, `//packages/python:sdist`, `//packages/typescript:npm_package`, and `//specs/schemas:archive`. | CONFIRMED | Release review. |
 | BUILD-015 | Schema validation MUST run in `//specs/schemas:schema_tests` against the built bundle. | CONFIRMED | Test target. |
 | BUILD-016 | Hand-written filegroups with no consumer MUST be removed; `schema_bundle` MUST be kept as the published schema entry point. | IMPLEMENTED | `bazel query "rdeps(//..., //specs/schemas:schema_bundle)"`; unused aggregates removed. |
-| BUILD-017 | Documentation checks MUST NOT require SDK installation. | CONFIRMED | Docs CI. |
+| BUILD-017 | Documentation checks MUST NOT require SDK installation. | IMPLEMENTED | `//scripts:docs_checks` runs with the hermetic Python toolchain and no SDK dependency. |
 | BUILD-018 | CI MUST build the repository from a clean checkout to prove reproducibility. | CONFIRMED | Clean-checkout CI job. |
 | BUILD-019 | CI MUST cache Bazel outputs per operating system, keyed by the Bazel version, `MODULE.bazel.lock`, and build files. | CONFIRMED | CI review. |
 | BUILD-020 | Build logs MUST NOT contain secrets or document content. | CONFIRMED | Security review. |

@@ -99,8 +99,9 @@ requirement ID and a status of `CONFIRMED` or `IMPLEMENTED`.
 
 | Area | Current state | Evidence |
 |---|---|---|
-| Bazel build | Implemented | `bazel build //...` succeeds with 12 targets. |
-| Bazel test | Implemented for codegen only | `bazel test //...` runs one test target with seven unittest cases. |
+| Bazel build | Implemented | `bazel build //...` succeeds with 14 targets. |
+| Bazel test | Implemented for codegen and the repository checks | `bazel test //...` runs two test targets: seven unittest cases and the documentation check. |
+| Documentation checks | Implemented | `//scripts:docs_checks` validates the documents, the requirement index, the ADR index, and the schema references. |
 | JSON Schema generator | Implemented | `tools/codegen/` and `bazel/codegen.bzl`. |
 | Schema bundle | Implemented, incomplete | `//specs/schemas:schema_bundle` builds five files; `node.schema.json` is missing. |
 | Python SDK | Placeholder | `packages/python/src/typcast/__init__.py` is empty. |

@@ -139,6 +139,34 @@ The gate runs on changed documents in pull requests and all documents on
 Tooling must not add runtime dependencies to the SDK. Documentation tools are
 CI-only or development-only.
 
+## Repository checks
+
+`scripts/validate_docs.py` runs the checks that the repository can perform
+today. It uses the Python standard library only, so it needs no SDK
+installation and no network access.
+
+```shell
+bazel test //scripts:docs_checks
+```
+
+| Area | Check |
+|---|---|
+| Encoding | UTF-8 without a byte order mark, LF endings, a final newline. |
+| Text hygiene | No trailing whitespace, tabs, emoji, replacement characters, or mojibake. |
+| Markdown | One level-1 heading, code fences with a language, balanced fences, internal links that resolve. |
+| Diagrams | Every Mermaid block starts with a diagram type and has balanced brackets. |
+| Requirements | Unique IDs, an allowed status, family ranges that match the traceability index, and evidence for every implemented requirement. |
+| Decisions | An ADR index that lists every ADR, links that resolve, and supersede relations that point at a known ADR. |
+| Schema references | Every published raw URL uses a repository path, and no current document keeps the retired publishing domain. |
+| Schemas | Valid JSON, and every relative `$ref` resolves except the references that are tracked as open defects. |
+
+A new document must be added to the `docs_sources` group in the root
+`BUILD.bazel`, so that it becomes part of the gate.
+
+The script does not replace the full gate. Markdown lint, external link
+checks, and a Mermaid parser are still not configured, and the checks do not
+run in CI yet.
+
 ## Current state
 
 | Item | Current |
@@ -147,10 +175,11 @@ CI-only or development-only.
 | README code fences | Fixed; README uses standard fences and LF line endings. |
 | `.gitattributes` | Present. It pins LF for text files and marks binary assets as binary. |
 | `.editorconfig` | Present. It pins UTF-8, LF, final newline, and indentation rules. |
-| Markdown lint | Not configured. |
-| Link checker | Not configured. |
-| Mermaid validation | Not configured. |
-| Encoding checks | Manual audit only. |
+| Repository checks | Implemented in `//scripts:docs_checks`. |
+| Markdown lint | Not configured. The repository script checks the structure. |
+| Link checker | Internal links are checked by the repository script. External links are not checked. |
+| Mermaid validation | Structural check only. A Mermaid parser is not configured. |
+| Encoding checks | Implemented in `//scripts:docs_checks`. |
 | Docs CI | None. |
 
 ## Requirements
@@ -177,6 +206,7 @@ CI-only or development-only.
 | DOC-018 | Accepted ADRs MUST NOT be edited to change decisions. | CONFIRMED | Review. |
 | DOC-019 | Examples MUST be updated when the public API changes. | CONFIRMED | Review. |
 | DOC-020 | The traceability index MUST be updated with requirement changes. | CONFIRMED | Review. |
+| DOC-021 | A repository script MUST validate the documents, the requirement index, the ADR index, and the schema references without SDK installation or network access. | IMPLEMENTED | `//scripts:docs_checks`. |
 
 ## Open questions
 
