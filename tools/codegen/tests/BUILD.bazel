@@ -6,6 +6,7 @@ package(
 
 py_test(
     name = "unit_tests",
+    size = "small",
     srcs = [
         "test_generator.py",
     ],
