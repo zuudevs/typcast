@@ -473,8 +473,17 @@ def check_schema_files(root: Path, bundle: Path | None, report: Report) -> int:
 
     if bundle is not None and bundle.exists():
         bundle_root = bundle.resolve()
+        published = known_schema_paths(root)
         for path in sorted(bundle.rglob("*.json")):
+            # A build directory also holds the runfiles tree of the bundle
+            # test and the outputs of rules that no longer exist. Those copies
+            # are not bundle files.
+            if any(part.endswith(".runfiles") for part in path.relative_to(bundle).parts):
+                continue
             rel = path.relative_to(bundle).as_posix()
+            if rel not in published:
+                report.warn(f"bundle {rel}: not a published schema path; ignored")
+                continue
             try:
                 document = json.loads(path.read_text(encoding="utf-8"))
             except json.JSONDecodeError as exc:
