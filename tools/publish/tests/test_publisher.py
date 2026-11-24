@@ -5,7 +5,7 @@ import os
 import tempfile
 import threading
 import unittest
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 
 from typcast_publish.errors import PublishError
 from typcast_publish.publisher import (
@@ -16,9 +16,6 @@ from typcast_publish.publisher import (
     verify_published_urls,
     write_manifest,
 )
-
-# The node schema does not exist yet. It is the tracked defect SCH-D01.
-KNOWN_MISSING_REFERENCE = "definitions/node.schema.json"
 
 
 def runfiles_candidates() -> list[Path]:
@@ -360,6 +357,7 @@ class PublishedBundleTests(unittest.TestCase):
         self.assertIn("api/types/length.schema.json", self.manifest)
         self.assertIn("api/types/paper.schema.json", self.manifest)
         self.assertIn("definitions/bound.schema.json", self.manifest)
+        self.assertIn("definitions/node.schema.json", self.manifest)
 
     def test_every_published_file_has_the_release_identity(self) -> None:
         published = self.publish()
@@ -383,13 +381,10 @@ class PublishedBundleTests(unittest.TestCase):
                 if reference.startswith(("http://", "https://", "#")):
                     continue
                 target = (path.parent / reference).resolve()
-                if not target.exists():
-                    normalized = PurePosixPath(reference).as_posix()
-                    self.assertEqual(
-                        normalized,
-                        KNOWN_MISSING_REFERENCE,
-                        f"{path.name} references {reference}",
-                    )
+                self.assertTrue(
+                    target.exists(),
+                    f"{path.name} references {reference}",
+                )
 
     def test_the_published_bundle_matches_the_build(self) -> None:
         self.publish()

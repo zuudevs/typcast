@@ -77,6 +77,7 @@ recorded below and in the linked ADRs.
 |---|---|---|
 | `SCH-009` | The built bundle is the authoritative artifact set; source-tree `$ref` resolution is optional. | ADR-0023 |
 | `SCH-021` | A published schema is referenced by the versioned raw URL of its release tag; a `main` URL is a development reference only. | ADR-0022 |
+| `SCH-020` | The schema contract is migrated to the document IR before `1.0.0`, and the ten prototype defects are closed. | `specifications/schema.md` |
 | `IR-019` | The raw size limit defaults to 1 MiB and is configurable through `max_raw_bytes`. | ADR-0017 |
 | `NODE-023` | The raw size limit is enforced at `build()` and again before emit. | ADR-0017 |
 | `API-024` | The builder is mutable, single-document, and not thread-safe. | ADR-0015 |
@@ -124,21 +125,27 @@ a target for the MVP and is not yet verified in the repository.
 | `BUILD-010` | The generator accepts absolute input and output paths and creates the output parent directory. | Manual run documented in `development/build.md`; `test_output_parent_directory_is_created` in `//tools/codegen/tests:unit_tests`. |
 | `BUILD-012` | The Linux CI run starts Bazel with the current `.bazelrc`. | The first Linux CI run passed on 2026-11-24. |
 | `COMPAT-016` | The Linux CI run starts Bazel with the current `.bazelrc`. | The first Linux CI run passed on 2026-11-24. |
-| `BUILD-015` | `//specs/schemas:schema_tests` validates the bundle that `//specs/schemas:schema_bundle` produces, against the rules in `specifications/schema.md`. | `//specs/schemas:schema_tests`; 5 bundle files checked, 26 tracked prototype violations, 0 errors. |
+| `BUILD-015` | `//specs/schemas:schema_tests` validates the bundle that `//specs/schemas:schema_bundle` produces, against the rules in `specifications/schema.md`. | `//specs/schemas:schema_tests`; 6 bundle files checked, 0 violations. |
 | `BUILD-017` | The documentation checks run with the hermetic Python toolchain and need no SDK installation and no network access. | `//scripts:docs_checks`; `scripts/validate_docs.py` uses the standard library only. |
 | `BUILD-018` | The clean checkout build proves that the build does not depend on a warm cache or on an untracked file. | The `Clean build` job of the workflows; the first run passed. |
 | `BUILD-019` | The Bazel cache is separated by operating system and keyed by the Bazel version, the lockfile, and the build files. | The cache configuration of the workflows. |
 | `BUILD-016` | `//specs/schemas/templates/api/types:schema_templates` and `//specs/catalogs/enums:enum_catalogs` were removed; `schema_bundle` remains the bundle entry point. | `bazel query "rdeps(//..., //specs/schemas:schema_bundle)"` and `bazel build //...`. |
 | `SCH-011` | `read_csv_column` rejects an empty value in the selected column. | `test_empty_value_in_selected_column_reports_an_error` in `//tools/codegen/tests:unit_tests`. |
 | `SCH-012` | `read_csv_column` skips fully blank rows. | `test_fully_blank_rows_are_skipped` in `//tools/codegen/tests:unit_tests`. |
-| `SCH-009` | The schema contract is validated against the built bundle, not against the source tree. | `//specs/schemas:schema_tests`; 5 bundle files checked, 26 tracked prototype violations, 0 errors. |
+| `SCH-001` | Every schema of the bundle declares the draft 2020-12 dialect. | `//specs/schemas:schema_tests`; the dialect rule. |
+| `SCH-002` | Every schema of the bundle declares an absolute, unique `$id` that matches its versioned raw URL. | `//specs/schemas:schema_tests`; the identity and uniqueness rules. |
+| `SCH-003` | Every object schema of the bundle is closed. | `//specs/schemas:schema_tests`; the closed-object rule. |
+| `SCH-006` | Every union of the bundle uses a `type` discriminator with unique `const` values. | `//specs/schemas:schema_tests`; the discriminator rule. |
+| `SCH-008` | Every relative `$ref` of the bundle resolves inside the bundle. | `//specs/schemas:schema_tests`; the reference rule. |
+| `SCH-009` | The schema contract is validated against the built bundle, not against the source tree. | `//specs/schemas:schema_tests`; 6 bundle files checked, 0 violations. |
+| `SCH-020` | The ten prototype defects `SCH-D01` to `SCH-D10` are closed. | `specifications/schema.md`; the bundle test reports no violation. |
 | `DOC-015` | The root `README.md` uses standard code fences and LF line endings. | Documentation validation script run on 2026-11-24. |
 | `DOC-016` | `.gitattributes` pins LF for text files and `.editorconfig` pins UTF-8, LF, final newline, and indentation. | Files present at the repository root. |
-| `DOC-021` | `scripts/validate_docs.py` validates the documents, the requirement index, the ADR index, and the schema references with the standard library only. | `//scripts:docs_checks`; 56 files, 441 requirements, and 3 workflows checked with 0 errors. |
+| `DOC-021` | `scripts/validate_docs.py` validates the documents, the requirement index, the ADR index, and the schema references with the standard library only. | `//scripts:docs_checks`; 56 files, 448 requirements, and 3 workflows checked with 0 errors. |
 | `DOC-012` | The documentation gate runs on pull requests. | The `Documentation gate` job of `.github/workflows/pr.yml`. |
 | `DOC-013` | The documentation gate runs on `main`. | The `Documentation gate` job of `.github/workflows/main.yml`. |
 | `DOC-022` | The repository gate validates the workflow files: pinned actions, declared permissions, no write access or secret in a pull request workflow, and no `pull_request_target`. | `//scripts:docs_checks`; 3 workflows checked. |
-| `TEST-016` | `//specs/schemas:schema_tests` validates every bundle file and resolves every relative `$ref`; the one dangling reference is tracked as `SCH-D01`. | `//specs/schemas:schema_tests`; 5 bundle files checked, 26 tracked prototype violations, 0 errors. |
+| `TEST-016` | `//specs/schemas:schema_tests` validates every bundle file and resolves every relative `$ref`. | `//specs/schemas:schema_tests`; 6 bundle files checked, 0 violations. |
 | `TEST-025` | The test lane runs on Windows and Linux. | The `Test` jobs of the workflows; the first run passed on `windows-latest` and `ubuntu-latest`. |
 | `TEST-026` | `//tools/publish/tests:publish_tests` covers the publisher with unit tests and with an integration test against the built bundle. | `//tools/publish/tests:publish_tests`; 28 cases. |
 | `TEST-027` | `//scripts/tests:version_tests` covers the release version check. | `//scripts/tests:version_tests`; 10 cases. |

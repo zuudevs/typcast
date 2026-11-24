@@ -11,8 +11,11 @@ document. It is the contract between the builder, serializer, validator,
 emitter, and cross-language tests. Python and TypeScript models serialize to the
 same IR for the same input.
 
-The target IR version is `1.0.0`. The current repository version is `0.1.0`; the
-existing schemas are prototypes and are not the normative IR described here.
+The IR version is `1.0.0`, and the JSON Schema in `specs/schemas/` implements
+this document. The repository version is still `0.1.0`, because no release has
+been published yet. The release lane bumps the package manifests and the
+changelog to the release tag, and the publisher writes the identity of that
+tag into every published schema.
 
 ## Root shape
 

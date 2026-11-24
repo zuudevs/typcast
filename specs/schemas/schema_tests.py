@@ -12,11 +12,8 @@ in `docs/specifications/schema.md`:
 - Every object schema is closed and declares its required list.
 - Every union uses a `type` discriminator with `const` values.
 
-The prototype bundle does not satisfy the rules yet. Every violation is
-therefore compared with the open prototype defects in the schema contract. A
-violation that no open defect explains fails the target, and a tracked
-violation that no longer occurs fails the target too, so the defect list
-shrinks as the schema migration proceeds.
+Every violation fails the target, so the bundle cannot drift away from the
+contract without a failing check.
 
 Usage:
 
@@ -29,7 +26,6 @@ import json
 import os
 import re
 import sys
-from collections import Counter
 from pathlib import Path
 
 DIALECT = "https://json-schema.org/draft/2020-12/schema"
@@ -40,35 +36,15 @@ PUBLISHED_PATTERN = re.compile(
 )
 RELEASE_TAG_PATTERN = re.compile(r"^v\d+\.\d+\.\d+")
 
-# Violations that an open prototype defect explains. The key is
-# "<rule>:<file>[:<location>]" and the value is the defect that tracks it.
-KNOWN_VIOLATIONS = {
-    "dialect:api/types/length.schema.json": "SCH-D05",
-    "dialect:api/types/paper.schema.json": "SCH-D05",
-    "identity:api/types/length.schema.json": "SCH-D05",
-    "identity:api/types/paper.schema.json": "SCH-D05",
-    "identity-base:api/types/alignment.schema.json": "SCH-D10",
-    "identity-base:definitions/bound.schema.json": "SCH-D10",
-    "identity-base:validator.schema.json": "SCH-D10",
-    "identity-path:api/types/alignment.schema.json": "SCH-D03",
-    "identity-path:validator.schema.json": "SCH-D04",
-    "reference:validator.schema.json:./definitions/node.schema.json": "SCH-D01",
-    "closed:api/types/length.schema.json:/": "SCH-D06",
-    "closed:api/types/paper.schema.json:/": "SCH-D06",
-    "closed:api/types/paper.schema.json:properties/paper": "SCH-D06",
-    "closed:definitions/bound.schema.json:/": "SCH-D06",
-    "closed:validator.schema.json:/": "SCH-D06",
-    "closed:validator.schema.json:properties/contents/items": "SCH-D06",
-    "closed:validator.schema.json:properties/modules": "SCH-D06",
-    "closed:validator.schema.json:properties/page": "SCH-D06",
-    "closed:validator.schema.json:properties/page/properties/paper": "SCH-D06",
-    "required-missing:api/types/length.schema.json:/": "SCH-D06",
-    "required-missing:api/types/paper.schema.json:/": "SCH-D06",
-    "required-missing:api/types/paper.schema.json:properties/paper": "SCH-D06",
-    "required-missing:definitions/bound.schema.json:/": "SCH-D06",
-    "required-missing:validator.schema.json:properties/contents/items": "SCH-D06",
-    "required-missing:validator.schema.json:properties/page": "SCH-D06",
-    "required-missing:validator.schema.json:properties/page/properties/paper": "SCH-D06",
+# The files that the published bundle carries. A missing file or an unexpected
+# file fails the target, so the published set cannot change unnoticed.
+EXPECTED_FILES = {
+    "validator.schema.json",
+    "api/types/alignment.schema.json",
+    "api/types/length.schema.json",
+    "api/types/paper.schema.json",
+    "definitions/bound.schema.json",
+    "definitions/node.schema.json",
 }
 
 
@@ -112,6 +88,11 @@ def object_schemas(document: object, location: str = "") -> list[tuple[str, dict
                 for name, subschema in value.items():
                     if isinstance(subschema, dict):
                         found.extend(object_schemas(subschema, f"{location}/properties/{name}"))
+            elif key == "$defs":
+                if isinstance(value, dict):
+                    for name, subschema in value.items():
+                        if isinstance(subschema, dict):
+                            found.extend(object_schemas(subschema, f"{location}/$defs/{name}"))
             elif key in ("items", "additionalProperties", "unevaluatedProperties"):
                 if isinstance(value, dict):
                     found.extend(object_schemas(value, f"{location}/{key}"))
@@ -120,7 +101,7 @@ def object_schemas(document: object, location: str = "") -> list[tuple[str, dict
                     for index, subschema in enumerate(value):
                         if isinstance(subschema, dict):
                             found.extend(object_schemas(subschema, f"{location}/{key}/{index}"))
-            elif key not in ("$defs",):
+            else:
                 found.extend(object_schemas(value, f"{location}/{key}"))
     elif isinstance(document, list):
         for index, value in enumerate(document):
@@ -249,39 +230,32 @@ def main() -> int:
 
     violations: list[str] = []
     identifiers: dict[str, list[str]] = {}
+    names = set()
     for path in files:
         relative = path.relative_to(bundle).as_posix()
+        names.add(relative)
         file_violations, file_identifiers = check_file(path, relative, bundle)
         violations.extend(file_violations)
         for identifier in file_identifiers:
             identifiers.setdefault(identifier, []).append(relative)
+
+    for missing in sorted(EXPECTED_FILES - names):
+        violations.append(f"file-missing:{missing}")
+    for unexpected in sorted(names - EXPECTED_FILES):
+        violations.append(f"file-unexpected:{unexpected}")
 
     for identifier, owners in sorted(identifiers.items()):
         if len(owners) > 1:
             violations.append(f"identity-unique:{identifier}")
 
     violations.sort()
-    untracked = [item for item in violations if item not in KNOWN_VIOLATIONS]
-    stale = [item for item in KNOWN_VIOLATIONS if item not in violations]
-    tracked = Counter(KNOWN_VIOLATIONS[item] for item in violations if item in KNOWN_VIOLATIONS)
 
     print(f"bundle files: {len(files)}")
     print(f"violations: {len(violations)}")
     for item in violations:
-        marker = "KNOWN" if item in KNOWN_VIOLATIONS else "NEW"
-        defect = KNOWN_VIOLATIONS.get(item, "")
-        print(f"{marker} {item} {defect}".rstrip())
-    print(f"known defects still present: {dict(sorted(tracked.items()))}")
-
-    errors = 0
-    for item in untracked:
-        print(f"ERROR untracked violation: {item}")
-        errors += 1
-    for item in stale:
-        print(f"ERROR stale known violation: {item}")
-        errors += 1
-    print(f"errors: {errors}")
-    return 1 if errors else 0
+        print(f"ERROR violation: {item}")
+    print(f"errors: {len(violations)}")
+    return 1 if violations else 0
 
 
 if __name__ == "__main__":

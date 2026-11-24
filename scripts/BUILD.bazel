@@ -40,6 +40,7 @@ py_test(
         "//specs/schemas:BUILD.bazel",
         "//specs/schemas:validator.schema.json",
         "//specs/schemas/definitions:bound.schema.json",
+        "//specs/schemas/definitions:node.schema.json",
         "//specs/schemas/templates/api/types:alignment.schema.json.tmpl",
         "//specs/schemas/templates/api/types:length.schema.json.tmpl",
         "//specs/schemas/templates/api/types:paper.schema.json.tmpl",

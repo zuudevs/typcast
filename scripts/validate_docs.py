@@ -83,7 +83,6 @@ LEGACY_DOMAIN_DOCUMENTS = {
 # References that do not resolve yet. Each entry names the defect that tracks
 # it. An entry that becomes resolvable is reported so that it is removed.
 KNOWN_UNRESOLVED_REFERENCES = {
-    "definitions/node.schema.json": "SCH-D01: the node schema does not exist yet.",
     "api/types/paper.schema.json": "ADR-0023: generated schema, resolves in the built bundle.",
     "api/types/length.schema.json": "ADR-0023: generated schema, resolves in the built bundle.",
     "api/types/alignment.schema.json": "ADR-0023: generated schema, resolves in the built bundle.",

@@ -34,6 +34,12 @@ constraints, and their Typst mapping. The JSON shape is defined in
 | `lineBreak` | None | None | `#linebreak()`. |
 | `raw` | None | `format`, `value` | Verbatim insertion. |
 
+The JSON Schema in `specs/schemas/definitions/node.schema.json` implements this
+catalog. It holds one union branch per block type and per inline span type,
+each with a `type` discriminator and a `const` value, and it rejects an unknown
+type. The schema enforces the constraints that JSON Schema can express. The
+semantics below stay with the SDK.
+
 ## Defaults
 
 Defaults are applied by the builder before the immutable model is created. They

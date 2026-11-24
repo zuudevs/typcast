@@ -58,6 +58,7 @@ filegroup(
         ":length_schema",
         ":paper_schema",
         "//specs/schemas/definitions:bound_schema",
+        "//specs/schemas/definitions:node_schema",
     ],
 )
 
