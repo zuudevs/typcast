@@ -89,7 +89,7 @@ class PublishBundleTests(unittest.TestCase):
             json.dumps(
                 {
                     "$schema": "https://json-schema.org/draft/2020-12/schema",
-                    "$id": "https://typcast.local/schemas/validation.schema.json",
+                    "$id": "https://raw.githubusercontent.com/zuudevs/typcast/v1.0.0/specs/schemas/validator.schema.json",
                     "type": "object",
                 },
                 indent=2,
