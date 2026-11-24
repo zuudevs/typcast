@@ -28,12 +28,12 @@ change impact analysis.
 | Assets | `specifications/assets.md` | `ASSET-001` to `ASSET-020` | Path and workspace tests. |
 | Compatibility | `specifications/compatibility.md` | `COMPAT-001` to `COMPAT-019` | CI matrix. |
 | Build | `development/build.md` | `BUILD-001` to `BUILD-020` | Bazel commands. |
-| Testing | `development/testing.md` | `TEST-001` to `TEST-026` | Test inventory. |
+| Testing | `development/testing.md` | `TEST-001` to `TEST-028` | Test inventory. |
 | Benchmarking | `development/benchmarking.md` | `PERF-001` to `PERF-015` | Benchmark job. |
-| CI/CD | `development/ci-cd.md` | `CI-001` to `CI-026` | Workflow review. |
-| Release | `development/release.md` | `REL-001` to `REL-032` | Release checklist. |
+| CI/CD | `development/ci-cd.md` | `CI-001` to `CI-028` | Workflow review. |
+| Release | `development/release.md` | `REL-001` to `REL-034` | Release checklist. |
 | Security | `development/security.md` | `SEC-001` to `SEC-025` | Security review. |
-| Documentation | `development/documentation.md` | `DOC-001` to `DOC-021` | Docs gate. |
+| Documentation | `development/documentation.md` | `DOC-001` to `DOC-022` | Docs gate. |
 | Governance | `governance/contributing.md` | `GOV-001` to `GOV-021` | Repository settings. |
 | Traceability | This document | `TRACE-001` to `TRACE-005` | Review. |
 
@@ -122,18 +122,45 @@ a target for the MVP and is not yet verified in the repository.
 | Requirement | Evidence | Verified by |
 |---|---|---|
 | `BUILD-010` | The generator accepts absolute input and output paths and creates the output parent directory. | Manual run documented in `development/build.md`; `test_output_parent_directory_is_created` in `//tools/codegen/tests:unit_tests`. |
+| `BUILD-012` | The Linux CI run starts Bazel with the current `.bazelrc`. | The first Linux CI run passed on 2026-11-24. |
+| `COMPAT-016` | The Linux CI run starts Bazel with the current `.bazelrc`. | The first Linux CI run passed on 2026-11-24. |
 | `BUILD-015` | `//specs/schemas:schema_tests` validates the bundle that `//specs/schemas:schema_bundle` produces, against the rules in `specifications/schema.md`. | `//specs/schemas:schema_tests`; 5 bundle files checked, 26 tracked prototype violations, 0 errors. |
 | `BUILD-017` | The documentation checks run with the hermetic Python toolchain and need no SDK installation and no network access. | `//scripts:docs_checks`; `scripts/validate_docs.py` uses the standard library only. |
+| `BUILD-018` | The clean checkout build proves that the build does not depend on a warm cache or on an untracked file. | The `Clean build` job of the workflows; the first run passed. |
+| `BUILD-019` | The Bazel cache is separated by operating system and keyed by the Bazel version, the lockfile, and the build files. | The cache configuration of the workflows. |
 | `BUILD-016` | `//specs/schemas/templates/api/types:schema_templates` and `//specs/catalogs/enums:enum_catalogs` were removed; `schema_bundle` remains the bundle entry point. | `bazel query "rdeps(//..., //specs/schemas:schema_bundle)"` and `bazel build //...`. |
 | `SCH-011` | `read_csv_column` rejects an empty value in the selected column. | `test_empty_value_in_selected_column_reports_an_error` in `//tools/codegen/tests:unit_tests`. |
 | `SCH-012` | `read_csv_column` skips fully blank rows. | `test_fully_blank_rows_are_skipped` in `//tools/codegen/tests:unit_tests`. |
 | `SCH-009` | The schema contract is validated against the built bundle, not against the source tree. | `//specs/schemas:schema_tests`; 5 bundle files checked, 26 tracked prototype violations, 0 errors. |
 | `DOC-015` | The root `README.md` uses standard code fences and LF line endings. | Documentation validation script run on 2026-11-24. |
 | `DOC-016` | `.gitattributes` pins LF for text files and `.editorconfig` pins UTF-8, LF, final newline, and indentation. | Files present at the repository root. |
-| `DOC-021` | `scripts/validate_docs.py` validates the documents, the requirement index, the ADR index, and the schema references with the standard library only. | `//scripts:docs_checks`; 56 files and 441 requirements checked with 0 errors. |
+| `DOC-021` | `scripts/validate_docs.py` validates the documents, the requirement index, the ADR index, and the schema references with the standard library only. | `//scripts:docs_checks`; 56 files, 441 requirements, and 3 workflows checked with 0 errors. |
+| `DOC-012` | The documentation gate runs on pull requests. | The `Documentation gate` job of `.github/workflows/pr.yml`. |
+| `DOC-013` | The documentation gate runs on `main`. | The `Documentation gate` job of `.github/workflows/main.yml`. |
+| `DOC-022` | The repository gate validates the workflow files: pinned actions, declared permissions, no write access or secret in a pull request workflow, and no `pull_request_target`. | `//scripts:docs_checks`; 3 workflows checked. |
 | `TEST-016` | `//specs/schemas:schema_tests` validates every bundle file and resolves every relative `$ref`; the one dangling reference is tracked as `SCH-D01`. | `//specs/schemas:schema_tests`; 5 bundle files checked, 26 tracked prototype violations, 0 errors. |
-| `TEST-026` | `//tools/publish/tests:publish_tests` covers the publisher with unit tests and with an integration test against the built bundle. | `//tools/publish/tests:publish_tests`; 23 cases. |
+| `TEST-025` | The test lane runs on Windows and Linux. | The `Test` jobs of the workflows; the first run passed on `windows-latest` and `ubuntu-latest`. |
+| `TEST-026` | `//tools/publish/tests:publish_tests` covers the publisher with unit tests and with an integration test against the built bundle. | `//tools/publish/tests:publish_tests`; 28 cases. |
+| `TEST-027` | `//scripts/tests:version_tests` covers the release version check. | `//scripts/tests:version_tests`; 10 cases. |
+| `TEST-028` | The publisher tests serve the published files from a local server, so the test suite needs no network access. | `//tools/publish/tests:publish_tests`; the `PublishedUrlTests` cases. |
 | `REL-032` | `//tools/publish:publish_schemas` publishes exactly the files of the bundle manifest, sets the `$id` of every file to the versioned raw URL of the release tag, and rejects a version that is not a release tag. | `//tools/publish:publish_schemas`; `publish` and `check` verified against the built bundle with an illustrative `v1.0.0` tag. |
+| `REL-033` | `//scripts:check_version` compares the version of every manifest and the changelog with the tag, and reports every mismatch. | `//scripts:check_version`; `//scripts/tests:version_tests`; 10 cases. |
+| `REL-034` | `publish_schemas verify` fetches every published schema from its versioned raw URL and compares the served bytes with the file of the tagged commit. | `//tools/publish:publish_tests`; the `PublishedUrlTests` cases. |
+| `CI-001` | The repository has the pull request validation, the main integration, and the release workflows. | `.github/workflows/pr.yml`, `.github/workflows/main.yml`, and `.github/workflows/release.yml`. |
+| `CI-002` | The pull request workflows have read-only permissions. | `permissions: contents: read` in `pr.yml` and `main.yml`; the repository gate rejects write access in a pull request workflow. |
+| `CI-003` | No pull request workflow reads a secret. | No workflow reads a secret; the repository gate rejects a secret in a pull request workflow. |
+| `CI-004` | The main integration workflow runs on every push to `main`. | `.github/workflows/main.yml`. |
+| `CI-010` | The Bazel cache is separated by operating system. | The cache key of the workflows holds the operating system and the architecture. |
+| `CI-011` | The cache key holds the Bazel version, the lockfile, and the build files. | The cache configuration of the workflows hashes `.bazelversion`, `MODULE.bazel.lock`, and the build files. |
+| `CI-012` | The build and the test lane run on Windows and Linux. | The workflows; the first run passed on `windows-latest` and `ubuntu-latest`. |
+| `CI-014` | The documentation gate runs on pull requests and on `main`. | The `Documentation gate` job of `pr.yml` and `main.yml`. |
+| `CI-017` | The release workflow uses one concurrency group per tag and does not cancel a run. | `.github/workflows/release.yml`. |
+| `CI-019` | Every action is pinned to a commit SHA. | The three workflow files; the repository gate rejects a tag or a branch. |
+| `CI-020` | No workflow publishes. | The three workflow files; the pull request workflow has read-only permissions. |
+| `CI-021` | The test lane prints the output of every failing test. | `test --test_output=errors` in `.bazelrc`. |
+| `CI-025` | The workflow files are in their own commits. | The commits `ci: add the pull request validation workflow`, `ci: add the main integration workflow`, and `ci: add the release verification workflow`. |
+| `CI-027` | The pull request and main lanes run the build, the test lane, the clean checkout build, and the documentation gate on Windows and Linux, and the release lane verifies the version, the tagged build, the published bundle, and the raw URLs. | The three workflow files; the first pull request run passed on 2026-11-24. |
+| `CI-028` | The repository gate rejects an unpinned action, a workflow without permissions, write access or a secret in a pull request workflow, and `pull_request_target`. | `scripts/validate_docs.py`; `//scripts:docs_checks`; 3 workflows checked. |
 | `SEC-002` | The Apache-2.0 license text is present at the repository root. | `LICENSE`, compared byte for byte with the canonical Apache-2.0 text. |
 | `SEC-003` | The vulnerability reporting policy is present at the repository root. | `SECURITY.md`. |
 | `GOV-019` | Contributions are accepted under Apache-2.0. | `LICENSE`. |

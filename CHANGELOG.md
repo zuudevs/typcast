@@ -22,10 +22,17 @@ No release has been published yet. Every change so far is listed under
 - The schema bundle and its validation target, `//specs/schemas:schema_tests`,
   which checks the built bundle against the contract.
 - A schema publisher, `//tools/publish:publish_schemas`, which writes the
-  published bundle with the identity of a release tag and verifies it against
-  the build.
+  published bundle with the identity of a release tag, verifies it against the
+  build, and checks that every published schema resolves at its versioned raw
+  URL.
+- A release version check, `//scripts:check_version`, which compares the
+  version of every manifest and the changelog with the tag.
 - Repository checks, `//scripts:docs_checks`, for the documents, the
-  requirement index, the decision index, and the schema references.
+  requirement index, the decision index, the schema references, and the
+  workflow files.
+- Three GitHub Actions workflows: pull request validation, main integration,
+  and release verification. The pull request lane builds, tests, and checks
+  the repository on Windows and Linux.
 - A pull request template at `.github/PULL_REQUEST_TEMPLATE.md`, this
   changelog, a contributing guide, and a code of conduct.
 - The security policy and the Apache-2.0 license.
@@ -41,5 +48,5 @@ No release has been published yet. Every change so far is listed under
 
 - The schema prototype does not satisfy the contract yet. The open defects are
   listed in [the schema specification](docs/specifications/schema.md).
-- The Typcast SDK core, the packaging targets, the CI workflows, and the
+- The Typcast SDK core, the packaging targets, and the publishing jobs of the
   release workflow are not implemented.
