@@ -191,6 +191,39 @@ The test does not validate a schema document against the JSON Schema
 meta-schema, and it does not validate an instance against the contract. Both
 need a JSON Schema implementation that the repository does not depend on yet.
 
+## Publishing
+
+The published bundle is the file set that the tagged release commit carries
+under `specs/schemas/`. `//tools/publish:publish_schemas` writes it.
+
+```shell
+bazel build //specs/schemas:schema_bundle //specs/schemas:schema_manifest
+bazel-bin/tools/publish/publish_schemas.exe publish \
+  --version v1.0.0 \
+  --input bazel-bin/specs/schemas \
+  --manifest bazel-bin/specs/schemas/schema_manifest.txt \
+  --output specs/schemas
+```
+
+| Rule | Requirement |
+|---|---|
+| File set | The publisher publishes exactly the files of the bundle manifest. |
+| Paths | Every published file keeps its path relative to `specs/schemas/`. |
+| Identity | Every published file declares the `$id` of its versioned raw URL. |
+| Version | The version MUST be a release tag. A `main` URL is a development reference and is rejected. |
+| Encoding | Every published file is UTF-8 JSON with LF endings and a final newline. |
+
+`//specs/schemas:schema_manifest` names the files of the bundle. The publisher
+reads that list instead of scanning a directory, because the build directory
+also holds the outputs of other rules.
+
+The publisher rewrites the identity of a file, so the source schemas keep
+their development identifiers until the release. The placeholder identifiers
+are the tracked defect `SCH-D10`.
+
+The release lane compares the published bundle with the build before the tag
+is created; see `development/release.md`.
+
 ## Placeholder syntax
 
 ```text

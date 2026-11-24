@@ -99,12 +99,13 @@ requirement ID and a status of `CONFIRMED` or `IMPLEMENTED`.
 
 | Area | Current state | Evidence |
 |---|---|---|
-| Bazel build | Implemented | `bazel build //...` succeeds with 15 targets. |
-| Bazel test | Implemented for codegen, the repository checks, and the schema bundle | `bazel test //...` runs three test targets: seven unittest cases, the documentation check, and the schema bundle check. |
+| Bazel build | Implemented | `bazel build //...` succeeds with 19 targets. |
+| Bazel test | Implemented for codegen, the publisher, the repository checks, and the schema bundle | `bazel test //...` runs four test targets: seven unittest cases, 23 publisher cases, the documentation check, and the schema bundle check. |
 | Documentation checks | Implemented | `//scripts:docs_checks` validates the documents, the requirement index, the ADR index, and the schema references. |
 | JSON Schema generator | Implemented | `tools/codegen/` and `bazel/codegen.bzl`. |
 | Schema bundle | Implemented, incomplete | `//specs/schemas:schema_bundle` builds five files; `node.schema.json` is missing. |
 | Schema bundle validation | Implemented | `//specs/schemas:schema_tests` validates the built bundle and reports the 26 tracked prototype violations. |
+| Schema publisher | Implemented | `//tools/publish:publish_schemas` writes the published bundle with the identity of a release tag. |
 | Python SDK | Placeholder | `packages/python/src/typcast/__init__.py` is empty. |
 | TypeScript SDK | Placeholder | `packages/typescript/src/index.ts` is empty and the package is private. |
 | Document model, builder, emitter | Not implemented | No source files exist. |

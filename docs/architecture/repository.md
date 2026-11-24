@@ -19,7 +19,8 @@ creating circular dependencies.
 | `specs/catalogs/` | Language-independent CSV catalogs for enums. | Implemented. |
 | `specs/schemas/` | Static schemas, schema templates, and the bundle validation test. | Partial; `node.schema.json` is missing. |
 | `tools/codegen/` | Python generator for template and CSV expansion. | Implemented with seven unit tests. |
-| `bazel/` | Reusable Starlark rules. | Schema rules implemented. |
+| `tools/publish/` | Python publisher for the released schema bundle. | Implemented with 23 unit tests. |
+| `bazel/` | Reusable Starlark rules. | Schema and publication rules implemented. |
 | `packages/python/` | Python SDK. | Placeholder package. |
 | `packages/typescript/` | TypeScript and JavaScript SDK. | Placeholder package; manifest is private. |
 | `tests/contract/` | Cross-language contract tests. | Placeholder directory. |
@@ -135,8 +136,12 @@ Current targets include:
 | `//tools/codegen:typcast_codegen` | Generator binary. |
 | `//tools/codegen:typcast_codegen_lib` | Generator library. |
 | `//tools/codegen/tests:unit_tests` | Seven generator unit tests. |
+| `//tools/publish:publish_schemas` | Publisher binary. |
+| `//tools/publish:publish_schemas_lib` | Publisher library. |
+| `//tools/publish/tests:publish_tests` | Twenty-three publisher unit tests. |
 | `//scripts:docs_checks` | Documentation, requirement, and decision checks. |
 | `//specs/schemas:schema_bundle` | Five staged or generated schema files. |
+| `//specs/schemas:schema_manifest` | The names of the bundle files. |
 | `//specs/schemas:schema_tests` | Validates the built bundle against the schema contract. |
 | `//packages/python:typcast` | Python library placeholder. |
 | `//packages/typescript:typcast` | TypeScript project placeholder. |

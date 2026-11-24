@@ -123,6 +123,40 @@ so every schema file and every `$ref` target resolves at the same tag.
 The published paths and their sources are listed in
 `specifications/schema.md`.
 
+### Publishing the bundle
+
+`//tools/publish:publish_schemas` writes the published bundle. It reads the
+file list from the bundle manifest, so it publishes exactly the files of
+`//specs/schemas:schema_bundle` and nothing else.
+
+```shell
+bazel build //specs/schemas:schema_bundle //specs/schemas:schema_manifest
+bazel-bin/tools/publish/publish_schemas.exe publish \
+  --version v1.0.0 \
+  --input bazel-bin/specs/schemas \
+  --manifest bazel-bin/specs/schemas/schema_manifest.txt \
+  --output specs/schemas
+```
+
+The publisher sets the `$id` of every file to its versioned raw URL and keeps
+the relative path of the file. It rejects a version that is not a release tag,
+so a `main` URL can never be published.
+
+The release lane verifies the result against the build before the tag is
+created.
+
+```shell
+bazel-bin/tools/publish/publish_schemas.exe check \
+  --version v1.0.0 \
+  --input bazel-bin/specs/schemas \
+  --manifest bazel-bin/specs/schemas/schema_manifest.txt \
+  --published specs/schemas
+```
+
+The check reports a missing file, a file that differs from the build, and a
+file that the bundle does not contain. It fails the release when any of them
+is found.
+
 ## Release gates
 
 | Gate | Requirement |
@@ -228,7 +262,7 @@ Stable `1.0.0`:
 | Security policy | `SECURITY.md` present at the repository root. |
 | Tag | None. |
 | Schema archive | None. |
-| Published schema bundle | None. The release commit step is not implemented. |
+| Published schema bundle | None. The publisher exists, but the release commit step is not implemented. |
 | Schema domain | None. The MVP does not require a dedicated schema domain. |
 | SBOM | None. |
 
@@ -267,6 +301,7 @@ Stable `1.0.0`:
 | REL-029 | The canonical schema reference MUST be the versioned raw URL `https://raw.githubusercontent.com/zuudevs/typcast/<VERSION>/specs/schemas/<SCHEMA_FILE>`, where `<VERSION>` is the release tag; the MVP MUST NOT require a dedicated schema domain or hosting infrastructure. | CONFIRMED | Release check. |
 | REL-030 | The tagged release commit MUST contain the complete published schema bundle under `specs/schemas/`, so that every schema file is retrievable at its versioned raw URL. | CONFIRMED | Release check. |
 | REL-031 | A published release tag MUST NOT be moved, reused, or deleted; a schema correction MUST ship in a new release tag. | CONFIRMED | Release check. |
+| REL-032 | The publisher MUST set the `$id` of every published schema to the versioned raw URL of the release tag, MUST publish exactly the files of the bundle, and MUST reject a version that is not a release tag. | IMPLEMENTED | `//tools/publish:publish_schemas`; `//tools/publish/tests:publish_tests`. |
 
 ## Open questions
 

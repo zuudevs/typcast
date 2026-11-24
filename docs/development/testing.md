@@ -15,9 +15,10 @@ compiler integration, and package installation.
 
 | Area | Current state |
 |---|---|
-| Test targets | Three `py_test` targets: `//tools/codegen/tests:unit_tests`, `//scripts:docs_checks`, and `//specs/schemas:schema_tests`. |
-| Test cases | Seven generator cases, one documentation check, one schema bundle check. |
+| Test targets | Four `py_test` targets: `//tools/codegen/tests:unit_tests`, `//tools/publish/tests:publish_tests`, `//scripts:docs_checks`, and `//specs/schemas:schema_tests`. |
+| Test cases | Seven generator cases, 23 publisher cases, one documentation check, one schema bundle check. |
 | Schema tests | `//specs/schemas:schema_tests` validates the built bundle. Meta-schema and instance validation are missing. |
+| Publisher tests | `//tools/publish/tests:publish_tests` covers the publisher and the published identity of the built bundle. |
 | Contract tests | None. |
 | Golden `.typ` tests | None. |
 | Parity tests | None. |
@@ -250,6 +251,7 @@ threshold may be added in a later minor version once the suite stabilizes.
 | TEST-023 | Tests MUST cover package installation from wheel and npm tarball. | CONFIRMED | Install test. |
 | TEST-024 | Test reports MUST be retained as CI artifacts for 14 days. | CONFIRMED | CI review. |
 | TEST-025 | The test matrix MUST include Windows and Linux. | CONFIRMED | CI matrix. |
+| TEST-026 | The publisher MUST be covered by unit tests and by an integration test against the built bundle. | IMPLEMENTED | `//tools/publish/tests:publish_tests`; 23 cases. |
 
 ## Open questions
 

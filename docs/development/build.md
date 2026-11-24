@@ -70,12 +70,14 @@ root.
 
 | Check | Result |
 |---|---|
-| `bazel build //...` | Pass, 15 targets. |
-| `bazel test //...` | Pass, 3 test targets: 7 unittest cases, 1 documentation check, 1 schema bundle check. |
+| `bazel build //...` | Pass, 19 targets. |
+| `bazel test //...` | Pass, 4 test targets: 7 unittest cases, 1 documentation check, 1 schema bundle check, 1 publisher check. |
 | `bazel build //specs/schemas:schema_bundle` | Pass, 5 schema files. |
+| `bazel build //specs/schemas:schema_manifest` | Pass, 5 paths. |
 | `bazel test //specs/schemas:schema_tests` | Pass, 5 bundle files, 26 tracked violations, 0 errors. |
-| `bazel test //scripts:docs_checks` | Pass, 53 files and 439 requirements checked, 0 errors. |
-| `bazel query "kind(rule, //...)"` | 15 rules; 3 test targets. |
+| `bazel test //scripts:docs_checks` | Pass, 53 files and 441 requirements checked, 0 errors. |
+| `bazel test //tools/publish/tests:publish_tests` | Pass, 23 publisher cases. |
+| `bazel query "kind(rule, //...)"` | 19 rules; 4 test targets. |
 | `--test_filter` on the unittest target | Ignored; all 7 cases run. |
 
 The schema bundle contains:
@@ -91,13 +93,16 @@ bazel-bin/specs/schemas/
 
 ## Current targets
 
-`bazel query "kind(rule, //...)"` reports 15 rules. All of them:
+`bazel query "kind(rule, //...)"` reports 19 rules. All of them:
 
 | Target | Kind | Purpose |
 |---|---|---|
 | `//tools/codegen:typcast_codegen` | `py_binary` | Generator CLI. |
 | `//tools/codegen:typcast_codegen_lib` | `py_library` | Generator library. |
 | `//tools/codegen/tests:unit_tests` | `py_test` | Seven generator tests. |
+| `//tools/publish:publish_schemas` | `py_binary` | Publisher CLI. |
+| `//tools/publish:publish_schemas_lib` | `py_library` | Publisher library. |
+| `//tools/publish/tests:publish_tests` | `py_test` | Publisher tests. |
 | `//scripts:docs_checks` | `py_test` | Documentation, requirement, and decision checks. |
 | `//:docs_sources` | `filegroup` | The documents that the checks read. |
 | `//specs/schemas:validator_schema` | `typcast_schema_copy` | Stage the root schema. |
@@ -105,6 +110,7 @@ bazel-bin/specs/schemas/
 | `//specs/schemas:length_schema` | `typcast_json_schema` | Generate length schema. |
 | `//specs/schemas:paper_schema` | `typcast_json_schema` | Generate paper schema. |
 | `//specs/schemas:schema_bundle` | `filegroup` | Collect the schema bundle. |
+| `//specs/schemas:schema_manifest` | `typcast_schema_manifest` | Name every file of the bundle. |
 | `//specs/schemas:schema_tests` | `py_test` | Validate the built bundle against the contract. |
 | `//specs/schemas/definitions:bound_schema` | `typcast_schema_copy` | Stage the bound schema. |
 | `//packages/python:typcast` | `py_library` | Python SDK placeholder. |

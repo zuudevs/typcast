@@ -28,10 +28,10 @@ change impact analysis.
 | Assets | `specifications/assets.md` | `ASSET-001` to `ASSET-020` | Path and workspace tests. |
 | Compatibility | `specifications/compatibility.md` | `COMPAT-001` to `COMPAT-019` | CI matrix. |
 | Build | `development/build.md` | `BUILD-001` to `BUILD-020` | Bazel commands. |
-| Testing | `development/testing.md` | `TEST-001` to `TEST-025` | Test inventory. |
+| Testing | `development/testing.md` | `TEST-001` to `TEST-026` | Test inventory. |
 | Benchmarking | `development/benchmarking.md` | `PERF-001` to `PERF-015` | Benchmark job. |
 | CI/CD | `development/ci-cd.md` | `CI-001` to `CI-026` | Workflow review. |
-| Release | `development/release.md` | `REL-001` to `REL-031` | Release checklist. |
+| Release | `development/release.md` | `REL-001` to `REL-032` | Release checklist. |
 | Security | `development/security.md` | `SEC-001` to `SEC-025` | Security review. |
 | Documentation | `development/documentation.md` | `DOC-001` to `DOC-021` | Docs gate. |
 | Governance | `governance/contributing.md` | `GOV-001` to `GOV-021` | Repository settings. |
@@ -130,8 +130,10 @@ a target for the MVP and is not yet verified in the repository.
 | `SCH-009` | The schema contract is validated against the built bundle, not against the source tree. | `//specs/schemas:schema_tests`; 5 bundle files checked, 26 tracked prototype violations, 0 errors. |
 | `DOC-015` | The root `README.md` uses standard code fences and LF line endings. | Documentation validation script run on 2026-11-24. |
 | `DOC-016` | `.gitattributes` pins LF for text files and `.editorconfig` pins UTF-8, LF, final newline, and indentation. | Files present at the repository root. |
-| `DOC-021` | `scripts/validate_docs.py` validates the documents, the requirement index, the ADR index, and the schema references with the standard library only. | `//scripts:docs_checks`; 53 files and 439 requirements checked with 0 errors. |
+| `DOC-021` | `scripts/validate_docs.py` validates the documents, the requirement index, the ADR index, and the schema references with the standard library only. | `//scripts:docs_checks`; 53 files and 441 requirements checked with 0 errors. |
 | `TEST-016` | `//specs/schemas:schema_tests` validates every bundle file and resolves every relative `$ref`; the one dangling reference is tracked as `SCH-D01`. | `//specs/schemas:schema_tests`; 5 bundle files checked, 26 tracked prototype violations, 0 errors. |
+| `TEST-026` | `//tools/publish/tests:publish_tests` covers the publisher with unit tests and with an integration test against the built bundle. | `//tools/publish/tests:publish_tests`; 23 cases. |
+| `REL-032` | `//tools/publish:publish_schemas` publishes exactly the files of the bundle manifest, sets the `$id` of every file to the versioned raw URL of the release tag, and rejects a version that is not a release tag. | `//tools/publish:publish_schemas`; `publish` and `check` verified against the built bundle with an illustrative `v1.0.0` tag. |
 | `SEC-002` | The Apache-2.0 license text is present at the repository root. | `LICENSE`, compared byte for byte with the canonical Apache-2.0 text. |
 | `SEC-003` | The vulnerability reporting policy is present at the repository root. | `SECURITY.md`. |
 | `GOV-019` | Contributions are accepted under Apache-2.0. | `LICENSE`. |
