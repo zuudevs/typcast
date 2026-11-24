@@ -17,7 +17,7 @@ creating circular dependencies.
 | Path | Responsibility | Current state |
 |---|---|---|
 | `specs/catalogs/` | Language-independent CSV catalogs for enums. | Implemented. |
-| `specs/schemas/` | Static schemas, schema templates, and the bundle validation test. | Partial; `node.schema.json` is missing. |
+| `specs/schemas/` | Static schemas, schema templates, and the bundle validation test. | The bundle implements the document IR and passes the contract test. |
 | `tools/codegen/` | Python generator for template and CSV expansion. | Implemented with seven unit tests. |
 | `tools/publish/` | Python publisher for the released schema bundle. | Implemented with 23 unit tests. |
 | `bazel/` | Reusable Starlark rules. | Schema and publication rules implemented. |
@@ -185,8 +185,6 @@ tarball, and the schema archive. Target names are specified in
 
 | Gap | Impact | Owner |
 |---|---|---|
-| `node.schema.json` missing | Validator cannot resolve all references. | Contract |
-| `paper` double nesting | Ambiguous page shape. | Contract |
 | TS package name mismatch | Publication would use the wrong name. | TypeScript SDK |
 | No shared fixtures | Parity cannot be tested. | Testing |
 | No packaging targets | Release cannot produce artifacts. | Release |

@@ -49,13 +49,11 @@ bazel test //specs/schemas:schema_tests
 | Closed objects | `additionalProperties: false` or `unevaluatedProperties: false`. |
 | Required fields | A `required` list whose entries exist in `properties`. |
 | Discriminators | A `type` discriminator with unique `const` values in every union. |
+| File set | The bundle carries exactly the six published files. |
 
-The prototype bundle does not satisfy the rules yet. The test therefore
-compares each violation with the open prototype defects in
-`specifications/schema.md`. An unexplained violation fails the target, and a
-tracked violation that no longer occurs fails it too. The current result is 26
-tracked violations across `SCH-D01`, `SCH-D03`, `SCH-D04`, `SCH-D05`,
-`SCH-D06`, and `SCH-D10`.
+The bundle satisfies every rule. The test no longer tracks violations: an
+unexplained violation fails the target, and the check also fails when a
+published file is missing or when the bundle carries an unexpected file.
 
 ## Test layers
 
@@ -242,7 +240,7 @@ threshold may be added in a later minor version once the suite stabilizes.
 | TEST-013 | Flaky tests MUST be fixed or quarantined. | CONFIRMED | Process review. |
 | TEST-014 | The MVP MUST use critical-path coverage instead of a numeric threshold, covering every public method, node type, diagnostic code, and failure mode. | CONFIRMED | Coverage inventory. |
 | TEST-015 | CI MUST NOT retry failed tests automatically; quarantined tests MUST be reported separately and tracked by an issue. | CONFIRMED | CI review. |
-| TEST-016 | Schema tests MUST validate the bundle and every `$ref`. | IMPLEMENTED | `//specs/schemas:schema_tests`; the one dangling reference is tracked as `SCH-D01` and fails the target when it is not listed. |
+| TEST-016 | Schema tests MUST validate the bundle and every `$ref`. | IMPLEMENTED | `//specs/schemas:schema_tests`; 6 bundle files checked, 0 violations, and the file set is checked. |
 | TEST-017 | Contract tests MUST cover round-trip serialization. | CONFIRMED | Contract test. |
 | TEST-018 | Tests MUST cover every block and span type. | CONFIRMED | Fixture review. |
 | TEST-019 | Tests MUST cover Unicode and escaping. | CONFIRMED | Golden test. |

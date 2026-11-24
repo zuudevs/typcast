@@ -37,6 +37,8 @@ No release has been published yet. Every change so far is listed under
 - A pull request template at `.github/PULL_REQUEST_TEMPLATE.md`, this
   changelog, a contributing guide, and a code of conduct.
 - The security policy and the Apache-2.0 license.
+- The node schema, `specs/schemas/definitions/node.schema.json`, which defines
+  the block and the inline span unions of the document IR.
 
 ### Changed
 
@@ -44,10 +46,18 @@ No release has been published yet. Every change so far is listed under
   instead of a planned dedicated schema domain.
 - The schema validation runs against the built bundle, which is the
   authoritative artifact set.
+- The root schema implements the document IR: `schemaVersion`, `metadata`,
+  `page`, `contents`, and `modules`. The `page.paper.paper` nesting of the
+  prototype is gone.
+- Every schema declares the draft 2020-12 dialect, an absolute identifier
+  under the versioned raw base, a closed object shape, and an explicit list of
+  required fields.
+- The alignment catalog holds the three alignment values of the MVP. The
+  remaining Typst alignment values are not part of the contract.
 
 ### Known issues
 
-- The schema prototype does not satisfy the contract yet. The open defects are
-  listed in [the schema specification](docs/specifications/schema.md).
+- The project does not validate a document against the schema yet. That needs
+  a JSON Schema implementation that the repository does not depend on.
 - The Typcast SDK core, the packaging targets, and the publishing jobs of the
   release workflow are not implemented.

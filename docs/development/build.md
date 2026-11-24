@@ -70,15 +70,15 @@ root.
 
 | Check | Result |
 |---|---|
-| `bazel build //...` | Pass, 24 targets. |
+| `bazel build //...` | Pass, 25 targets. |
 | `bazel test //...` | Pass, 5 test targets: 7 unittest cases, 28 publisher cases, 10 version cases, 1 documentation check, 1 schema bundle check. |
-| `bazel build //specs/schemas:schema_bundle` | Pass, 5 schema files. |
-| `bazel build //specs/schemas:schema_manifest` | Pass, 5 paths. |
-| `bazel test //specs/schemas:schema_tests` | Pass, 5 bundle files, 26 tracked violations, 0 errors. |
-| `bazel test //scripts:docs_checks` | Pass, 56 files, 441 requirements, and 3 workflows checked, 0 errors. |
+| `bazel build //specs/schemas:schema_bundle` | Pass, 6 schema files. |
+| `bazel build //specs/schemas:schema_manifest` | Pass, 6 paths. |
+| `bazel test //specs/schemas:schema_tests` | Pass, 6 bundle files, 0 violations. |
+| `bazel test //scripts:docs_checks` | Pass, 56 files, 448 requirements, and 3 workflows checked, 0 errors. |
 | `bazel test //scripts/tests:version_tests` | Pass, 10 cases. |
 | `bazel test //tools/publish/tests:publish_tests` | Pass, 28 publisher cases. |
-| `bazel query "kind(rule, //...)"` | 24 rules; 5 test targets. |
+| `bazel query "kind(rule, //...)"` | 25 rules; 5 test targets. |
 | `--test_filter` on the unittest target | Ignored; all 7 cases run. |
 
 The schema bundle contains:
@@ -90,11 +90,12 @@ bazel-bin/specs/schemas/
   api/types/length.schema.json
   api/types/paper.schema.json
   definitions/bound.schema.json
+  definitions/node.schema.json
 ```
 
 ## Current targets
 
-`bazel query "kind(rule, //...)"` reports 24 rules. All of them:
+`bazel query "kind(rule, //...)"` reports 25 rules. All of them:
 
 | Target | Kind | Purpose |
 |---|---|---|
@@ -119,6 +120,7 @@ bazel-bin/specs/schemas/
 | `//specs/schemas:schema_manifest` | `typcast_schema_manifest` | Name every file of the bundle. |
 | `//specs/schemas:schema_tests` | `py_test` | Validate the built bundle against the contract. |
 | `//specs/schemas/definitions:bound_schema` | `typcast_schema_copy` | Stage the bound schema. |
+| `//specs/schemas/definitions:node_schema` | `typcast_schema_copy` | Stage the node schema. |
 | `//packages/python:typcast` | `py_library` | Python SDK placeholder. |
 | `//packages/typescript:typcast` | `ts_project` | TypeScript SDK placeholder. |
 | `//packages/typescript:typcast_types` | `filegroup` | TypeScript declaration outputs. |
@@ -168,6 +170,14 @@ Those checks belong to the schema test layer.
    bundle.
 8. Rebuild and inspect the output.
 
+A schema that needs no catalog value is a static file. Put it under
+`specs/schemas/`, export it in the `BUILD.bazel` of its directory, stage it
+with `typcast_schema_copy`, and add the staged target to `schema_bundle`.
+
+The bundle test checks that the bundle carries exactly the published files.
+Add the new path to `EXPECTED_FILES` in `specs/schemas/schema_tests.py` when
+the published set changes.
+
 ## Generated artifacts
 
 - Generated files are written under `bazel-bin/`.
@@ -190,7 +200,7 @@ Those checks belong to the schema test layer.
 | Hermetic Python 3.14 toolchain | Implemented. |
 | TypeScript version from root `package.json` | Implemented. |
 | No generated files in git | Implemented. |
-| CI disk cache keyed by version and lockfile | Confirmed. |
+| CI disk cache keyed by version and lockfile | Implemented. |
 | Remote cache or remote execution | Deferred. |
 
 ## Platform notes
@@ -198,7 +208,8 @@ Those checks belong to the schema test layer.
 ### Windows
 
 - `.bazelrc` enables `startup --windows_enable_symlinks`.
-- The flag must be made conditional or verified on Linux before CI.
+- The flag is verified on Linux. The first Linux CI run passed with the current
+  `.bazelrc` on 2026-11-24.
 - `core.autocrlf=true` is configured and `.gitattributes` pins LF for text
   files. Git converts text files to CRLF on checkout without that file, so
   LF-only documents are only stable in the working tree until `.gitattributes`

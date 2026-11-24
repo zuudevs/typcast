@@ -100,12 +100,12 @@ requirement ID and a status of `CONFIRMED` or `IMPLEMENTED`.
 
 | Area | Current state | Evidence |
 |---|---|---|
-| Bazel build | Implemented | `bazel build //...` succeeds with 24 targets. |
+| Bazel build | Implemented | `bazel build //...` succeeds with 25 targets. |
 | Bazel test | Implemented for codegen, the publisher, the release version check, the repository checks, and the schema bundle | `bazel test //...` runs five test targets: seven unittest cases, 28 publisher cases, 10 version cases, the documentation check, and the schema bundle check. |
 | Documentation checks | Implemented | `//scripts:docs_checks` validates the documents, the requirement index, the ADR index, the schema references, and the workflow files. |
 | JSON Schema generator | Implemented | `tools/codegen/` and `bazel/codegen.bzl`. |
-| Schema bundle | Implemented, incomplete | `//specs/schemas:schema_bundle` builds five files; `node.schema.json` is missing. |
-| Schema bundle validation | Implemented | `//specs/schemas:schema_tests` validates the built bundle and reports the 26 tracked prototype violations. |
+| Schema bundle | Implemented | `//specs/schemas:schema_bundle` builds six files that implement the document IR. |
+| Schema bundle validation | Implemented | `//specs/schemas:schema_tests` validates the built bundle and reports no violation. |
 | Schema publisher | Implemented | `//tools/publish:publish_schemas` writes the published bundle with the identity of a release tag and verifies the versioned raw URLs. |
 | Release version check | Implemented | `//scripts:check_version` compares the manifests and the changelog with the tag. |
 | Python SDK | Placeholder | `packages/python/src/typcast/__init__.py` is empty. |

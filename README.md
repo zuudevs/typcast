@@ -65,7 +65,8 @@ bazel-bin/
         │       ├── length.schema.json
         │       └── paper.schema.json
         └── definitions/
-            └── bound.schema.json
+            ├── bound.schema.json
+            └── node.schema.json
 ```
 
 Static schemas are staged with Bazel symlink actions; generated schemas are
@@ -93,12 +94,17 @@ All files referenced by a template must also be declared in the corresponding
 Bazel generation rule's `catalogs` attribute. This makes the inputs explicit
 to Bazel and allows it to invalidate cached outputs when a catalog changes.
 
-## Current schema limitation
+## Current schema scope
 
-`validator.schema.json` currently references
-`definitions/node.schema.json`, but that schema is not present in the repository
-yet. The bundle contains all schema files currently available; the node
-definition must be added before every reference in the validator can resolve.
+The bundle implements the document IR of `docs/specifications/document-ir.md`:
+the root schema, the margin, the node catalog, and the three generated type
+schemas. Every reference in the bundle resolves, and the contract test passes
+without a tracked violation.
+
+Two limits remain. The repository does not validate a document against the
+schema yet, because that needs a JSON Schema implementation that the project
+does not depend on. And no release exists, so the versioned raw URLs are
+illustrative until the first tag is published.
 
 ## Build outputs
 
