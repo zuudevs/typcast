@@ -19,3 +19,5 @@ coverage/
 # Tooling
 .aspect/
 .DS_Store
+
+AGENTS.md
