@@ -95,14 +95,15 @@ Before publishing, the release job checks:
 - The git tag without the `v` prefix.
 - The changelog entry.
 - The schema version in the release notes.
+- The contract version in the `$id` of every schema source.
 - The tagged commit contains the complete published schema bundle under
   `specs/schemas/`.
 
 Any mismatch fails the release.
 
 `//scripts:check_version` performs the version part of the check. It compares
-the four manifests and the changelog with the tag, and it reports every
-mismatch at once.
+the four manifests, the contract version of every schema source, and the
+changelog with the tag, and it reports every mismatch at once.
 
 ```shell
 bazel run //scripts:check_version -- --version v1.0.0
@@ -310,9 +311,10 @@ Stable `1.0.0`:
 | npm version | `0.1.0`. |
 | npm name | `@zuudevs/typcast`. |
 | npm private | `true`. |
+| Schema contract version | `1.0.0`. The publisher replaces it with the release tag. |
 | Packaging targets | None. |
 | Release workflow | `.github/workflows/release.yml` verifies the release. It does not publish yet. |
-| Version check | `//scripts:check_version` compares the manifests and the changelog with the tag. |
+| Version check | `//scripts:check_version` compares the manifests, the contract version of every schema source, and the changelog with the tag. |
 | Changelog | `CHANGELOG.md` present at the repository root. It has no released entry yet. |
 | License | `LICENSE` present at the repository root. |
 | Security policy | `SECURITY.md` present at the repository root. |
@@ -358,7 +360,7 @@ Stable `1.0.0`:
 | REL-030 | The tagged release commit MUST contain the complete published schema bundle under `specs/schemas/`, so that every schema file is retrievable at its versioned raw URL. | CONFIRMED | Release check. |
 | REL-031 | A published release tag MUST NOT be moved, reused, or deleted; a schema correction MUST ship in a new release tag. | CONFIRMED | Release check. |
 | REL-032 | The publisher MUST set the `$id` of every published schema to the versioned raw URL of the release tag, MUST publish exactly the files of the bundle, and MUST reject a version that is not a release tag. | IMPLEMENTED | `//tools/publish:publish_schemas`; `//tools/publish/tests:publish_tests`. |
-| REL-033 | The release MUST compare the version of every manifest and the changelog with the tag, and MUST fail when one of them differs. | IMPLEMENTED | `//scripts:check_version`; `//scripts/tests:version_tests`. |
+| REL-033 | The release MUST compare the version of every manifest, the contract version of every schema source, and the changelog with the tag, and MUST fail when one of them differs. | IMPLEMENTED | `//scripts:check_version`; `//scripts/tests:version_tests`; 15 cases. |
 | REL-034 | The release MUST verify that every published schema resolves at its versioned raw URL and serves the content of the tagged commit. | IMPLEMENTED | `publish_schemas verify`; `//tools/publish/tests:publish_tests`. |
 | REL-035 | The release MUST attach the schema archive of the published bundle as a GitHub Release asset, and the archive MUST be byte-identical on every platform. | CONFIRMED | Release check. |
 

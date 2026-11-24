@@ -1,8 +1,9 @@
-"""Check that a release version agrees across the manifests and the changelog.
+"""Check that a release version agrees across the release sources.
 
 The release gate runs before a tag is created and again in the release lane.
-Every manifest carries the version of the release, and the changelog carries
-the entry of the release. A mismatch fails the release.
+Every manifest carries the version of the release, the schema sources carry the
+contract version, and the changelog carries the entry of the release. A
+mismatch fails the release.
 
 The script uses the Python standard library only, so it needs no SDK
 installation and no network access.
@@ -31,6 +32,10 @@ VERSION_RE = re.compile(r"^v?(\d+\.\d+\.\d+)$")
 MODULE_VERSION_RE = re.compile(r"module\s*\((.*?)\)", re.S)
 MODULE_FIELD_RE = re.compile(r'version\s*=\s*"([^"]+)"')
 CHANGELOG_VERSION_RE = re.compile(r"^##\s+\[?(\d+\.\d+\.\d+)\]?", re.M)
+SCHEMA_ID_RE = re.compile(
+    r"https://raw\.githubusercontent\.com/zuudevs/typcast/"
+    r"v?(\d+\.\d+\.\d+)/specs/schemas/"
+)
 
 # The files that carry the version of the release.
 MANIFESTS = (
@@ -40,6 +45,28 @@ MANIFESTS = (
     ("packages/typescript/package.json", "the TypeScript package manifest"),
 )
 CHANGELOG = "CHANGELOG.md"
+
+# The schema sources. Their identity names the contract version, which is
+# lockstep with the version of the release. The publisher replaces the version
+# with the release tag, so a source that carries another version would publish
+# a bundle that does not match the build.
+SCHEMA_SOURCES = (
+    ("specs/schemas/validator.schema.json", "the root schema"),
+    ("specs/schemas/definitions/bound.schema.json", "the bound schema"),
+    ("specs/schemas/definitions/node.schema.json", "the node schema"),
+    (
+        "specs/schemas/templates/api/types/alignment.schema.json.tmpl",
+        "the alignment schema template",
+    ),
+    (
+        "specs/schemas/templates/api/types/length.schema.json.tmpl",
+        "the length schema template",
+    ),
+    (
+        "specs/schemas/templates/api/types/paper.schema.json.tmpl",
+        "the paper schema template",
+    ),
+)
 
 
 def find_root(explicit: str | None) -> Path:
@@ -115,11 +142,16 @@ def changelog_versions(path: Path) -> list[str]:
     return CHANGELOG_VERSION_RE.findall(path.read_text(encoding="utf-8"))
 
 
+def schema_versions(path: Path) -> list[str]:
+    """Returns the contract versions that the schema source names."""
+    return SCHEMA_ID_RE.findall(path.read_text(encoding="utf-8"))
+
+
 def check_versions(root: Path, version: str) -> list[str]:
     """Returns one message per version mismatch.
 
-    An empty list means that every manifest and the changelog agree with the
-    release version.
+    An empty list means that every manifest, every schema source, and the
+    changelog agree with the release version.
     """
     match = VERSION_RE.match(version.strip())
     if not match:
@@ -138,6 +170,22 @@ def check_versions(root: Path, version: str) -> list[str]:
         elif found != expected:
             problems.append(
                 f"{description} has version {found}, expected {expected}: {relative_path}"
+            )
+
+    for relative_path, description in SCHEMA_SOURCES:
+        path = root / relative_path
+        if not path.is_file():
+            problems.append(f"missing {description}: {relative_path}")
+            continue
+        found = schema_versions(path)
+        if not found:
+            problems.append(
+                f"cannot read the contract version of {description}: {relative_path}"
+            )
+        elif expected not in found:
+            problems.append(
+                f"{description} has contract version {found[0]}, expected "
+                f"{expected}: {relative_path}"
             )
 
     changelog = root / CHANGELOG
@@ -161,7 +209,10 @@ def main(argv: list[str] | None = None) -> int:
         print(f"typcast-version: error: {problem}", file=sys.stderr)
     if problems:
         return 1
-    print(f"every manifest and the changelog agree with {args.version}")
+    print(
+        "every manifest, every schema source, and the changelog agree with "
+        f"{args.version}"
+    )
     return 0
 
 

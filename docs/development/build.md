@@ -71,7 +71,7 @@ root.
 | Check | Result |
 |---|---|
 | `bazel build //...` | Pass, 31 targets. |
-| `bazel test //...` | Pass, 7 test targets: 7 unittest cases, 41 publisher cases, 10 version cases, 18 documentation gate cases, 4 link check cases, 1 documentation check, 1 schema bundle check. |
+| `bazel test //...` | Pass, 7 test targets: 7 unittest cases, 41 publisher cases, 15 version cases, 18 documentation gate cases, 4 link check cases, 1 documentation check, 1 schema bundle check. |
 | `bazel build //specs/schemas:schema_bundle` | Pass, 6 schema files. |
 | `bazel build //specs/schemas:schema_manifest` | Pass, 6 paths. |
 | `bazel build //specs/schemas:archive` | Pass, 6 members, deterministic gzip tarball. |
@@ -117,9 +117,9 @@ bazel-bin/specs/schemas/
 | `//scripts:docs_lib` | `py_library` | Documentation check library. |
 | `//scripts/tests:docs_tests` | `py_test` | Eighteen documentation check tests. |
 | `//scripts/tests:link_tests` | `py_test` | Four external link check tests. |
-| `//scripts/tests:version_tests` | `py_test` | Ten release version check tests. |
+| `//scripts/tests:version_tests` | `py_test` | Fifteen release version check tests. |
 | `//:docs_sources` | `filegroup` | The documents that the checks read. |
-| `//:release_manifests` | `filegroup` | The manifests that carry the release version. |
+| `//:release_manifests` | `filegroup` | The manifests and the schema sources that carry the release version. |
 | `//:workflow_sources` | `filegroup` | The workflow files that the checks read. |
 | `//specs/schemas:validator_schema` | `typcast_schema_copy` | Stage the root schema. |
 | `//specs/schemas:alignment_schema` | `typcast_json_schema` | Generate alignment schema. |

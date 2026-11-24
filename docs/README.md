@@ -101,7 +101,7 @@ requirement ID and a status of `CONFIRMED` or `IMPLEMENTED`.
 | Area | Current state | Evidence |
 |---|---|---|
 | Bazel build | Implemented | `bazel build //...` succeeds with 31 targets. |
-| Bazel test | Implemented for codegen, the publisher, the release version check, the repository checks, the link check, and the schema bundle | `bazel test //...` runs seven test targets: seven unittest cases, 41 publisher cases, 10 version cases, 18 documentation gate cases, 4 link check cases, the documentation check, and the schema bundle check. |
+| Bazel test | Implemented for codegen, the publisher, the release version check, the repository checks, the link check, and the schema bundle | `bazel test //...` runs seven test targets: seven unittest cases, 41 publisher cases, 15 version cases, 18 documentation gate cases, 4 link check cases, the documentation check, and the schema bundle check. |
 | Documentation checks | Implemented | `//scripts:docs_checks` validates the documents, the Markdown structure, the Mermaid diagrams, the requirement index, the ADR index, the schema references, the workflow files, and the CODEOWNERS file. |
 | External link check | Implemented | `//scripts:check_links` checks the external links with a timeout and reports warnings only. |
 | JSON Schema generator | Implemented | `tools/codegen/` and `bazel/codegen.bzl`. |
@@ -109,7 +109,7 @@ requirement ID and a status of `CONFIRMED` or `IMPLEMENTED`.
 | Schema bundle validation | Implemented | `//specs/schemas:schema_tests` validates the built bundle and reports no violation. |
 | Schema publisher | Implemented | `//tools/publish:publish_schemas` writes the published bundle with the identity of a release tag and verifies the versioned raw URLs. |
 | Schema archive | Implemented | `//specs/schemas:archive` builds a deterministic gzip tarball of the bundle. |
-| Release version check | Implemented | `//scripts:check_version` compares the manifests and the changelog with the tag. |
+| Release version check | Implemented | `//scripts:check_version` compares the manifests, the contract version of every schema source, and the changelog with the tag. |
 | Python SDK | Placeholder | `packages/python/src/typcast/__init__.py` is empty. |
 | TypeScript SDK | Placeholder | `packages/typescript/src/index.ts` is empty and the package is private. |
 | Document model, builder, emitter | Not implemented | No source files exist. |

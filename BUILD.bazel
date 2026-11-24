@@ -21,7 +21,8 @@ filegroup(
 )
 
 # The manifests that carry the version of the release. The release gate
-# compares them with the tag and with the changelog.
+# compares them with the tag and with the changelog. The schema sources are
+# part of the group because their identity names the contract version.
 filegroup(
     name = "release_manifests",
     srcs = [
@@ -30,6 +31,12 @@ filegroup(
         "package.json",
         "//packages/python:pyproject.toml",
         "//packages/typescript:package.json",
+        "//specs/schemas:validator.schema.json",
+        "//specs/schemas/definitions:bound.schema.json",
+        "//specs/schemas/definitions:node.schema.json",
+        "//specs/schemas/templates/api/types:alignment.schema.json.tmpl",
+        "//specs/schemas/templates/api/types:length.schema.json.tmpl",
+        "//specs/schemas/templates/api/types:paper.schema.json.tmpl",
     ],
 )
 

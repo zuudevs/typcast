@@ -16,10 +16,10 @@ compiler integration, and package installation.
 | Area | Current state |
 |---|---|
 | Test targets | Seven `py_test` targets: `//tools/codegen/tests:unit_tests`, `//tools/publish/tests:publish_tests`, `//scripts/tests:version_tests`, `//scripts/tests:docs_tests`, `//scripts/tests:link_tests`, `//scripts:docs_checks`, and `//specs/schemas:schema_tests`. |
-| Test cases | Seven generator cases, 41 publisher cases, 10 release version cases, 18 documentation gate cases, 4 link check cases, one documentation check, one schema bundle check. |
+| Test cases | Seven generator cases, 41 publisher cases, 15 release version cases, 18 documentation gate cases, 4 link check cases, one documentation check, one schema bundle check. |
 | Schema tests | `//specs/schemas:schema_tests` validates the built bundle. Meta-schema and instance validation are missing. |
 | Publisher tests | `//tools/publish/tests:publish_tests` covers the publisher, the published identity of the built bundle, the resolution of the versioned raw URLs, and the deterministic archive. |
-| Version tests | `//scripts/tests:version_tests` covers the release version check. |
+| Version tests | `//scripts/tests:version_tests` covers the release version check, including the contract version of every schema source. |
 | Gate tests | `//scripts/tests:docs_tests` and `//scripts/tests:link_tests` cover the rules of the repository gate and of the external link check. |
 | Contract tests | None. |
 | Golden `.typ` tests | None. |
@@ -252,7 +252,7 @@ threshold may be added in a later minor version once the suite stabilizes.
 | TEST-024 | Test reports MUST be retained as CI artifacts for 14 days. | CONFIRMED | CI review. |
 | TEST-025 | The test matrix MUST include Windows and Linux. | IMPLEMENTED | The build and test lanes of the workflows run on `windows-latest` and `ubuntu-latest`; the first run passed on both. |
 | TEST-026 | The publisher MUST be covered by unit tests and by an integration test against the built bundle. | IMPLEMENTED | `//tools/publish/tests:publish_tests`; 41 cases. |
-| TEST-027 | The release version check MUST be covered by unit tests. | IMPLEMENTED | `//scripts/tests:version_tests`; 10 cases. |
+| TEST-027 | The release version check MUST be covered by unit tests. | IMPLEMENTED | `//scripts/tests:version_tests`; 15 cases. |
 | TEST-028 | The resolution of the versioned raw URLs MUST be covered by a test that serves the published files from a local server. | IMPLEMENTED | `//tools/publish/tests:publish_tests`; the publisher tests use a local server, so the test suite needs no network access. |
 | TEST-029 | The schema archive MUST be covered by tests for its content, its member metadata, and its byte-for-byte determinism. | IMPLEMENTED | `//tools/publish/tests:publish_tests`; the archive cases compare two archives and the metadata of every member. |
 | TEST-030 | The rules of the repository gate and of the external link check MUST be covered by unit tests. | IMPLEMENTED | `//scripts/tests:docs_tests`; `//scripts/tests:link_tests`. |

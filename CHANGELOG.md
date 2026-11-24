@@ -26,7 +26,8 @@ No release has been published yet. Every change so far is listed under
   build, and checks that every published schema resolves at its versioned raw
   URL.
 - A release version check, `//scripts:check_version`, which compares the
-  version of every manifest and the changelog with the tag.
+  version of every manifest, the contract version of every schema source, and
+  the changelog with the tag.
 - Repository checks, `//scripts:docs_checks`, for the documents, the
   requirement index, the decision index, the schema references, and the
   workflow files.
