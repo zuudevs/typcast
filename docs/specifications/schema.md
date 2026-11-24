@@ -22,7 +22,7 @@ migration work.
 | Dialect | Every schema declares `$schema` with draft 2020-12. |
 | Identity | Every schema declares an absolute `$id` that matches its published versioned raw URL. |
 | Objects | Objects are closed with `additionalProperties: false` or `unevaluatedProperties: false`. |
-| Required fields | Required fields are listed explicitly. Optional fields are omitted, not set to `null`. |
+| Required fields | Every object schema declares a `required` list, even when it is empty. Every required field is listed explicitly. |
 | Null | `null` is allowed only when the field semantics are explicitly nullable. |
 | Unions | Unions use a `type` discriminator with `const` values and `oneOf`. |
 | Shared types | Shared shapes live in `$defs` or in a static schema file referenced by a relative `$ref`. |
@@ -160,6 +160,37 @@ The generator:
 The generator does not validate that the generated schema is a valid JSON Schema.
 That check belongs to the schema validation test layer.
 
+## Bundle validation
+
+`//specs/schemas:schema_tests` validates the built bundle. The bundle is the
+authoritative artifact set, so the test runs against the build output and not
+against the source tree.
+
+```shell
+bazel test //specs/schemas:schema_tests
+```
+
+| Rule | Requirement |
+|---|---|
+| Encoding | Every file is UTF-8 JSON without a byte order mark. |
+| Dialect | Every file declares `$schema` draft 2020-12. |
+| Identity | Every file declares an absolute, unique `$id` that matches its published versioned raw URL. |
+| References | Every relative `$ref` resolves inside the bundle. |
+| Closed objects | Every object schema sets `additionalProperties: false` or `unevaluatedProperties: false`. |
+| Required fields | Every object schema declares a `required` list, and every listed field exists. |
+| Discriminators | Every union uses a `type` discriminator with unique `const` values. |
+
+The prototype bundle does not satisfy the rules yet. The test therefore
+compares every violation with the open prototype defects below. A violation
+that no open defect explains fails the target, and a tracked violation that no
+longer occurs fails the target too, so the list shrinks as the migration
+proceeds. The current result is 26 tracked violations across `SCH-D01`,
+`SCH-D03`, `SCH-D04`, `SCH-D05`, `SCH-D06`, and `SCH-D10`.
+
+The test does not validate a schema document against the JSON Schema
+meta-schema, and it does not validate an instance against the contract. Both
+need a JSON Schema implementation that the repository does not depend on yet.
+
 ## Placeholder syntax
 
 ```text
@@ -223,15 +254,17 @@ exact equality and `CONFIRMED` for the major version.
 | SCH-D03 | `$id` does not match the output path. | `alignment` uses `/typst-api/types/...`; output is `api/types/...`. | Use the versioned raw base URI and consistent paths. |
 | SCH-D04 | Root `$id` filename is wrong. | `validator.schema.json` declares `validation.schema.json`. | Make the `$id` match the published raw URL of the file, or rename the file. |
 | SCH-D05 | `paper` and `length` lack `$schema` and `$id`. | Generated files omit both. | Add them in the templates. |
-| SCH-D06 | Objects are open. | `bound`, `length`, `paper`, and `validator` do not set `additionalProperties: false`, and `length` and `paper` do not declare `required`. | Close objects and declare required fields. |
+| SCH-D06 | Objects are open and most of them declare no `required` list. | `bound`, `length`, `paper`, and `validator` do not set `additionalProperties: false`, and their object schemas do not declare `required`. | Close objects and declare the required fields. |
 | SCH-D07 | Source `$ref` values do not resolve without a build. | `bound` and `validator` reference generated files that exist only in `bazel-bin`. | Make the validated bundle self-contained or provide source-resolvable refs. |
 | SCH-D08 | Relative length units were removed without replacement. | `length-suffixes.csv` contains `pt`, `mm`, `cm`, `in`, `em`; `%` and `fr` are absent. | Keep them out of the MVP or add them with a versioned decision. |
 | SCH-D09 | The root shape drifts from the target IR. | The prototype uses `version` instead of `schemaVersion`, `modules` is an object instead of an array, `contents` items are wrapped in a `call` object, and `metadata` is absent. | Rebuild the root schema from `document-ir.md`. |
+| SCH-D10 | The schema identities use a local placeholder base. | `validator`, `bound`, and `alignment` declare an identifier under the local development domain; the published base is the versioned raw base. | Replace the placeholder base with the versioned raw base. |
 
 These defects are `OPEN` until the schema migration is implemented. The
 normative IR in `document-ir.md` takes precedence over the prototype files.
 Replacing the placeholder identifiers with the versioned raw URLs is part of
-that migration; the release build substitutes the version once.
+that migration; the release build substitutes the version once. The bundle
+test reports every open defect as a tracked violation.
 
 ## Generated type strategy
 
@@ -258,7 +291,7 @@ the public API to JSON Schema limitations.
 | SCH-006 | Unions MUST use a `type` discriminator with `const` values. | CONFIRMED | Schema lint. |
 | SCH-007 | The root schema MUST validate the IR in `document-ir.md`. | CONFIRMED | Contract test. |
 | SCH-008 | The built bundle MUST resolve every `$ref`. | CONFIRMED | Bundle test. |
-| SCH-009 | The schema contract MUST be validated as a built bundle; source-tree `$ref` resolution is optional and MUST NOT be a release requirement. | CONFIRMED | Bundle validation test. |
+| SCH-009 | The schema contract MUST be validated as a built bundle; source-tree `$ref` resolution is optional and MUST NOT be a release requirement. | IMPLEMENTED | `//specs/schemas:schema_tests` validates the bundle that `//specs/schemas:schema_bundle` produces. |
 | SCH-010 | Every template CSV MUST be declared in the Bazel rule. | CONFIRMED | Build test. |
 | SCH-011 | Empty CSV values in the selected column MUST be errors. | IMPLEMENTED | `test_empty_value_in_selected_column_reports_an_error`. |
 | SCH-012 | Fully blank CSV rows MUST be skipped. | IMPLEMENTED | `test_fully_blank_rows_are_skipped`. |
@@ -269,7 +302,7 @@ the public API to JSON Schema limitations.
 | SCH-017 | The schema MUST reject invalid discriminators. | CONFIRMED | Negative test. |
 | SCH-018 | The schema MUST reject missing required fields. | CONFIRMED | Negative test. |
 | SCH-019 | The schema MUST be language-neutral and usable from Python and TypeScript. | CONFIRMED | Cross-language test. |
-| SCH-020 | The prototype defects SCH-D01 to SCH-D09 MUST be resolved before 1.0.0. | CONFIRMED | Migration review. |
+| SCH-020 | The prototype defects SCH-D01 to SCH-D10 MUST be resolved before 1.0.0. | CONFIRMED | Migration review. |
 | SCH-021 | A published schema MUST be referenced by the versioned raw URL of its release tag, and a `main` URL MUST NOT be used as a stable reference. | CONFIRMED | Release check. |
 
 ## Open questions

@@ -55,7 +55,7 @@ Jobs:
 2. Set up Bazelisk and cache.
 3. `bazel build //...`.
 4. `bazel test //...` for the fast lane.
-5. Schema validation.
+5. Schema validation: `bazel test //specs/schemas:schema_tests`.
 6. Contract and golden tests.
 7. Cross-language parity tests.
 8. Repository checks: `bazel test //scripts:docs_checks`.

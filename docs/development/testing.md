@@ -15,9 +15,9 @@ compiler integration, and package installation.
 
 | Area | Current state |
 |---|---|
-| Test targets | One `py_test` target: `//tools/codegen/tests:unit_tests`. |
-| Test cases | Seven generator cases. |
-| Schema tests | None. |
+| Test targets | Three `py_test` targets: `//tools/codegen/tests:unit_tests`, `//scripts:docs_checks`, and `//specs/schemas:schema_tests`. |
+| Test cases | Seven generator cases, one documentation check, one schema bundle check. |
+| Schema tests | `//specs/schemas:schema_tests` validates the built bundle. Meta-schema and instance validation are missing. |
 | Contract tests | None. |
 | Golden `.typ` tests | None. |
 | Parity tests | None. |
@@ -27,6 +27,33 @@ compiler integration, and package installation.
 
 The current `--test_filter` is ignored by the `py_test`; all seven cases run. Do
 not rely on filtering for local iteration.
+
+## Schema bundle test
+
+`//specs/schemas:schema_tests` runs against the bundle that
+`//specs/schemas:schema_bundle` produces, because the bundle is the
+authoritative artifact set.
+
+```shell
+bazel test //specs/schemas:schema_tests
+```
+
+| Check | Rule |
+|---|---|
+| Encoding | UTF-8 JSON without a byte order mark. |
+| Dialect | `$schema` is draft 2020-12. |
+| Identity | An absolute, unique `$id` that matches the published versioned raw URL. |
+| References | Every relative `$ref` resolves inside the bundle. |
+| Closed objects | `additionalProperties: false` or `unevaluatedProperties: false`. |
+| Required fields | A `required` list whose entries exist in `properties`. |
+| Discriminators | A `type` discriminator with unique `const` values in every union. |
+
+The prototype bundle does not satisfy the rules yet. The test therefore
+compares each violation with the open prototype defects in
+`specifications/schema.md`. An unexplained violation fails the target, and a
+tracked violation that no longer occurs fails it too. The current result is 26
+tracked violations across `SCH-D01`, `SCH-D03`, `SCH-D04`, `SCH-D05`,
+`SCH-D06`, and `SCH-D10`.
 
 ## Test layers
 
@@ -213,7 +240,7 @@ threshold may be added in a later minor version once the suite stabilizes.
 | TEST-013 | Flaky tests MUST be fixed or quarantined. | CONFIRMED | Process review. |
 | TEST-014 | The MVP MUST use critical-path coverage instead of a numeric threshold, covering every public method, node type, diagnostic code, and failure mode. | CONFIRMED | Coverage inventory. |
 | TEST-015 | CI MUST NOT retry failed tests automatically; quarantined tests MUST be reported separately and tracked by an issue. | CONFIRMED | CI review. |
-| TEST-016 | Schema tests MUST validate the bundle and every `$ref`. | CONFIRMED | Schema test. |
+| TEST-016 | Schema tests MUST validate the bundle and every `$ref`. | IMPLEMENTED | `//specs/schemas:schema_tests`; the one dangling reference is tracked as `SCH-D01` and fails the target when it is not listed. |
 | TEST-017 | Contract tests MUST cover round-trip serialization. | CONFIRMED | Contract test. |
 | TEST-018 | Tests MUST cover every block and span type. | CONFIRMED | Fixture review. |
 | TEST-019 | Tests MUST cover Unicode and escaping. | CONFIRMED | Golden test. |

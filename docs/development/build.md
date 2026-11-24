@@ -70,11 +70,12 @@ root.
 
 | Check | Result |
 |---|---|
-| `bazel build //...` | Pass, 14 targets. |
-| `bazel test //...` | Pass, 2 test targets, 7 unittest cases and 1 documentation check. |
+| `bazel build //...` | Pass, 15 targets. |
+| `bazel test //...` | Pass, 3 test targets: 7 unittest cases, 1 documentation check, 1 schema bundle check. |
 | `bazel build //specs/schemas:schema_bundle` | Pass, 5 schema files. |
+| `bazel test //specs/schemas:schema_tests` | Pass, 5 bundle files, 26 tracked violations, 0 errors. |
 | `bazel test //scripts:docs_checks` | Pass, 53 files and 439 requirements checked, 0 errors. |
-| `bazel query "kind(rule, //...)"` | 14 rules; 2 test targets. |
+| `bazel query "kind(rule, //...)"` | 15 rules; 3 test targets. |
 | `--test_filter` on the unittest target | Ignored; all 7 cases run. |
 
 The schema bundle contains:
@@ -90,7 +91,7 @@ bazel-bin/specs/schemas/
 
 ## Current targets
 
-`bazel query "kind(rule, //...)"` reports 14 rules. All of them:
+`bazel query "kind(rule, //...)"` reports 15 rules. All of them:
 
 | Target | Kind | Purpose |
 |---|---|---|
@@ -104,6 +105,7 @@ bazel-bin/specs/schemas/
 | `//specs/schemas:length_schema` | `typcast_json_schema` | Generate length schema. |
 | `//specs/schemas:paper_schema` | `typcast_json_schema` | Generate paper schema. |
 | `//specs/schemas:schema_bundle` | `filegroup` | Collect the schema bundle. |
+| `//specs/schemas:schema_tests` | `py_test` | Validate the built bundle against the contract. |
 | `//specs/schemas/definitions:bound_schema` | `typcast_schema_copy` | Stage the bound schema. |
 | `//packages/python:typcast` | `py_library` | Python SDK placeholder. |
 | `//packages/typescript:typcast` | `ts_project` | TypeScript SDK placeholder. |
@@ -150,7 +152,8 @@ Those checks belong to the schema test layer.
 4. List every CSV used by the template in the rule's `catalogs` attribute.
 5. Set the `output` path to match the relative `$ref` paths used by consumers.
 6. Add the target to `schema_bundle`.
-7. Add a schema validation test.
+7. Run `bazel test //specs/schemas:schema_tests`; it validates every file in the
+   bundle.
 8. Rebuild and inspect the output.
 
 ## Generated artifacts
@@ -207,13 +210,8 @@ The MVP must add these targets. The names are final:
 | `//packages/python:sdist` | Python source distribution. |
 | `//packages/typescript:npm_package` | npm tarball. |
 | `//specs/schemas:archive` | Schema archive for release. |
-| `//specs/schemas:schema_tests` | Validates the built bundle and every `$ref`. |
 | `//tests/contract:parity_tests` | Cross-language parity tests. |
 | `//tests/integration:compiler_tests` | Compiler integration tests. |
-
-`//specs/schemas:schema_tests` validates the generated bundle as the
-authoritative artifact set. Source-tree `$ref` resolution is not a release
-requirement; see `specifications/schema.md` and ADR-0023.
 
 `//specs/schemas:archive` packages the same bundle for the GitHub Release
 asset, and the release commit publishes the bundle under `specs/schemas/` so
@@ -240,7 +238,7 @@ The artifact requirements for the packaging targets are defined in
 | BUILD-012 | Linux CI MUST prove that Bazel starts with the current `.bazelrc`; if the Windows symlink startup flag is rejected, it moves to a Windows-only rc file. | CONFIRMED | Linux CI startup check. |
 | BUILD-013 | TypeScript compiler version MUST come from the root manifest. | CONFIRMED | `MODULE.bazel`. |
 | BUILD-014 | The packaging targets MUST be `//packages/python:wheel`, `//packages/python:sdist`, `//packages/typescript:npm_package`, and `//specs/schemas:archive`. | CONFIRMED | Release review. |
-| BUILD-015 | Schema validation MUST run in `//specs/schemas:schema_tests` against the built bundle. | CONFIRMED | Test target. |
+| BUILD-015 | Schema validation MUST run in `//specs/schemas:schema_tests` against the built bundle. | IMPLEMENTED | `//specs/schemas:schema_tests` validates the bundle that `//specs/schemas:schema_bundle` produces. |
 | BUILD-016 | Hand-written filegroups with no consumer MUST be removed; `schema_bundle` MUST be kept as the published schema entry point. | IMPLEMENTED | `bazel query "rdeps(//..., //specs/schemas:schema_bundle)"`; unused aggregates removed. |
 | BUILD-017 | Documentation checks MUST NOT require SDK installation. | IMPLEMENTED | `//scripts:docs_checks` runs with the hermetic Python toolchain and no SDK dependency. |
 | BUILD-018 | CI MUST build the repository from a clean checkout to prove reproducibility. | CONFIRMED | Clean-checkout CI job. |

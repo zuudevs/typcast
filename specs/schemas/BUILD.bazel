@@ -3,6 +3,7 @@ load(
     "typcast_json_schema",
     "typcast_schema_copy",
 )
+load("@rules_python//python:defs.bzl", "py_test")
 
 package(
     default_visibility = ["//visibility:public"],
@@ -56,5 +57,19 @@ filegroup(
         ":length_schema",
         ":paper_schema",
         "//specs/schemas/definitions:bound_schema",
+    ],
+)
+
+# The bundle is the authoritative artifact set. The test validates it against
+# the contract rules and reports the violations that an open defect explains.
+py_test(
+    name = "schema_tests",
+    size = "small",
+    srcs = [
+        "schema_tests.py",
+    ],
+    main = "schema_tests.py",
+    data = [
+        ":schema_bundle",
     ],
 )

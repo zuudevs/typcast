@@ -17,7 +17,7 @@ creating circular dependencies.
 | Path | Responsibility | Current state |
 |---|---|---|
 | `specs/catalogs/` | Language-independent CSV catalogs for enums. | Implemented. |
-| `specs/schemas/` | Static schemas and schema templates. | Partial; `node.schema.json` is missing. |
+| `specs/schemas/` | Static schemas, schema templates, and the bundle validation test. | Partial; `node.schema.json` is missing. |
 | `tools/codegen/` | Python generator for template and CSV expansion. | Implemented with seven unit tests. |
 | `bazel/` | Reusable Starlark rules. | Schema rules implemented. |
 | `packages/python/` | Python SDK. | Placeholder package. |
@@ -65,8 +65,10 @@ following rules are normative:
 ### `specs/`
 
 The contract layer. It owns schema templates, static schema fragments, and enum
-catalogs. It does not own builder behavior or emitter behavior. A change to a
-catalog that changes a public enum is a contract change.
+catalogs. It also owns `specs/schemas/schema_tests.py`, the bundle validation
+target that checks the built bundle against the contract. It does not own
+builder behavior or emitter behavior. A change to a catalog that changes a
+public enum is a contract change.
 
 ### `tools/codegen/`
 
@@ -135,6 +137,7 @@ Current targets include:
 | `//tools/codegen/tests:unit_tests` | Seven generator unit tests. |
 | `//scripts:docs_checks` | Documentation, requirement, and decision checks. |
 | `//specs/schemas:schema_bundle` | Five staged or generated schema files. |
+| `//specs/schemas:schema_tests` | Validates the built bundle against the schema contract. |
 | `//packages/python:typcast` | Python library placeholder. |
 | `//packages/typescript:typcast` | TypeScript project placeholder. |
 
