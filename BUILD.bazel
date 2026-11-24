@@ -7,6 +7,19 @@ exports_files([
     "package.json",
 ])
 
+# The workflow files. The repository checks read them to enforce the action
+# pinning and the permissions of every workflow.
+filegroup(
+    name = "workflow_sources",
+    srcs = glob(
+        [
+            ".github/workflows/*.yaml",
+            ".github/workflows/*.yml",
+        ],
+        allow_empty = True,
+    ),
+)
+
 # The manifests that carry the version of the release. The release gate
 # compares them with the tag and with the changelog.
 filegroup(

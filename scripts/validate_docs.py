@@ -17,6 +17,9 @@ problems that the gate in `docs/development/documentation.md` must catch:
   repository, and no stale publishing domain is left in a current document.
 - Schemas: valid JSON, and every relative `$ref` that resolves except the
   references that are documented as open defects.
+- Workflows: every action is pinned to a commit SHA, every workflow declares
+  its permissions, and no pull request workflow runs with write access or
+  reads a secret.
 
 Usage:
 
@@ -62,6 +65,8 @@ RAW_URL_RE = re.compile(
     r"([^/\s`\"'()]+)/specs/schemas/([^\s`\"'()]+)"
 )
 OUTPUT_RE = re.compile(r'output\s*=\s*"([^"]+)"')
+USES_RE = re.compile(r"^\s*(?:-\s+)?uses:\s*([^\s#]+)", re.M)
+COMMIT_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 MERMAID_TYPES = (
     "flowchart", "graph", "sequenceDiagram", "classDiagram", "stateDiagram",
     "erDiagram", "journey", "gantt", "pie", "mindmap", "timeline",
@@ -137,6 +142,18 @@ def markdown_files(root: Path) -> list[Path]:
     ]
     files.extend(sorted((root / "docs").rglob("*.md")))
     return [path for path in files if path.exists()]
+
+
+def workflow_files(root: Path) -> list[Path]:
+    """Returns the workflow files of the repository."""
+    directory = root / ".github" / "workflows"
+    if not directory.is_dir():
+        return []
+    return sorted(
+        path
+        for path in directory.iterdir()
+        if path.is_file() and path.suffix in (".yml", ".yaml")
+    )
 
 
 def check_encoding(root: Path, files: list[Path], report: Report) -> None:
@@ -235,6 +252,75 @@ def check_mermaid(root: Path, files: list[Path], report: Report) -> None:
                 continue
             if in_mermaid:
                 body.append(line)
+
+
+def top_level_block(lines: list[str], key: str) -> list[str] | None:
+    """Returns the lines of a top-level block, or None when it is absent.
+
+    A block is either a key with indented lines below it or a key with its
+    value on the same line.
+    """
+    for index, line in enumerate(lines):
+        if line.startswith((" ", "\t")):
+            continue
+        stripped = line.strip()
+        if not stripped.startswith(key):
+            continue
+        value = stripped[len(key):].strip()
+        if value:
+            return [value]
+        block: list[str] = []
+        for candidate in lines[index + 1:]:
+            if candidate.strip() and not candidate.startswith((" ", "\t")):
+                break
+            block.append(candidate)
+        return block
+    return None
+
+
+def is_pull_request_workflow(lines: list[str]) -> bool:
+    """Returns whether the workflow runs for pull requests."""
+    return any(line.strip() == "pull_request:" for line in lines)
+
+
+def check_workflows(root: Path, files: list[Path], report: Report) -> int:
+    """Checks the workflow files of the repository."""
+    for path in files:
+        rel = path.relative_to(root).as_posix()
+        text = path.read_text(encoding="utf-8")
+        lines = text.splitlines()
+
+        if not any(line.startswith("name:") for line in lines):
+            report.error(f"{rel}: missing the workflow name")
+
+        if "pull_request_target" in text:
+            report.error(f"{rel}: pull_request_target runs the code of a fork")
+
+        for match in USES_RE.finditer(text):
+            reference = match.group(1)
+            if reference.startswith("./") or reference.startswith("docker://"):
+                continue
+            if "@" not in reference:
+                report.error(f"{rel}: action without a version: {reference}")
+                continue
+            commit = reference.partition("@")[2]
+            if not COMMIT_SHA_RE.match(commit):
+                report.error(f"{rel}: action is not pinned to a commit SHA: {reference}")
+
+        permissions = top_level_block(lines, "permissions:")
+        if permissions is None:
+            report.error(f"{rel}: missing the permissions block")
+        elif is_pull_request_workflow(lines):
+            writes = [line.strip() for line in permissions if "write" in line]
+            if writes:
+                report.error(
+                    f"{rel}: a pull request workflow grants write access: {writes[0]}"
+                )
+
+        if is_pull_request_workflow(lines) and "secrets." in text:
+            report.error(f"{rel}: a pull request workflow reads a secret")
+
+    return len(files)
 
 
 def requirement_definitions(root: Path, files: list[Path]) -> dict[str, tuple[Path, int, str]]:
@@ -528,19 +614,22 @@ def main(argv: list[str] | None = None) -> int:
 
     report = Report()
     files = markdown_files(root)
-    check_encoding(root, files, report)
+    workflows = workflow_files(root)
+    check_encoding(root, files + workflows, report)
     check_markdown(root, files, report)
     check_mermaid(root, files, report)
     statuses = check_requirements(root, files, report)
     decisions = check_decisions(root, report)
     urls = check_schema_references(root, files, report)
     schemas = check_schema_files(root, bundle, report)
+    workflow_count = check_workflows(root, workflows, report)
 
     print(f"files checked: {len(files)}")
     print(f"requirements: {len(statuses)} {dict(sorted(Counter(statuses.values()).items()))}")
     print(f"decisions: {decisions}")
     print(f"raw URLs: {urls}")
     print(f"schema files: {schemas}")
+    print(f"workflows checked: {workflow_count}")
     print(f"errors: {len(report.errors)}")
     for error in report.errors:
         print(f"ERROR {error}")
