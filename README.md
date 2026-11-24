@@ -11,6 +11,7 @@ targets for the Python and TypeScript packages.
 
 - `specs/`: language-independent catalogs and JSON Schema definitions/templates.
 - `tools/codegen/`: Python-based template/code generation tooling.
+- `tools/publish/`: release-time publisher for the schema bundle.
 - `bazel/`: reusable Starlark build rules.
 - `packages/python/`: Python SDK.
 - `packages/typescript/`: TypeScript SDK, also consumable by JavaScript projects
