@@ -9,45 +9,45 @@ targets for the Python and TypeScript packages.
 
 ## Repository layout
 
-- \`specs/\`: language-independent catalogs and JSON Schema definitions/templates.
-- \`tools/codegen/\`: Python-based template/code generation tooling.
-- \`bazel/\`: reusable Starlark build rules.
-- \`packages/python/\`: Python SDK.
-- \`packages/typescript/\`: TypeScript SDK, also consumable by JavaScript projects
+- `specs/`: language-independent catalogs and JSON Schema definitions/templates.
+- `tools/codegen/`: Python-based template/code generation tooling.
+- `bazel/`: reusable Starlark build rules.
+- `packages/python/`: Python SDK.
+- `packages/typescript/`: TypeScript SDK, also consumable by JavaScript projects
   after compilation.
-- \`tests/\`: cross-package contract and integration tests.
+- `tests/`: cross-package contract and integration tests.
 
 ## Requirements
 
-- Bazelisk. The required Bazel version is pinned in \`.bazelversion\`.
+- Bazelisk. The required Bazel version is pinned in `.bazelversion`.
 - Git.
 - No separately installed Python runtime is required for Bazel targets; the
-  Python toolchain is declared in \`MODULE.bazel\`.
+  Python toolchain is declared in `MODULE.bazel`.
 
 ## Build and test
 
 Build all configured targets:
 
-\`\`\`shell
+```shell
 bazel build //...
-\`\`\`
+```
 
 Run all tests:
 
-\`\`\`shell
+```shell
 bazel test //...
-\`\`\`
+```
 
 Build the complete set of currently available JSON Schema artifacts:
 
-\`\`\`shell
+```shell
 bazel build //specs/schemas:schema_bundle
-\`\`\`
+```
 
 The schema bundle is staged in the Bazel output tree while preserving the
-relative paths used by the schemas' \`$ref\` values:
+relative paths used by the schemas' `$ref` values:
 
-\`\`\`text
+```text
 bazel-bin/
 └── specs/
     └── schemas/
@@ -59,34 +59,37 @@ bazel-bin/
         │       └── paper.schema.json
         └── definitions/
             └── bound.schema.json
-\`\`\`
+```
 
 Static schemas are staged with Bazel symlink actions; generated schemas are
 produced from the templates and CSV catalogs. Source files remain under
-\`specs/schemas/\`; Bazel does not copy ordinary source files into \`bazel-bin\`
+`specs/schemas/`; Bazel does not copy ordinary source files into `bazel-bin`
 unless a build action declares an output for them.
 
 Run the generator directly:
 
-\`\`\`shell
-bazel run //tools/codegen:typcast_codegen -- --input specs/schemas/templates/api/types/alignment.schema.json.tmpl --output out/schemas/alignment.schema.json
-\`\`\`
+```shell
+bazel run //tools/codegen:typcast_codegen -- --input "$PWD/specs/schemas/templates/api/types/alignment.schema.json.tmpl" --output "$PWD/out/schemas/alignment.schema.json"
+```
+
+Workspace-relative input and output paths fail on Windows. Use absolute paths as
+shown, or run the built binary from the repository root.
 
 The generator resolves CSV paths relative to the directory containing the input
 template. A placeholder has this form:
 
-\`\`\`text
+```text
 <relative/path/to/catalog.csv:ColumnName>
-\`\`\`
+```
 
 All files referenced by a template must also be declared in the corresponding
-Bazel generation rule's \`catalogs\` attribute. This makes the inputs explicit
+Bazel generation rule's `catalogs` attribute. This makes the inputs explicit
 to Bazel and allows it to invalidate cached outputs when a catalog changes.
 
 ## Current schema limitation
 
-\`validator.schema.json\` currently references
-\`definitions/node.schema.json\`, but that schema is not present in the repository
+`validator.schema.json` currently references
+`definitions/node.schema.json`, but that schema is not present in the repository
 yet. The bundle contains all schema files currently available; the node
 definition must be added before every reference in the validator can resolve.
 
@@ -96,5 +99,51 @@ Generated and staged files are written to Bazel's output tree. Do not edit
 generated artifacts manually. Change the source catalog or template and rebuild
 the corresponding target instead.
 
-\`MODULE.bazel.lock\` is intentionally version-controlled once Bazel generates
+`MODULE.bazel.lock` is intentionally version-controlled once Bazel generates
 it, so dependency resolution remains reproducible across machines.
+
+## Schema distribution
+
+Published schemas are served from the repository at the release tag. The
+canonical URL of a schema file is:
+
+```text
+https://raw.githubusercontent.com/zuudevs/typcast/<VERSION>/specs/schemas/<SCHEMA_FILE>
+```
+
+- `<VERSION>` is the Git release tag that publishes the schema, for example
+  `v1.0.0`.
+- `<SCHEMA_FILE>` is the path of the schema file relative to `specs/schemas/`.
+
+A `main` URL is a development reference only. It is never a stable reference,
+and a consumer pins an exact release tag. The repository has no release tag
+yet, so every tag URL is illustrative until the first release is tagged.
+
+The covered schema paths and their sources are listed in
+[the schema contract](docs/specifications/schema.md). The MVP requires no
+dedicated schema domain and no hosting infrastructure.
+
+## Documentation
+
+The product, architecture, contract, and engineering documentation is in
+[`docs/`](docs/README.md). Start with the
+[documentation index](docs/README.md) and the
+[vision and scope](docs/product/vision-and-scope.md).
+
+The documents describe the approved MVP baseline. The SDK, emitter, compiler
+adapter, packaging, and CI workflows are not implemented yet.
+
+## Contributing
+
+Changes enter through pull requests. Use the pull request template at
+`.github/PULL_REQUEST_TEMPLATE.md` and follow the
+[contribution and governance rules](docs/governance/contributing.md).
+
+## License
+
+Typcast is licensed under the Apache License 2.0. See [`LICENSE`](LICENSE).
+
+## Security
+
+Report security issues privately as described in [`SECURITY.md`](SECURITY.md).
+Do not open a public issue for a suspected vulnerability.
