@@ -220,7 +220,7 @@ explains how a requirement, a decision, and the changelog are updated.
 | `SECURITY.md` | CLOSED. Present at the repository root. |
 | `LICENSE` | CLOSED. Present at the repository root. |
 | Branch protection | CLOSED. `main` is protected: the required checks must pass, one approval is required, force pushes and deletions are disabled, and a conversation must be resolved. |
-| Required checks | CLOSED. The six checks of the pull request lane are required: `Build`, `Test`, and `Clean build` on Windows and Linux, and the `Documentation gate`. |
+| Required checks | CLOSED. The six checks of the pull request lane are required: `Build`, `Test`, and `Clean build` on Windows and Linux, and the `Documentation gate`. The `Link check` runs as well, but it reports warnings only and is not required. |
 | `CODE_OF_CONDUCT.md` | CLOSED. Present at the repository root. |
 
 ## Requirements

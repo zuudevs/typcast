@@ -53,6 +53,7 @@ REQUIREMENT_RE = re.compile(r"\b(" + "|".join(FAMILIES) + r")-(\d{3})\b")
 DEFINITION_RE = re.compile(r"^\|\s*`?((?:" + "|".join(FAMILIES) + r")-(\d{3}))`?\s*\|")
 LINK_RE = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
 HEADING_RE = re.compile(r"^#\s+")
+HEADING_LEVEL_RE = re.compile(r"^(#{1,6})\s+(.*)$")
 MOJIBAKE = [
     "\u00c3", "\u00c2", "\u00e2\u20ac\u2122", "\u00e2\u20ac\u0153",
     "\u00e2\u20ac\u009d", "\u00f0\u0178", "\u00ef\u00bf\u00bd",
@@ -73,6 +74,50 @@ MERMAID_TYPES = (
     "flowchart", "graph", "sequenceDiagram", "classDiagram", "stateDiagram",
     "erDiagram", "journey", "gantt", "pie", "mindmap", "timeline",
 )
+FLOWCHART_DIRECTIONS = {"TB", "TD", "BT", "RL", "LR"}
+
+# The Markdown rules of the lint. A table row starts with a pipe and holds at
+# least one more pipe.
+TABLE_ROW_RE = re.compile(r"^\s*\|.*\|\s*$")
+
+# The edge labels of a flowchart are normalized before the statement is read,
+# so that the statement is a list of nodes that the edges connect.
+FLOW_PIPE_LABEL_RE = re.compile(r"\|[^|]*\|")
+FLOW_EDGE_LABEL_RE = re.compile(
+    r"\-?\.{1,2}\s*\"[^\"]*\"\s*\.{1,2}->"
+    r"|\-?\.{1,2}\s*[^.|>]+\s*\.{1,2}->"
+    r"|-{2,}\s+\"[^\"]*\"\s+-{2,}>"
+    r"|-{2,}\s+[^-|>]+\s+-{2,}>"
+)
+FLOW_ARROW_RE = re.compile(r"-->|==>|-\.->|--x\b|--o\b|---")
+FLOW_NODE_RE = re.compile(
+    r"^(?P<id>[A-Za-z_][A-Za-z0-9_]*)"
+    r"(?P<shape>"
+    r"\[\[[^\[\]]*\]\]"
+    r"|\(\([^()]*\)\)"
+    r"|\([^()]*\)"
+    r"|\[[^\[\]]*\]"
+    r"|\{[^{}]*\}"
+    r"|>[^\[\]]*\]"
+    r")?$"
+)
+
+# The statements of a sequence diagram.
+SEQUENCE_PARTICIPANT_RE = re.compile(
+    r"^(?:participant|actor)\s+(?P<id>[A-Za-z_][A-Za-z0-9_]*)"
+    r"(?:\s+as\s+(?P<label>.+))?$"
+)
+SEQUENCE_MESSAGE_RE = re.compile(
+    r"^(?P<from>[A-Za-z_][A-Za-z0-9_]*)\s*"
+    r"(?:-->>|->>|--x|--o|->|-\))\s*"
+    r"(?P<to>[A-Za-z_][A-Za-z0-9_]*)\s*:\s*(?P<text>.+)$"
+)
+SEQUENCE_NOTE_RE = re.compile(
+    r"^note\s+(?:over|left of|right of)\s+(?P<participants>[^:]+):\s*(?P<text>.+)$",
+    re.IGNORECASE,
+)
+SEQUENCE_BLOCKS = {"loop", "alt", "opt", "par", "rect", "critical", "break"}
+SEQUENCE_STATEMENTS = {"autonumber", "activate", "deactivate"}
 
 # The historical records of the superseded decisions keep the old domain and
 # the old placeholder identifier. They are the only documents that may do so.
@@ -230,6 +275,102 @@ def check_markdown(root: Path, files: list[Path], report: Report) -> None:
                 report.error(f"{rel}: broken link {target}")
 
 
+def markdown_lines(text: str) -> list[tuple[int, str, bool]]:
+    """Returns the lines of a document with the fence state of each line.
+
+    The third value tells whether the line is inside a code fence. A fence
+    marker is the line itself.
+    """
+    result: list[tuple[int, str, bool]] = []
+    in_fence = False
+    for lineno, line in enumerate(text.splitlines(), 1):
+        marker = line.lstrip().startswith("```")
+        result.append((lineno, line, in_fence))
+        if marker:
+            in_fence = not in_fence
+    return result
+
+
+def check_markdown_lint(root: Path, files: list[Path], report: Report) -> int:
+    """Checks the structure of the Markdown documents.
+
+    The rules are the ones that a reader and a link checker depend on: one
+    title, a heading structure without gaps, blank lines around the blocks,
+    one blank line between the blocks, and tables with a consistent shape.
+    """
+    checked = 0
+    for path in files:
+        if path.suffix != ".md":
+            continue
+        rel = path.relative_to(root).as_posix()
+        text = path.read_text(encoding="utf-8")
+        lines = markdown_lines(text)
+        content = [line for _, line, in_fence in lines if not in_fence]
+        checked += 1
+
+        first_content = next(
+            (index for index, line in enumerate(content) if line.strip()),
+            None,
+        )
+        if first_content is None:
+            report.error(f"{rel}: the document is empty")
+            continue
+        if not HEADING_RE.match(content[first_content]):
+            report.error(f"{rel}: the document must start with a level-1 heading")
+
+        blank_run = 0
+        previous_heading = 0
+        for index, line in enumerate(content):
+            if not line.strip():
+                blank_run += 1
+                if blank_run > 1:
+                    report.error(
+                        f"{rel}:{index + 1}: more than one blank line in a row"
+                    )
+                continue
+            blank_run = 0
+
+            heading = HEADING_LEVEL_RE.match(line)
+            if heading:
+                level = len(heading.group(1))
+                if level > previous_heading + 1:
+                    report.error(
+                        f"{rel}:{index + 1}: heading level {level} skips level "
+                        f"{previous_heading + 1}"
+                    )
+                previous_heading = level
+                if index > 0 and content[index - 1].strip():
+                    report.error(
+                        f"{rel}:{index + 1}: a heading needs a blank line before it"
+                    )
+                if index + 1 < len(content) and content[index + 1].strip():
+                    report.error(
+                        f"{rel}:{index + 1}: a heading needs a blank line after it"
+                    )
+                continue
+
+            if line.lstrip().startswith("```"):
+                if index > 0 and content[index - 1].strip():
+                    report.error(
+                        f"{rel}:{index + 1}: a code fence needs a blank line before it"
+                    )
+                continue
+
+            if TABLE_ROW_RE.match(line):
+                columns = line.strip().strip("|").count("|") + 1
+                if index > 0:
+                    previous = content[index - 1]
+                    if TABLE_ROW_RE.match(previous):
+                        previous_columns = previous.strip().strip("|").count("|") + 1
+                        if previous_columns != columns:
+                            report.error(
+                                f"{rel}:{index + 1}: the table row has "
+                                f"{columns} columns, the row above has "
+                                f"{previous_columns}"
+                            )
+    return checked
+
+
 def check_mermaid(root: Path, files: list[Path], report: Report) -> None:
     for path in files:
         if path.suffix != ".md":
@@ -252,9 +393,142 @@ def check_mermaid(root: Path, files: list[Path], report: Report) -> None:
                     report.error(f"{rel}:{start}: Mermaid block does not start with a diagram type")
                 if first.count("[") != first.count("]") or first.count('"') % 2:
                     report.error(f"{rel}:{start}: Mermaid block has unbalanced brackets or quotes")
+                check_mermaid_diagram(rel, start, body, report)
                 continue
             if in_mermaid:
                 body.append(line)
+
+
+def check_mermaid_diagram(
+    rel: str,
+    start: int,
+    body: list[str],
+    report: Report,
+) -> None:
+    """Parses the statements of a Mermaid diagram.
+
+    The parser covers the diagram types that the repository uses: the
+    flowchart and the sequence diagram. Every other diagram type keeps the
+    structural check of the block.
+    """
+    entries = [
+        (start + 1 + offset, line.strip())
+        for offset, line in enumerate(body)
+        if line.strip()
+    ]
+    if not entries:
+        report.error(f"{rel}:{start}: the Mermaid block is empty")
+        return
+
+    header = entries[0][1]
+    if header.startswith(("flowchart", "graph")):
+        check_mermaid_flowchart(rel, start, entries, report)
+    elif header.startswith("sequenceDiagram"):
+        check_mermaid_sequence(rel, start, entries, report)
+
+
+def check_mermaid_flowchart(
+    rel: str,
+    start: int,
+    entries: list[tuple[int, str]],
+    report: Report,
+) -> None:
+    """Checks the statements of a Mermaid flowchart."""
+    header = entries[0][1].split()
+    if len(header) != 2 or header[1] not in FLOWCHART_DIRECTIONS:
+        report.error(
+            f"{rel}:{entries[0][0]}: the flowchart needs a direction: "
+            + ", ".join(sorted(FLOWCHART_DIRECTIONS))
+        )
+        return
+
+    for lineno, statement in entries[1:]:
+        normalized = FLOW_EDGE_LABEL_RE.sub("-->", statement)
+        normalized = FLOW_PIPE_LABEL_RE.sub("", normalized)
+        arrows = FLOW_ARROW_RE.findall(normalized)
+        parts = [part.strip() for part in FLOW_ARROW_RE.split(normalized)]
+        parts = [part for part in parts if part]
+        if not parts:
+            report.error(f"{rel}:{lineno}: the flowchart statement is empty")
+            continue
+        if len(parts) != len(arrows) + 1:
+            report.error(
+                f"{rel}:{lineno}: the flowchart statement needs an edge between "
+                "two nodes"
+            )
+            continue
+        for index, part in enumerate(parts):
+            match = FLOW_NODE_RE.match(part)
+            if not match:
+                kind = "node" if index % 2 == 0 else "edge"
+                report.error(
+                    f"{rel}:{lineno}: the flowchart {kind} cannot be read: {part}"
+                )
+                continue
+            if index % 2 == 0:
+                node_id = match.group("id")
+                shape = match.group("shape")
+                if shape and shape.count('"') % 2:
+                    report.error(
+                        f"{rel}:{lineno}: the label of {node_id} has an unbalanced quote"
+                    )
+
+
+def check_mermaid_sequence(
+    rel: str,
+    start: int,
+    entries: list[tuple[int, str]],
+    report: Report,
+) -> None:
+    """Checks the statements of a Mermaid sequence diagram."""
+    participants: set[str] = set()
+    blocks: list[tuple[int, str]] = []
+    for lineno, statement in entries[1:]:
+        participant = SEQUENCE_PARTICIPANT_RE.match(statement)
+        if participant:
+            participants.add(participant.group("id"))
+            continue
+
+        message = SEQUENCE_MESSAGE_RE.match(statement)
+        if message:
+            for role in ("from", "to"):
+                name = message.group(role)
+                if name not in participants:
+                    report.error(
+                        f"{rel}:{lineno}: the participant {name} is not declared"
+                    )
+            continue
+
+        note = SEQUENCE_NOTE_RE.match(statement)
+        if note:
+            for name in note.group("participants").split(","):
+                name = name.strip()
+                if name and name not in participants:
+                    report.error(
+                        f"{rel}:{lineno}: the participant {name} is not declared"
+                    )
+            continue
+
+        keyword = statement.split()[0].lower()
+        if keyword in SEQUENCE_BLOCKS:
+            blocks.append((lineno, keyword))
+            continue
+        if keyword == "else":
+            if not blocks or blocks[-1][1] != "alt":
+                report.error(f"{rel}:{lineno}: else must be inside an alt block")
+            continue
+        if keyword == "end":
+            if not blocks:
+                report.error(f"{rel}:{lineno}: end without a block")
+            else:
+                blocks.pop()
+            continue
+        if keyword in SEQUENCE_STATEMENTS:
+            continue
+        report.error(f"{rel}:{lineno}: the sequence statement cannot be read: {statement}")
+
+    for lineno, block in blocks:
+        report.error(f"{rel}:{lineno}: the {block} block is not closed")
 
 
 def top_level_block(lines: list[str], key: str) -> list[str] | None:
@@ -602,6 +876,23 @@ def check_schema_files(root: Path, bundle: Path | None, report: Report) -> int:
     return checked
 
 
+def external_links(root: Path, files: list[Path]) -> list[tuple[str, str]]:
+    """Returns the external links of the documents: the URL and its file."""
+    links: dict[str, str] = {}
+    for path in files:
+        if path.suffix != ".md":
+            continue
+        rel = path.relative_to(root).as_posix()
+        for match in LINK_RE.finditer(path.read_text(encoding="utf-8")):
+            target = match.group(1).strip()
+            if not target.startswith(("http://", "https://")):
+                continue
+            url = target.split("#", 1)[0]
+            if url:
+                links.setdefault(url, rel)
+    return sorted(links.items())
+
+
 def check_codeowners(root: Path, report: Report) -> int:
     """Checks the CODEOWNERS file of the repository.
 
@@ -658,6 +949,7 @@ def main(argv: list[str] | None = None) -> int:
     workflows = workflow_files(root)
     check_encoding(root, files + workflows, report)
     check_markdown(root, files, report)
+    lint = check_markdown_lint(root, files, report)
     check_mermaid(root, files, report)
     statuses = check_requirements(root, files, report)
     decisions = check_decisions(root, report)
@@ -667,6 +959,7 @@ def main(argv: list[str] | None = None) -> int:
     codeowners = check_codeowners(root, report)
 
     print(f"files checked: {len(files)}")
+    print(f"markdown files linted: {lint}")
     print(f"requirements: {len(statuses)} {dict(sorted(Counter(statuses.values()).items()))}")
     print(f"decisions: {decisions}")
     print(f"raw URLs: {urls}")

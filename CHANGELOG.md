@@ -45,6 +45,18 @@ No release has been published yet. Every change so far is listed under
   the release asset are the same on every platform.
 - A CODEOWNERS file at `.github/CODEOWNERS`, which routes every path to the
   maintainer and is checked by the repository gate.
+- A Markdown lint in the repository gate: the document starts with its title,
+  the heading levels do not skip a level, the headings and the code fences
+  have a blank line around them, and the rows of a table have the same number
+  of columns.
+- A Mermaid parser in the repository gate. It reads the flowchart and the
+  sequence diagram, the diagram types that the repository uses.
+- An external link check, `//scripts:check_links`, that checks the external
+  links with a timeout. It reports warnings only, because an outage of an
+  external site must not block an unrelated change. It runs in its own job of
+  the pull request lane and of the main lane.
+- Unit tests for the rules of the repository gate and of the external link
+  check.
 
 ### Changed
 

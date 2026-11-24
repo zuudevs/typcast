@@ -28,12 +28,12 @@ change impact analysis.
 | Assets | `specifications/assets.md` | `ASSET-001` to `ASSET-020` | Path and workspace tests. |
 | Compatibility | `specifications/compatibility.md` | `COMPAT-001` to `COMPAT-019` | CI matrix. |
 | Build | `development/build.md` | `BUILD-001` to `BUILD-021` | Bazel commands. |
-| Testing | `development/testing.md` | `TEST-001` to `TEST-029` | Test inventory. |
+| Testing | `development/testing.md` | `TEST-001` to `TEST-030` | Test inventory. |
 | Benchmarking | `development/benchmarking.md` | `PERF-001` to `PERF-015` | Benchmark job. |
 | CI/CD | `development/ci-cd.md` | `CI-001` to `CI-028` | Workflow review. |
 | Release | `development/release.md` | `REL-001` to `REL-035` | Release checklist. |
 | Security | `development/security.md` | `SEC-001` to `SEC-025` | Security review. |
-| Documentation | `development/documentation.md` | `DOC-001` to `DOC-023` | Docs gate. |
+| Documentation | `development/documentation.md` | `DOC-001` to `DOC-025` | Docs gate. |
 | Governance | `governance/contributing.md` | `GOV-001` to `GOV-021` | Repository settings. |
 | Traceability | This document | `TRACE-001` to `TRACE-005` | Review. |
 
@@ -53,7 +53,7 @@ change impact analysis.
 | Release artifacts | `REL-005`, `REL-006`, `REL-007`, `REL-008`, `REL-035`, `BUILD-014`, `BUILD-021` | Artifact build and checksum check. |
 | Apache-2.0 licensing | `PRD-016`, `SEC-001`, `SEC-002`, `REL-010`, `REL-022` | Package and license checks. |
 | Stable `1.0.0` gate | `PRD-017`, `REL-003`, `REL-013`, `CI-006` | Release checklist. |
-| Documentation quality | `DOC-001`, `DOC-002`, `DOC-012`, `CI-014` | Docs gate. |
+| Documentation quality | `DOC-001`, `DOC-002`, `DOC-012`, `DOC-024`, `CI-014` | Docs gate and link check. |
 | Vulnerability response | `SEC-003`, `SEC-024`, `SEC-025` | Policy review and release check. |
 
 ## Status summary
@@ -143,17 +143,25 @@ a target for the MVP and is not yet verified in the repository.
 | `SCH-020` | The ten prototype defects `SCH-D01` to `SCH-D10` are closed. | `specifications/schema.md`; the bundle test reports no violation. |
 | `DOC-015` | The root `README.md` uses standard code fences and LF line endings. | Documentation validation script run on 2026-11-24. |
 | `DOC-016` | `.gitattributes` pins LF for text files and `.editorconfig` pins UTF-8, LF, final newline, and indentation. | Files present at the repository root. |
-| `DOC-021` | `scripts/validate_docs.py` validates the documents, the requirement index, the ADR index, and the schema references with the standard library only. | `//scripts:docs_checks`; 57 files, 452 requirements, and 3 workflows checked with 0 errors. |
+| `DOC-021` | `scripts/validate_docs.py` validates the documents, the requirement index, the ADR index, and the schema references with the standard library only. | `//scripts:docs_checks`; 57 files, 455 requirements, and 3 workflows checked with 0 errors. |
 | `DOC-012` | The documentation gate runs on pull requests. | The `Documentation gate` job of `.github/workflows/pr.yml`. |
 | `DOC-013` | The documentation gate runs on `main`. | The `Documentation gate` job of `.github/workflows/main.yml`. |
 | `DOC-022` | The repository gate validates the workflow files: pinned actions, declared permissions, no write access or secret in a pull request workflow, and no `pull_request_target`. | `//scripts:docs_checks`; 3 workflows checked. |
 | `DOC-023` | The repository gate validates the CODEOWNERS file: it exists, every rule names an owner, and one rule covers every path. | `//scripts:docs_checks`; the CODEOWNERS file is checked. |
+| `DOC-006` | Every code fence of the documents declares a language. | `//scripts:docs_checks`; the code fence rule. |
+| `DOC-007` | Every document has exactly one level-1 heading, and it is the first line of the document. | `//scripts:docs_checks`; the heading rules. |
+| `DOC-008` | Every internal link of the documents resolves. | `//scripts:docs_checks`; the link rule. |
+| `DOC-009` | The Mermaid diagrams parse: the flowchart has a direction and readable statements, the sequence diagram declares every participant, and every block is closed. | `//scripts:docs_checks`; the diagram rule. |
+| `DOC-010` | The external links are checked with a timeout, and an unreachable link is a warning that does not block the merge. | `//scripts:check_links`; `//scripts/tests:link_tests`. |
+| `DOC-024` | The external link check runs in the pull request lane and in the main lane. | The `Link check` job of `.github/workflows/pr.yml` and `main.yml`. |
+| `DOC-025` | The rules of the repository gate and of the external link check are covered by unit tests. | `//scripts/tests:docs_tests`; `//scripts/tests:link_tests`. |
 | `TEST-016` | `//specs/schemas:schema_tests` validates every bundle file and resolves every relative `$ref`. | `//specs/schemas:schema_tests`; 6 bundle files checked, 0 violations. |
 | `TEST-025` | The test lane runs on Windows and Linux. | The `Test` jobs of the workflows; the first run passed on `windows-latest` and `ubuntu-latest`. |
 | `TEST-026` | `//tools/publish/tests:publish_tests` covers the publisher with unit tests and with an integration test against the built bundle. | `//tools/publish/tests:publish_tests`; 41 cases. |
 | `TEST-027` | `//scripts/tests:version_tests` covers the release version check. | `//scripts/tests:version_tests`; 10 cases. |
 | `TEST-028` | The publisher tests serve the published files from a local server, so the test suite needs no network access. | `//tools/publish/tests:publish_tests`; the `PublishedUrlTests` cases. |
 | `TEST-029` | The publisher tests cover the content, the member metadata, and the byte-for-byte determinism of the schema archive. | `//tools/publish/tests:publish_tests`; the `ArchiveTests` cases. |
+| `TEST-030` | The unit tests cover the rules of the repository gate and of the external link check. | `//scripts/tests:docs_tests`; `//scripts/tests:link_tests`. |
 | `REL-032` | `//tools/publish:publish_schemas` publishes exactly the files of the bundle manifest, sets the `$id` of every file to the versioned raw URL of the release tag, and rejects a version that is not a release tag. | `//tools/publish:publish_schemas`; `publish` and `check` verified against the built bundle with an illustrative `v1.0.0` tag. |
 | `REL-033` | `//scripts:check_version` compares the version of every manifest and the changelog with the tag, and reports every mismatch. | `//scripts:check_version`; `//scripts/tests:version_tests`; 10 cases. |
 | `REL-034` | `publish_schemas verify` fetches every published schema from its versioned raw URL and compares the served bytes with the file of the tagged commit. | `//tools/publish:publish_tests`; the `PublishedUrlTests` cases. |
@@ -170,7 +178,7 @@ a target for the MVP and is not yet verified in the repository.
 | `CI-020` | No workflow publishes. | The three workflow files; the pull request workflow has read-only permissions. |
 | `CI-021` | The test lane prints the output of every failing test. | `test --test_output=errors` in `.bazelrc`. |
 | `CI-025` | The workflow files are in their own commits. | The commits `ci: add the pull request validation workflow`, `ci: add the main integration workflow`, and `ci: add the release verification workflow`. |
-| `CI-027` | The pull request and main lanes run the build, the test lane, the clean checkout build, and the documentation gate on Windows and Linux, and the release lane verifies the version, the tagged build, the published bundle, and the raw URLs. | The three workflow files; the first pull request run passed on 2026-11-24. |
+| `CI-027` | The pull request and main lanes run the build, the test lane, the clean checkout build, the documentation gate, and the external link check, and the release lane verifies the version, the tagged build, the published bundle, and the raw URLs. | The three workflow files; the first pull request run passed on 2026-11-24. |
 | `CI-028` | The repository gate rejects an unpinned action, a workflow without permissions, write access or a secret in a pull request workflow, and `pull_request_target`. | `scripts/validate_docs.py`; `//scripts:docs_checks`; 3 workflows checked. |
 | `SEC-002` | The Apache-2.0 license text is present at the repository root. | `LICENSE`, compared byte for byte with the canonical Apache-2.0 text. |
 | `SEC-003` | The vulnerability reporting policy is present at the repository root. | `SECURITY.md`. |

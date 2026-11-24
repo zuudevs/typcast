@@ -17,3 +17,30 @@ py_test(
         "//scripts:check_version_lib",
     ],
 )
+
+py_test(
+    name = "docs_tests",
+    size = "small",
+    srcs = [
+        "__init__.py",
+        "test_validate_docs.py",
+    ],
+    main = "test_validate_docs.py",
+    deps = [
+        "//scripts:docs_lib",
+    ],
+)
+
+py_test(
+    name = "link_tests",
+    size = "small",
+    srcs = [
+        "__init__.py",
+        "test_check_links.py",
+    ],
+    main = "test_check_links.py",
+    deps = [
+        "//scripts:docs_lib",
+        "//scripts:check_links_lib",
+    ],
+)

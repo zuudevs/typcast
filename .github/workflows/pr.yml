@@ -107,3 +107,24 @@ jobs:
           cache-save: false
       - name: Run the documentation checks
         run: bazel test //scripts:docs_checks
+
+  links:
+    name: Link check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Bazelisk
+        uses: bazel-contrib/setup-bazel@f34d6a05eae3c24acab7fa54587492daeaeffdab # 0.19.2
+        with:
+          bazelisk-cache: true
+          disk-cache: "true"
+          repository-cache: |
+            - MODULE.bazel
+            - MODULE.bazel.lock
+            - .bazelversion
+          cache-save: false
+      # The check reports warnings only. An outage of an external site must
+      # not block an unrelated pull request.
+      - name: Check the external links
+        run: bazel run //scripts:check_links

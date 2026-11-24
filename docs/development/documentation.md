@@ -82,7 +82,7 @@ normative statements without an ID.
 - External links use HTTPS where available.
 - Link text describes the target.
 - A link to an external resource does not imply endorsement.
-- The docs gate checks internal links. External links are not checked yet.
+- The docs gate checks the internal links.
 - A broken internal link is blocking. An unreachable external link is a
   warning in the full gate, because an external outage must not block an
   unrelated change.
@@ -124,21 +124,25 @@ The gate runs on changed documents in pull requests and all documents on
 
 | Check | Tool class | Failure |
 |---|---|---|
-| Markdown lint | `markdownlint` or equivalent. | Blocking. |
-| Internal links | Link checker. | Blocking. |
-| External links | Link checker with timeout. | Warning. |
-| Mermaid syntax | Mermaid CLI or parser. | Blocking. |
+| Markdown lint | Repository script. | Blocking. |
+| Internal links | Repository script. | Blocking. |
+| External links | Repository script with a timeout. | Warning. |
+| Mermaid syntax | Repository script. | Blocking. |
 | UTF-8 validity | Repository script. | Blocking. |
 | BOM detection | Repository script. | Blocking. |
 | LF line endings | Repository script. | Blocking. |
 | Emoji and dingbats | Repository script. | Blocking. |
 | Replacement characters | Repository script. | Blocking. |
 | Mojibake patterns | Repository script. | Blocking. |
-| Heading structure | Markdown lint. | Blocking. |
-| Code fence language | Markdown lint. | Blocking. |
+| Heading structure | Repository script. | Blocking. |
+| Code fence language | Repository script. | Blocking. |
 
 Tooling must not add runtime dependencies to the SDK. Documentation tools are
 CI-only or development-only.
+
+The repository script runs the blocking checks. The external link check needs
+the network, so it runs in its own job of the continuous integration lanes and
+reports warnings only.
 
 ## Repository checks
 
@@ -155,13 +159,20 @@ bazel test //scripts:docs_checks
 | Encoding | UTF-8 without a byte order mark, LF endings, a final newline. |
 | Text hygiene | No trailing whitespace, tabs, emoji, replacement characters, or mojibake. |
 | Markdown | One level-1 heading, code fences with a language, balanced fences, internal links that resolve. |
-| Diagrams | Every Mermaid block starts with a diagram type and has balanced brackets. |
+| Markdown lint | The document starts with its title, the heading levels do not skip a level, the headings and the code fences have a blank line around them, one blank line separates the blocks, and the rows of a table have the same number of columns. |
+| Diagrams | Every Mermaid block starts with a diagram type, the flowchart has a direction, the flowchart statements connect two nodes with a readable edge, the sequence diagram declares every participant, and every block is closed. |
 | Requirements | Unique IDs, an allowed status, family ranges that match the traceability index, and evidence for every implemented requirement. |
 | Decisions | An ADR index that lists every ADR, links that resolve, and supersede relations that point at a known ADR. |
 | Schema references | Every published raw URL uses a repository path, and no current document keeps the retired publishing domain. |
 | Schemas | Valid JSON, and every relative `$ref` resolves except the references that are tracked as open defects. |
 | Workflows | Every action is pinned to a commit SHA, every workflow declares its permissions, no pull request workflow grants write access or reads a secret, and no workflow uses `pull_request_target`. |
 | Governance | The CODEOWNERS file exists, every rule names an owner, and one rule covers every path. |
+
+The rules of the script are covered by unit tests.
+
+```shell
+bazel test //scripts/tests:docs_tests
+```
 
 A new document must be added to the `docs_sources` group in the root
 `BUILD.bazel`, so that it becomes part of the gate. The group holds the root
@@ -171,9 +182,29 @@ policy files `README.md`, `CHANGELOG.md`, `CODE_OF_CONDUCT.md`,
 document under `docs/`. A new workflow file is picked up by the
 `workflow_sources` group.
 
-The script does not replace the full gate. Markdown lint, external link
-checks, and a Mermaid parser are still not configured. The checks run in the
-pull request lane and in the main lane.
+## External link check
+
+`scripts/check_links.py` checks the external links of the documents. It uses
+the network, so it belongs to the continuous integration lane and not to the
+repository gate.
+
+```shell
+bazel run //scripts:check_links
+```
+
+| Property | Rule |
+|---|---|
+| Method | A `HEAD` request, and a `GET` request when the server refuses the first one. |
+| Timeout | Ten seconds per request. |
+| Result | A warning for every unreachable link. |
+| Exit code | Always zero. The check never blocks a merge. |
+| Skipped URLs | The versioned raw URLs of the schemas. They resolve only after the first release tag exists, and the release lane verifies them against the tagged commit. |
+
+The rules of the script are covered by unit tests.
+
+```shell
+bazel test //scripts/tests:link_tests
+```
 
 ## Current state
 
@@ -185,13 +216,13 @@ pull request lane and in the main lane.
 | `.editorconfig` | Present. It pins UTF-8, LF, final newline, and indentation rules. |
 | Root policy files | `README.md`, `CHANGELOG.md`, `CODE_OF_CONDUCT.md`, `CONTRIBUTING.md`, `SECURITY.md`, and `LICENSE` are present and covered by the gate. |
 | Repository checks | Implemented in `//scripts:docs_checks`. |
-| Markdown lint | Not configured. The repository script checks the structure. |
-| Link checker | Internal links are checked by the repository script. External links are not checked. |
-| Mermaid validation | Structural check only. A Mermaid parser is not configured. |
+| Markdown lint | Implemented in `//scripts:docs_checks`. The script checks the title, the heading levels, the blank lines around the blocks, and the shape of the tables. |
+| Link checker | Internal links are checked by the repository script. External links are checked by `//scripts:check_links` in the continuous integration lanes. |
+| Mermaid validation | Implemented in `//scripts:docs_checks`. The script parses the flowchart and the sequence diagram, the diagram types that the repository uses. |
 | Encoding checks | Implemented in `//scripts:docs_checks`. |
 | Workflow checks | Implemented in `//scripts:docs_checks`; three workflow files are checked. |
 | Governance checks | Implemented in `//scripts:docs_checks`; the CODEOWNERS file is checked. |
-| Docs CI | The `Documentation gate` job of the pull request lane and of the main lane. |
+| Docs CI | The `Documentation gate` job and the `Link check` job of the pull request lane and of the main lane. |
 
 ## Requirements
 
@@ -202,11 +233,11 @@ pull request lane and in the main lane.
 | DOC-003 | Documents MUST NOT contain emoji or dingbats. | CONFIRMED | Script. |
 | DOC-004 | Documents MUST NOT contain replacement characters. | CONFIRMED | Script. |
 | DOC-005 | Documents MUST NOT contain mojibake patterns. | CONFIRMED | Script. |
-| DOC-006 | Every code fence MUST declare a language. | CONFIRMED | Markdown lint. |
-| DOC-007 | Every document MUST have one level-1 heading. | CONFIRMED | Markdown lint. |
-| DOC-008 | Internal links MUST resolve. | CONFIRMED | Link checker. |
-| DOC-009 | Mermaid diagrams MUST parse. | CONFIRMED | Mermaid validation. |
-| DOC-010 | External links MUST be checked with a timeout and MUST produce a warning, not a blocking failure, when unreachable. | CONFIRMED | Link checker. |
+| DOC-006 | Every code fence MUST declare a language. | IMPLEMENTED | `//scripts:docs_checks`; the code fence rule. |
+| DOC-007 | Every document MUST have one level-1 heading. | IMPLEMENTED | `//scripts:docs_checks`; the heading rule. |
+| DOC-008 | Internal links MUST resolve. | IMPLEMENTED | `//scripts:docs_checks`; the link rule. |
+| DOC-009 | Mermaid diagrams MUST parse. | IMPLEMENTED | `//scripts:docs_checks`; the diagram rule parses the flowchart and the sequence diagram. |
+| DOC-010 | External links MUST be checked with a timeout and MUST produce a warning, not a blocking failure, when unreachable. | IMPLEMENTED | `//scripts:check_links`; `//scripts/tests:link_tests`. |
 | DOC-011 | Requirement IDs MUST be unique and stable. | CONFIRMED | Review and script. |
 | DOC-012 | The docs gate MUST run on changed documents in PRs. | IMPLEMENTED | The `Documentation gate` job of the pull request lane. |
 | DOC-013 | The docs gate MUST run on all documents on main. | IMPLEMENTED | The `Documentation gate` job of the main lane. |
@@ -220,13 +251,16 @@ pull request lane and in the main lane.
 | DOC-021 | A repository script MUST validate the documents, the requirement index, the ADR index, and the schema references without SDK installation or network access. | IMPLEMENTED | `//scripts:docs_checks`. |
 | DOC-022 | The repository gate MUST validate the workflow files: pinned actions, declared permissions, no write access or secret in a pull request workflow, and no `pull_request_target`. | IMPLEMENTED | `//scripts:docs_checks`; three workflow files are checked. |
 | DOC-023 | The repository gate MUST validate the CODEOWNERS file: it exists, every rule names an owner, and one rule covers every path. | IMPLEMENTED | `//scripts:docs_checks`; the CODEOWNERS file is checked. |
+| DOC-024 | The external link check MUST run in the pull request lane and in the main lane, MUST use a timeout, and MUST NOT block the merge. | IMPLEMENTED | The `Link check` job of `pr.yml` and `main.yml`; `//scripts:check_links`. |
+| DOC-025 | The rules of the repository gate and of the external link check MUST be covered by unit tests. | IMPLEMENTED | `//scripts/tests:docs_tests`; `//scripts/tests:link_tests`. |
 
 ## Open questions
 
-- Which Markdown linter and link checker are used?
-- Is a custom Python script preferred for encoding checks?
-- Should Mermaid validation run on every PR or only changed files?
-- Should line length be enforced later?
+- Should the Mermaid parser cover the diagram types that the repository does
+  not use yet?
+- Should the line length be enforced later?
+- Should the external link check also visit the anchors of the external
+  documents?
 
 ## Related documents
 

@@ -15,6 +15,17 @@ py_library(
     imports = ["."],
 )
 
+# The repository checks. The library is separate so that the unit tests
+# import it.
+py_library(
+    name = "docs_lib",
+    srcs = [
+        "__init__.py",
+        "validate_docs.py",
+    ],
+    imports = ["."],
+)
+
 py_binary(
     name = "check_version",
     srcs = [
@@ -22,6 +33,33 @@ py_binary(
     ],
     main = "check_version.py",
     data = ["//:release_manifests"],
+)
+
+# The external link check. It uses the network, so it belongs to the
+# continuous integration lane and not to the repository gate.
+py_library(
+    name = "check_links_lib",
+    srcs = [
+        "__init__.py",
+        "check_links.py",
+    ],
+    imports = ["."],
+    deps = [
+        ":docs_lib",
+    ],
+)
+
+py_binary(
+    name = "check_links",
+    srcs = [
+        "__init__.py",
+        "check_links.py",
+    ],
+    main = "check_links.py",
+    data = ["//:docs_sources"],
+    deps = [
+        ":docs_lib",
+    ],
 )
 
 # The documents that the checks read. The group lives in the root package so

@@ -100,9 +100,10 @@ requirement ID and a status of `CONFIRMED` or `IMPLEMENTED`.
 
 | Area | Current state | Evidence |
 |---|---|---|
-| Bazel build | Implemented | `bazel build //...` succeeds with 26 targets. |
-| Bazel test | Implemented for codegen, the publisher, the release version check, the repository checks, and the schema bundle | `bazel test //...` runs five test targets: seven unittest cases, 41 publisher cases, 10 version cases, the documentation check, and the schema bundle check. |
-| Documentation checks | Implemented | `//scripts:docs_checks` validates the documents, the requirement index, the ADR index, the schema references, the workflow files, and the CODEOWNERS file. |
+| Bazel build | Implemented | `bazel build //...` succeeds with 31 targets. |
+| Bazel test | Implemented for codegen, the publisher, the release version check, the repository checks, the link check, and the schema bundle | `bazel test //...` runs seven test targets: seven unittest cases, 41 publisher cases, 10 version cases, 18 documentation gate cases, 4 link check cases, the documentation check, and the schema bundle check. |
+| Documentation checks | Implemented | `//scripts:docs_checks` validates the documents, the Markdown structure, the Mermaid diagrams, the requirement index, the ADR index, the schema references, the workflow files, and the CODEOWNERS file. |
+| External link check | Implemented | `//scripts:check_links` checks the external links with a timeout and reports warnings only. |
 | JSON Schema generator | Implemented | `tools/codegen/` and `bazel/codegen.bzl`. |
 | Schema bundle | Implemented | `//specs/schemas:schema_bundle` builds six files that implement the document IR. |
 | Schema bundle validation | Implemented | `//specs/schemas:schema_tests` validates the built bundle and reports no violation. |

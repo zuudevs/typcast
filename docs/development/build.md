@@ -70,16 +70,19 @@ root.
 
 | Check | Result |
 |---|---|
-| `bazel build //...` | Pass, 26 targets. |
-| `bazel test //...` | Pass, 5 test targets: 7 unittest cases, 41 publisher cases, 10 version cases, 1 documentation check, 1 schema bundle check. |
+| `bazel build //...` | Pass, 31 targets. |
+| `bazel test //...` | Pass, 7 test targets: 7 unittest cases, 41 publisher cases, 10 version cases, 18 documentation gate cases, 4 link check cases, 1 documentation check, 1 schema bundle check. |
 | `bazel build //specs/schemas:schema_bundle` | Pass, 6 schema files. |
 | `bazel build //specs/schemas:schema_manifest` | Pass, 6 paths. |
 | `bazel build //specs/schemas:archive` | Pass, 6 members, deterministic gzip tarball. |
 | `bazel test //specs/schemas:schema_tests` | Pass, 6 bundle files, 0 violations. |
-| `bazel test //scripts:docs_checks` | Pass, 57 files, 452 requirements, and 3 workflows checked, 0 errors. |
+| `bazel test //scripts:docs_checks` | Pass, 57 files, 455 requirements, and 3 workflows checked, 0 errors. |
 | `bazel test //scripts/tests:version_tests` | Pass, 10 cases. |
+| `bazel test //scripts/tests:docs_tests` | Pass, 18 cases. |
+| `bazel test //scripts/tests:link_tests` | Pass, 4 cases. |
 | `bazel test //tools/publish/tests:publish_tests` | Pass, 41 publisher cases. |
-| `bazel query "kind(rule, //...)"` | 26 rules; 5 test targets. |
+| `bazel run //scripts:check_links` | Pass, 4 external links checked, 0 unreachable. |
+| `bazel query "kind(rule, //...)"` | 31 rules; 7 test targets. |
 | `--test_filter` on the unittest target | Ignored; all 7 cases run. |
 
 The schema bundle contains:
@@ -96,7 +99,7 @@ bazel-bin/specs/schemas/
 
 ## Current targets
 
-`bazel query "kind(rule, //...)"` reports 26 rules. All of them:
+`bazel query "kind(rule, //...)"` reports 31 rules. All of them:
 
 | Target | Kind | Purpose |
 |---|---|---|
@@ -108,7 +111,12 @@ bazel-bin/specs/schemas/
 | `//tools/publish/tests:publish_tests` | `py_test` | Publisher tests. |
 | `//scripts:check_version` | `py_binary` | Release version check. |
 | `//scripts:check_version_lib` | `py_library` | Release version check library. |
+| `//scripts:check_links` | `py_binary` | External link check of the documents. |
+| `//scripts:check_links_lib` | `py_library` | External link check library. |
 | `//scripts:docs_checks` | `py_test` | Documentation, requirement, decision, and workflow checks. |
+| `//scripts:docs_lib` | `py_library` | Documentation check library. |
+| `//scripts/tests:docs_tests` | `py_test` | Eighteen documentation check tests. |
+| `//scripts/tests:link_tests` | `py_test` | Four external link check tests. |
 | `//scripts/tests:version_tests` | `py_test` | Ten release version check tests. |
 | `//:docs_sources` | `filegroup` | The documents that the checks read. |
 | `//:release_manifests` | `filegroup` | The manifests that carry the release version. |

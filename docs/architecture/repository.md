@@ -143,6 +143,9 @@ Current targets include:
 | `//tools/publish:publish_schemas_lib` | Publisher library. |
 | `//tools/publish/tests:publish_tests` | Forty-one publisher unit tests. |
 | `//scripts:docs_checks` | Documentation, requirement, and decision checks. |
+| `//scripts:check_links` | External link check of the documents. |
+| `//scripts/tests:docs_tests` | Eighteen documentation check tests. |
+| `//scripts/tests:link_tests` | Four external link check tests. |
 | `//specs/schemas:schema_bundle` | Six staged or generated schema files. |
 | `//specs/schemas:schema_manifest` | The names of the bundle files. |
 | `//specs/schemas:archive` | The deterministic archive of the bundle. |

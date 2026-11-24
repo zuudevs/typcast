@@ -28,6 +28,7 @@ flowchart TD
   PV --> B["Build"]
   PV --> F["Fast tests"]
   PV --> D["Docs gate"]
+  PV --> L["Link check"]
   PV --> S["Security checks"]
   M["Push to main"] --> MI["Main integration"]
   MI --> FT["Full tests"]
@@ -45,8 +46,8 @@ flowchart TD
 
 | File | Trigger | Jobs |
 |---|---|---|
-| `.github/workflows/pr.yml` | `pull_request` on `main`, manual | `Build`, `Test`, `Clean build`, `Documentation gate` |
-| `.github/workflows/main.yml` | `push` to `main`, manual | The same four jobs |
+| `.github/workflows/pr.yml` | `pull_request` on `main`, manual | `Build`, `Test`, `Clean build`, `Documentation gate`, `Link check` |
+| `.github/workflows/main.yml` | `push` to `main`, manual | The same five jobs |
 | `.github/workflows/release.yml` | `push` of a `v*` tag, manual | `Verify`, `Published schema bundle` |
 
 Every job installs Bazelisk and reads the Bazel version from `.bazelversion`.
@@ -54,7 +55,9 @@ The `Build` and `Test` jobs run on `windows-latest` and `ubuntu-latest`. The
 `Clean build` job runs on Linux with every cache disabled, so it proves that
 the build does not depend on a warm cache or on an untracked file. The
 `Documentation gate` job runs `bazel test //scripts:docs_checks` on its own,
-so that a reviewer sees the documentation result as a check of its own.
+so that a reviewer sees the documentation result as a check of its own. The
+`Link check` job runs `bazel run //scripts:check_links`; it needs the network
+and reports warnings only, so it never blocks a merge.
 
 The release lane checks the version consistency of the manifests and the tag,
 it builds and tests the tagged commit, it compares the published schema bundle
@@ -259,14 +262,14 @@ cache or on untracked files.
 | Item | Current |
 |---|---|
 | Workflows | Three: `.github/workflows/pr.yml`, `main.yml`, and `release.yml`. |
-| Pull request checks | `Build`, `Test`, `Clean build`, and `Documentation gate`, on Windows and Linux. |
+| Pull request checks | `Build`, `Test`, `Clean build`, `Documentation gate`, and `Link check`. The first four run on Windows and Linux; the link check runs on Linux. |
 | Cache | Bazel cache per operating system, keyed by version, lockfile, and build files. |
 | Matrix | The operating system dimension. The runtime dimensions wait for the SDK. |
 | Action pinning | Every action is pinned to a commit SHA. The repository gate enforces it. |
 | Release lane | Verifies the version, the tagged build, the published bundle, and the raw URLs. It does not publish. |
 | Release environment | None. |
 | Trusted publishing | None. |
-| Required checks | The six checks of the pull request lane. The branch protection of `main` requires them. |
+| Required checks | The six checks of the pull request lane. The branch protection of `main` requires them. The link check runs as well, but it reports warnings only and is not required. |
 | Published schema bundle | None; the release commit step is not implemented. |
 
 The first pull request run of the workflows passed on 2026-11-24: the build,
@@ -304,7 +307,7 @@ starts with the current `.bazelrc`.
 | CI-024 | The CI matrix MUST cover Windows and Linux, Python 3.11 to 3.14, Node.js 22 and 24, and Typst 0.15.1, with the pull request lane limited to the minimum and newest Python versions. | CONFIRMED | Matrix review. |
 | CI-025 | The workflow files MUST be added in a separate implementation change. | IMPLEMENTED | The three workflow files are in their own commits. |
 | CI-026 | The release lane MUST verify that the tagged commit contains the complete published schema bundle and that every published schema resolves at its versioned raw URL. | CONFIRMED | The release lane runs `publish_schemas check` and `publish_schemas verify`. The check has not run against a tag, because no release exists yet. |
-| CI-027 | The pull request and main lanes MUST run the Bazel build and the test lane on Windows and Linux, and the release lane MUST verify the version consistency, the tagged build, the published bundle, and the versioned raw URLs. | IMPLEMENTED | The three workflow files; the first pull request run passed on 2026-11-24. |
+| CI-027 | The pull request and main lanes MUST run the Bazel build and the test lane on Windows and Linux, MUST run the documentation gate and the external link check, and the release lane MUST verify the version consistency, the tagged build, the published bundle, and the versioned raw URLs. | IMPLEMENTED | The three workflow files; the first pull request run passed on 2026-11-24. |
 | CI-028 | The repository gate MUST reject an action that is not pinned to a commit SHA, a workflow without a permissions block, a pull request workflow with write access, a pull request workflow that reads a secret, and a workflow that uses `pull_request_target`. | IMPLEMENTED | `scripts/validate_docs.py`; `//scripts:docs_checks` checks three workflow files. |
 
 ## Open questions
