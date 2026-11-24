@@ -1,0 +1,25 @@
+load("@rules_python//python:defs.bzl", "py_binary", "py_library")
+
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+py_library(
+    name = "publish_schemas_lib",
+    srcs = glob(
+        ["src/typcast_publish/**/*.py"],
+        exclude = ["src/typcast_publish/__main__.py"],
+    ),
+    imports = ["src"],
+)
+
+py_binary(
+    name = "publish_schemas",
+    srcs = [
+        "src/typcast_publish/__main__.py",
+    ],
+    main = "src/typcast_publish/__main__.py",
+    deps = [
+        ":publish_schemas_lib",
+    ],
+)
