@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://typcast.local/schemas/utilities/bound.schema.json",
+  "type": "object",
+  "properties": {
+    "left": { "$ref": "../api/types/length.schema.json" },
+    "top": { "$ref": "../api/types/length.schema.json" },
+    "right": { "$ref": "../api/types/length.schema.json" },
+    "bottom": { "$ref": "../api/types/length.schema.json" }
+  }
+}

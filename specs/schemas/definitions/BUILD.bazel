@@ -3,5 +3,5 @@ package(
 )
 
 exports_files([
-    "utilities/bound.schema.json",
+    "bound.schema.json",
 ])
