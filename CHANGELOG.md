@@ -32,7 +32,8 @@ No release has been published yet. Every change so far is listed under
   workflow files.
 - Three GitHub Actions workflows: pull request validation, main integration,
   and release verification. The pull request lane builds, tests, and checks
-  the repository on Windows and Linux.
+  the repository on Windows and Linux, and the six checks are required before
+  a merge into `main`.
 - A pull request template at `.github/PULL_REQUEST_TEMPLATE.md`, this
   changelog, a contributing guide, and a code of conduct.
 - The security policy and the Apache-2.0 license.

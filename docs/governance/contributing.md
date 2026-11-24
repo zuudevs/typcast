@@ -212,8 +212,8 @@ explains how a requirement, a decision, and the changelog are updated.
 | `CHANGELOG.md` | CLOSED. Present at the repository root. |
 | `SECURITY.md` | CLOSED. Present at the repository root. |
 | `LICENSE` | CLOSED. Present at the repository root. |
-| Branch protection | OPEN |
-| Required checks | OPEN |
+| Branch protection | CLOSED. `main` is protected: the required checks must pass, one approval is required, force pushes and deletions are disabled, and a conversation must be resolved. |
+| Required checks | CLOSED. The six checks of the pull request lane are required: `Build`, `Test`, and `Clean build` on Windows and Linux, and the `Documentation gate`. |
 | `CODE_OF_CONDUCT.md` | CLOSED. Present at the repository root. |
 
 ## Requirements
@@ -222,8 +222,8 @@ explains how a requirement, a decision, and the changelog are updated.
 |---|---|---|---|
 | GOV-001 | Development MUST be trunk-based with short-lived branches. | CONFIRMED | Process review. |
 | GOV-002 | Pull requests MUST target `main`. | CONFIRMED | Repository settings. |
-| GOV-003 | At least one maintainer approval MUST be required. | CONFIRMED | Branch protection. |
-| GOV-004 | Required CI checks MUST pass before merge. | CONFIRMED | Branch protection. |
+| GOV-003 | At least one maintainer approval MUST be required. | IMPLEMENTED | Branch protection of `main` requires one approving review. |
+| GOV-004 | Required CI checks MUST pass before merge. | IMPLEMENTED | Branch protection of `main` requires the six checks of the pull request lane. |
 | GOV-005 | Commits MUST follow Conventional Commits. | CONFIRMED | Review. |
 | GOV-006 | The repository MUST have exactly one pull request template at `.github/PULL_REQUEST_TEMPLATE.md`, and it MUST cover tests, documentation, changelog, and version impact. | IMPLEMENTED | `.github/PULL_REQUEST_TEMPLATE.md`. |
 | GOV-007 | Issue templates are DEFERRED for the MVP; an issue is a free-form report. | DEFERRED | Scope review. |
@@ -232,7 +232,7 @@ explains how a requirement, a decision, and the changelog are updated.
 | GOV-010 | CODEOWNERS MUST be added when maintainer count requires it. | DEFERRED | Future review. |
 | GOV-011 | Significant decisions MUST use an ADR. | CONFIRMED | ADR review. |
 | GOV-012 | Security reports MUST use a private channel. | CONFIRMED | `SECURITY.md`. |
-| GOV-013 | Direct pushes to `main` MUST be disabled. | CONFIRMED | Branch protection. |
+| GOV-013 | Direct pushes to `main` MUST be disabled. | IMPLEMENTED | Branch protection of `main`; an administrator may merge a pull request without a second reviewer while the project has one maintainer. |
 | GOV-014 | Breaking changes MUST be marked in the commit and changelog. | CONFIRMED | Review. |
 | GOV-015 | A change to a confirmed requirement MUST link an approving ADR or scope change. | CONFIRMED | Review. |
 | GOV-016 | A maintainer MUST NOT approve their own change without a second reviewer when available. | CONFIRMED | Review. |

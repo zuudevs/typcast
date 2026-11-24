@@ -190,7 +190,6 @@ tarball, and the schema archive. Target names are specified in
 | TS package name mismatch | Publication would use the wrong name. | TypeScript SDK |
 | No shared fixtures | Parity cannot be tested. | Testing |
 | No packaging targets | Release cannot produce artifacts. | Release |
-| No required checks | The merge is not blocked by a failing lane. The workflows run, but the branch protection of `main` is not configured. | CI |
 
 ## Open questions
 

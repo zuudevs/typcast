@@ -167,6 +167,9 @@ a target for the MVP and is not yet verified in the repository.
 | `GOV-006` | The repository has exactly one pull request template at `.github/PULL_REQUEST_TEMPLATE.md`, with the summary, classification, scope, requirement traceability, architecture and API impact, testing and verification, documentation, compatibility and release impact, security, final checklist, and reviewer notes sections. | `.github/PULL_REQUEST_TEMPLATE.md`. |
 | `GOV-021` | The template records the commands that were run and their results, and states that an inapplicable section or checkbox is removed or marked "Not applicable". | `.github/PULL_REQUEST_TEMPLATE.md`. |
 | `GOV-018` | `CODE_OF_CONDUCT.md` carries the Contributor Covenant 2.1 text and names the maintainer contact for reports. | `CODE_OF_CONDUCT.md` at the repository root. |
+| `GOV-003` | The branch protection of `main` requires one approving review. | The branch protection settings of the repository. |
+| `GOV-004` | The branch protection of `main` requires the six checks of the pull request lane. | The branch protection settings of the repository; the checks passed on 2026-11-24. |
+| `GOV-013` | Direct pushes to `main` are blocked; an administrator may merge a pull request without a second reviewer while the project has one maintainer. | The branch protection settings of the repository. |
 
 ## Traceability rules
 

@@ -266,7 +266,7 @@ cache or on untracked files.
 | Release lane | Verifies the version, the tagged build, the published bundle, and the raw URLs. It does not publish. |
 | Release environment | None. |
 | Trusted publishing | None. |
-| Required checks | None. The branch protection of `main` is not configured. |
+| Required checks | The six checks of the pull request lane. The branch protection of `main` requires them. |
 | Published schema bundle | None; the release commit step is not implemented. |
 
 The first pull request run of the workflows passed on 2026-11-24: the build,
