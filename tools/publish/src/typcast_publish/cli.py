@@ -7,10 +7,13 @@ from typing import Sequence
 
 from typcast_publish.errors import PublishError
 from typcast_publish.publisher import (
+    DEFAULT_TIMEOUT,
+    PUBLISHED_BASE,
     check_published_bundle,
     publish_bundle,
     published_url,
     read_manifest,
+    verify_published_urls,
     write_manifest,
 )
 
@@ -101,6 +104,41 @@ def build_parser() -> argparse.ArgumentParser:
         help="Directory that holds the published bundle.",
     )
 
+    verify = commands.add_parser(
+        "verify",
+        help="Check that every published schema resolves at its versioned raw URL.",
+    )
+    verify.add_argument(
+        "--version",
+        required=True,
+        help="Release tag, for example v1.0.0.",
+    )
+    verify.add_argument(
+        "--manifest",
+        "-m",
+        type=Path,
+        required=True,
+        help="Manifest of the bundle files.",
+    )
+    verify.add_argument(
+        "--published",
+        "-p",
+        type=Path,
+        required=True,
+        help="Directory that holds the published bundle.",
+    )
+    verify.add_argument(
+        "--base-url",
+        default=PUBLISHED_BASE,
+        help="Base URL of the published files.",
+    )
+    verify.add_argument(
+        "--timeout",
+        type=float,
+        default=DEFAULT_TIMEOUT,
+        help="Timeout of one request, in seconds.",
+    )
+
     return parser
 
 
@@ -135,6 +173,23 @@ def _check(args: argparse.Namespace) -> int:
     return 0
 
 
+def _verify(args: argparse.Namespace) -> int:
+    manifest = read_manifest(args.manifest)
+    problems = verify_published_urls(
+        args.version,
+        manifest,
+        args.published,
+        base_url=args.base_url,
+        timeout=args.timeout,
+    )
+    for problem in problems:
+        print(f"typcast-publish: error: {problem}", file=sys.stderr)
+    if problems:
+        return 1
+    print(f"every published schema resolves at its versioned raw URL ({len(manifest)} files)")
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
 
@@ -143,6 +198,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _manifest(args)
         if args.command == "publish":
             return _publish(args)
+        if args.command == "verify":
+            return _verify(args)
         return _check(args)
     except PublishError as error:
         print(f"typcast-publish: error: {error}", file=sys.stderr)

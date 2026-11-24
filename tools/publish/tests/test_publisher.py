@@ -1,6 +1,9 @@
+import functools
+import http.server
 import json
 import os
 import tempfile
+import threading
 import unittest
 from pathlib import Path, PurePosixPath
 
@@ -10,6 +13,7 @@ from typcast_publish.publisher import (
     publish_bundle,
     published_url,
     read_manifest,
+    verify_published_urls,
     write_manifest,
 )
 
@@ -398,6 +402,88 @@ class PublishedBundleTests(unittest.TestCase):
         )
 
         self.assertEqual(problems, [])
+
+
+class QuietHandler(http.server.SimpleHTTPRequestHandler):
+    """A request handler that does not write to the test log."""
+
+    def log_message(self, format: str, *args: object) -> None:
+        return
+
+
+class PublishedUrlTests(unittest.TestCase):
+    """Checks that the published URLs serve the committed files."""
+
+    def setUp(self) -> None:
+        self.temporary_directory = tempfile.TemporaryDirectory()
+        self.root = Path(self.temporary_directory.name)
+        self.published = self.root / "published"
+        self.published.mkdir()
+        self.served = self.root / "served" / "v1.0.0" / "specs" / "schemas"
+        self.served.mkdir(parents=True)
+        (self.published / "validator.schema.json").write_text("{}\n", encoding="utf-8")
+        (self.served / "validator.schema.json").write_text("{}\n", encoding="utf-8")
+        self.manifest = ["validator.schema.json"]
+
+        handler = functools.partial(QuietHandler, directory=str(self.root / "served"))
+        self.server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), handler)
+        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
+        self.thread.start()
+        self.base_url = f"http://127.0.0.1:{self.server.server_address[1]}/"
+
+    def tearDown(self) -> None:
+        self.server.shutdown()
+        self.server.server_close()
+        self.thread.join(timeout=5)
+        self.temporary_directory.cleanup()
+
+    def verify(self) -> list[str]:
+        return verify_published_urls(
+            "v1.0.0",
+            self.manifest,
+            self.published,
+            base_url=self.base_url,
+            timeout=5.0,
+        )
+
+    def test_verify_accepts_a_resolved_url(self) -> None:
+        self.assertEqual(self.verify(), [])
+
+    def test_verify_reports_a_different_file(self) -> None:
+        (self.served / "validator.schema.json").write_text("{}\n\n", encoding="utf-8")
+
+        problems = self.verify()
+
+        self.assertEqual(len(problems), 1)
+        self.assertIn("differs from the committed file", problems[0])
+
+    def test_verify_reports_a_missing_committed_file(self) -> None:
+        (self.published / "validator.schema.json").unlink()
+
+        problems = self.verify()
+
+        self.assertEqual(
+            problems,
+            ["missing published file: validator.schema.json"],
+        )
+
+    def test_verify_reports_an_unreachable_url(self) -> None:
+        self.server.shutdown()
+        self.server.server_close()
+
+        problems = self.verify()
+
+        self.assertEqual(len(problems), 1)
+        self.assertIn("cannot fetch", problems[0])
+
+    def test_verify_rejects_a_development_version(self) -> None:
+        with self.assertRaises(PublishError):
+            verify_published_urls(
+                "main",
+                self.manifest,
+                self.published,
+                base_url=self.base_url,
+            )
 
 
 if __name__ == "__main__":

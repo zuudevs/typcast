@@ -13,6 +13,8 @@ See `docs/decisions/ADR-0022-release-artifacts-schema-distribution-and-response-
 
 import json
 import re
+import urllib.error
+import urllib.request
 from pathlib import Path
 from typing import Any
 
@@ -22,6 +24,8 @@ REPOSITORY = "zuudevs/typcast"
 PUBLISHED_BASE = f"https://raw.githubusercontent.com/{REPOSITORY}/"
 SCHEMA_ROOT = "specs/schemas"
 RELEASE_TAG = re.compile(r"^v\d+\.\d+\.\d+$")
+USER_AGENT = "typcast-publish"
+DEFAULT_TIMEOUT = 30.0
 
 
 def validate_version(version: str) -> str:
@@ -38,10 +42,14 @@ def validate_version(version: str) -> str:
     return version
 
 
-def published_url(version: str, relative_path: str) -> str:
+def published_url(
+    version: str,
+    relative_path: str,
+    base_url: str = PUBLISHED_BASE,
+) -> str:
     """Returns the published URL of a schema file."""
     validate_version(version)
-    return f"{PUBLISHED_BASE}{version}/{SCHEMA_ROOT}/{relative_path}"
+    return f"{base_url.rstrip('/')}/{version}/{SCHEMA_ROOT}/{relative_path}"
 
 
 def render_json_document(value: Any) -> str:
@@ -177,5 +185,45 @@ def check_published_bundle(
         relative_path = path.relative_to(published_dir).as_posix()
         if relative_path not in expected:
             problems.append(f"unexpected published file: {relative_path}")
+
+    return problems
+
+
+def fetch_published_file(url: str, timeout: float = DEFAULT_TIMEOUT) -> bytes:
+    """Returns the bytes that a published URL serves."""
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+        return response.read()
+
+
+def verify_published_urls(
+    version: str,
+    manifest: list[str],
+    published_dir: Path,
+    base_url: str = PUBLISHED_BASE,
+    timeout: float = DEFAULT_TIMEOUT,
+) -> list[str]:
+    """Fetches every published schema and compares it with the committed file.
+
+    Returns one message per difference. An empty list means that every
+    published schema resolves at its versioned raw URL and that the served
+    file is the file that the tagged commit carries.
+    """
+    validate_version(version)
+    problems: list[str] = []
+
+    for relative_path in manifest:
+        url = published_url(version, relative_path, base_url=base_url)
+        target = published_dir / relative_path
+        try:
+            payload = fetch_published_file(url, timeout)
+        except (urllib.error.URLError, OSError) as error:
+            problems.append(f"cannot fetch {url}: {error}")
+            continue
+        if not target.is_file():
+            problems.append(f"missing published file: {relative_path}")
+            continue
+        if payload != target.read_bytes():
+            problems.append(f"the published URL differs from the committed file: {url}")
 
     return problems
