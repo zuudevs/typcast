@@ -1,0 +1,19 @@
+load("@rules_python//python:defs.bzl", "py_test")
+
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+py_test(
+    name = "version_tests",
+    size = "small",
+    srcs = [
+        "__init__.py",
+        "test_check_version.py",
+    ],
+    main = "test_check_version.py",
+    data = ["//:release_manifests"],
+    deps = [
+        "//scripts:check_version_lib",
+    ],
+)

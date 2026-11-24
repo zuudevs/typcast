@@ -1,7 +1,27 @@
-load("@rules_python//python:defs.bzl", "py_test")
+load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
 
 package(
     default_visibility = ["//visibility:public"],
+)
+
+# The version check of the release gate. The library is separate so that the
+# unit tests import it.
+py_library(
+    name = "check_version_lib",
+    srcs = [
+        "__init__.py",
+        "check_version.py",
+    ],
+    imports = ["."],
+)
+
+py_binary(
+    name = "check_version",
+    srcs = [
+        "check_version.py",
+    ],
+    main = "check_version.py",
+    data = ["//:release_manifests"],
 )
 
 # The documents that the checks read. The group lives in the root package so
