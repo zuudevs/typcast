@@ -75,7 +75,7 @@ root.
 | `bazel build //specs/schemas:schema_bundle` | Pass, 5 schema files. |
 | `bazel build //specs/schemas:schema_manifest` | Pass, 5 paths. |
 | `bazel test //specs/schemas:schema_tests` | Pass, 5 bundle files, 26 tracked violations, 0 errors. |
-| `bazel test //scripts:docs_checks` | Pass, 53 files and 441 requirements checked, 0 errors. |
+| `bazel test //scripts:docs_checks` | Pass, 56 files and 441 requirements checked, 0 errors. |
 | `bazel test //tools/publish/tests:publish_tests` | Pass, 23 publisher cases. |
 | `bazel query "kind(rule, //...)"` | 19 rules; 4 test targets. |
 | `--test_filter` on the unittest target | Ignored; all 7 cases run. |

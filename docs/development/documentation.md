@@ -82,9 +82,10 @@ normative statements without an ID.
 - External links use HTTPS where available.
 - Link text describes the target.
 - A link to an external resource does not imply endorsement.
-- The docs gate checks internal links and attempts external links with a timeout.
+- The docs gate checks internal links. External links are not checked yet.
 - A broken internal link is blocking. An unreachable external link is a
-  warning, because an external outage must not block an unrelated change.
+  warning in the full gate, because an external outage must not block an
+  unrelated change.
 
 ## Code examples
 
@@ -161,7 +162,10 @@ bazel test //scripts:docs_checks
 | Schemas | Valid JSON, and every relative `$ref` resolves except the references that are tracked as open defects. |
 
 A new document must be added to the `docs_sources` group in the root
-`BUILD.bazel`, so that it becomes part of the gate.
+`BUILD.bazel`, so that it becomes part of the gate. The group holds the root
+policy files `README.md`, `CHANGELOG.md`, `CODE_OF_CONDUCT.md`,
+`CONTRIBUTING.md`, `SECURITY.md`, `LICENSE`, `.gitattributes`, and
+`.editorconfig`, the pull request template, and every document under `docs/`.
 
 The script does not replace the full gate. Markdown lint, external link
 checks, and a Mermaid parser are still not configured, and the checks do not
@@ -175,6 +179,7 @@ run in CI yet.
 | README code fences | Fixed; README uses standard fences and LF line endings. |
 | `.gitattributes` | Present. It pins LF for text files and marks binary assets as binary. |
 | `.editorconfig` | Present. It pins UTF-8, LF, final newline, and indentation rules. |
+| Root policy files | `README.md`, `CHANGELOG.md`, `CODE_OF_CONDUCT.md`, `CONTRIBUTING.md`, `SECURITY.md`, and `LICENSE` are present and covered by the gate. |
 | Repository checks | Implemented in `//scripts:docs_checks`. |
 | Markdown lint | Not configured. The repository script checks the structure. |
 | Link checker | Internal links are checked by the repository script. External links are not checked. |

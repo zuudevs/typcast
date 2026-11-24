@@ -257,7 +257,7 @@ Stable `1.0.0`:
 | npm private | `true`. |
 | Packaging targets | None. |
 | Release workflow | None. |
-| Changelog | None. |
+| Changelog | `CHANGELOG.md` present at the repository root. It has no released entry yet. |
 | License | `LICENSE` present at the repository root. |
 | Security policy | `SECURITY.md` present at the repository root. |
 | Tag | None. |

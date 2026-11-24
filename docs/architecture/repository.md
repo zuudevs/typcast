@@ -31,6 +31,9 @@ creating circular dependencies.
 | `docs/` | Product, architecture, contract, and engineering docs. | This document set. |
 | `.github/PULL_REQUEST_TEMPLATE.md` | The single pull request template. | Present. |
 | `.github/workflows/` | CI and release workflows. | Placeholder only. |
+| `CONTRIBUTING.md` | The contributing guide. | Present. |
+| `CODE_OF_CONDUCT.md` | The code of conduct, Contributor Covenant 2.1. | Present. |
+| `CHANGELOG.md` | The changelog, Keep a Changelog style. | Present. |
 
 ## Dependency direction
 

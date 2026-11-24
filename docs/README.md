@@ -35,7 +35,8 @@ are implemented.
 
 Architecture decisions are recorded in `decisions/`. The decision index is
 `decisions/README.md`. The repository also carries the root-level policy files
-`LICENSE`, `SECURITY.md`, `.gitattributes`, and `.editorconfig`.
+`LICENSE`, `SECURITY.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`,
+`CHANGELOG.md`, `.gitattributes`, and `.editorconfig`.
 
 ## Document map
 
@@ -116,6 +117,9 @@ requirement ID and a status of `CONFIRMED` or `IMPLEMENTED`.
 | Pull request template | Implemented | `.github/PULL_REQUEST_TEMPLATE.md`. |
 | License | Implemented | `LICENSE` at the repository root. |
 | Security policy | Implemented | `SECURITY.md` at the repository root. |
+| Contributing guide | Implemented | `CONTRIBUTING.md` at the repository root. |
+| Code of conduct | Implemented | `CODE_OF_CONDUCT.md` at the repository root, Contributor Covenant 2.1. |
+| Changelog | Implemented | `CHANGELOG.md` at the repository root, Keep a Changelog style. |
 | Text file normalization | Implemented | `.gitattributes` and `.editorconfig` at the repository root. |
 
 ## Change control

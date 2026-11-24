@@ -143,7 +143,10 @@ adapter, packaging, and CI workflows are not implemented yet.
 
 Changes enter through pull requests. Use the pull request template at
 `.github/PULL_REQUEST_TEMPLATE.md` and follow the
-[contribution and governance rules](docs/governance/contributing.md).
+[contribution and governance rules](docs/governance/contributing.md). The
+[contributing guide](CONTRIBUTING.md) lists the checks to run, and the
+[code of conduct](CODE_OF_CONDUCT.md) states the expectations for the
+community. User-visible changes are recorded in [`CHANGELOG.md`](CHANGELOG.md).
 
 ## License
 

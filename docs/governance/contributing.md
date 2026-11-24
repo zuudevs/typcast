@@ -191,25 +191,30 @@ CODEOWNERS is optional for the MVP. It becomes required when:
 
 ## Code of conduct
 
-The project adopts the Contributor Covenant 2.1. A `CODE_OF_CONDUCT.md` file
-must be added at the repository root before the project accepts public
-contributions. The file is copied verbatim from the Contributor Covenant 2.1
-text and names the maintainer contact for reports.
+The project adopts the Contributor Covenant 2.1. `CODE_OF_CONDUCT.md` is
+present at the repository root. The file is copied verbatim from the
+Contributor Covenant 2.1 text and names the maintainer contact for reports.
+
+## Contributing guide
+
+`CONTRIBUTING.md` is present at the repository root. It is the entry point for
+a new contributor: it links to this document, lists the checks to run, and
+explains how a requirement, a decision, and the changelog are updated.
 
 ## Current gaps
 
 | Gap | Status |
 |---|---|
-| `CONTRIBUTING.md` at repository root | OPEN |
+| `CONTRIBUTING.md` at repository root | CLOSED. Present at the repository root. |
 | `CODEOWNERS` | DEFERRED |
 | PR template | CLOSED. Present at `.github/PULL_REQUEST_TEMPLATE.md`. |
 | Issue templates | DEFERRED |
-| `CHANGELOG.md` | OPEN |
+| `CHANGELOG.md` | CLOSED. Present at the repository root. |
 | `SECURITY.md` | CLOSED. Present at the repository root. |
 | `LICENSE` | CLOSED. Present at the repository root. |
 | Branch protection | OPEN |
 | Required checks | OPEN |
-| `CODE_OF_CONDUCT.md` | OPEN |
+| `CODE_OF_CONDUCT.md` | CLOSED. Present at the repository root. |
 
 ## Requirements
 
@@ -222,7 +227,7 @@ text and names the maintainer contact for reports.
 | GOV-005 | Commits MUST follow Conventional Commits. | CONFIRMED | Review. |
 | GOV-006 | The repository MUST have exactly one pull request template at `.github/PULL_REQUEST_TEMPLATE.md`, and it MUST cover tests, documentation, changelog, and version impact. | IMPLEMENTED | `.github/PULL_REQUEST_TEMPLATE.md`. |
 | GOV-007 | Issue templates are DEFERRED for the MVP; an issue is a free-form report. | DEFERRED | Scope review. |
-| GOV-008 | A changelog MUST be maintained and reviewed at release. | CONFIRMED | Release review. |
+| GOV-008 | A changelog MUST be maintained and reviewed at release. | CONFIRMED | `CHANGELOG.md` present; the release review is pending. |
 | GOV-009 | Release MUST require manual environment approval. | CONFIRMED | Environment settings. |
 | GOV-010 | CODEOWNERS MUST be added when maintainer count requires it. | DEFERRED | Future review. |
 | GOV-011 | Significant decisions MUST use an ADR. | CONFIRMED | ADR review. |
@@ -232,7 +237,7 @@ text and names the maintainer contact for reports.
 | GOV-015 | A change to a confirmed requirement MUST link an approving ADR or scope change. | CONFIRMED | Review. |
 | GOV-016 | A maintainer MUST NOT approve their own change without a second reviewer when available. | CONFIRMED | Review. |
 | GOV-017 | The repository MUST publish a roadmap or scope document. | CONFIRMED | Documentation review. |
-| GOV-018 | The project MUST adopt the Contributor Covenant 2.1 and MUST add `CODE_OF_CONDUCT.md` before accepting public contributions. | CONFIRMED | Repository review. |
+| GOV-018 | The project MUST adopt the Contributor Covenant 2.1 and MUST add `CODE_OF_CONDUCT.md` before accepting public contributions. | IMPLEMENTED | `CODE_OF_CONDUCT.md` at the repository root. |
 | GOV-019 | Contributions MUST be accepted under Apache-2.0. | IMPLEMENTED | `LICENSE` present at the repository root. |
 | GOV-020 | Release notes MUST describe user-visible changes and known issues. | CONFIRMED | Release review. |
 | GOV-021 | The pull request template MUST record the commands that were run and their results, and MUST allow a section or a checkbox that does not apply to be removed or marked "Not applicable". | IMPLEMENTED | `.github/PULL_REQUEST_TEMPLATE.md`. |
