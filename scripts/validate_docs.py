@@ -126,6 +126,9 @@ def find_root(explicit: str | None) -> Path:
 def markdown_files(root: Path) -> list[Path]:
     files = [
         root / "README.md",
+        root / "CHANGELOG.md",
+        root / "CODE_OF_CONDUCT.md",
+        root / "CONTRIBUTING.md",
         root / "SECURITY.md",
         root / "LICENSE",
         root / ".gitattributes",
