@@ -54,6 +54,34 @@ class JsonTemplateGeneratorTests(unittest.TestCase):
         with self.assertRaisesRegex(CodegenError, "was not found"):
             generate_json_text(template)
 
+    def test_empty_value_in_selected_column_reports_an_error(self) -> None:
+        catalog = self.root / "values.csv"
+        catalog.write_text(
+            "Value,Details\nalpha,First value\n,Details without a value\n",
+            encoding="utf-8",
+        )
+
+        template = self.root / "schema.json.tmpl"
+        template.write_text('{"enum": <./values.csv:Value>}', encoding="utf-8")
+
+        with self.assertRaisesRegex(CodegenError, "empty value"):
+            generate_json_text(template)
+
+    def test_fully_blank_rows_are_skipped(self) -> None:
+        catalog = self.root / "values.csv"
+        catalog.write_text(
+            "Value,Details\nalpha,First value\n,\nbeta,Second value\n",
+            encoding="utf-8",
+        )
+
+        template = self.root / "schema.json.tmpl"
+        template.write_text('{"enum": <./values.csv:Value>}', encoding="utf-8")
+
+        self.assertEqual(
+            json.loads(generate_json_text(template)),
+            {"enum": ["alpha", "beta"]},
+        )
+
     def test_invalid_json_reports_an_error(self) -> None:
         template = self.root / "invalid.json.tmpl"
         template.write_text('{"type": "string",}', encoding="utf-8")
