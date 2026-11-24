@@ -5,6 +5,11 @@ import sys
 from pathlib import Path
 from typing import Sequence
 
+from typcast_publish.archive import (
+    ARCHIVE_PREFIX,
+    bundle_sources,
+    write_archive,
+)
 from typcast_publish.errors import PublishError
 from typcast_publish.publisher import (
     DEFAULT_TIMEOUT,
@@ -139,6 +144,45 @@ def build_parser() -> argparse.ArgumentParser:
         help="Timeout of one request, in seconds.",
     )
 
+    archive = commands.add_parser(
+        "archive",
+        help="Write the deterministic archive of the schema bundle.",
+    )
+    archive.add_argument(
+        "--input",
+        "-i",
+        type=Path,
+        default=None,
+        help="Directory that holds the schema files.",
+    )
+    archive.add_argument(
+        "--manifest",
+        "-m",
+        type=Path,
+        default=None,
+        help="Manifest of the bundle files.",
+    )
+    archive.add_argument(
+        "--file",
+        dest="files",
+        action="append",
+        default=[],
+        metavar="NAME=PATH",
+        help="One bundle file: its path in the bundle and the path of the file.",
+    )
+    archive.add_argument(
+        "--output",
+        "-o",
+        type=Path,
+        required=True,
+        help="File that receives the archive.",
+    )
+    archive.add_argument(
+        "--prefix",
+        default=ARCHIVE_PREFIX,
+        help="Directory prefix inside the archive.",
+    )
+
     return parser
 
 
@@ -190,6 +234,30 @@ def _verify(args: argparse.Namespace) -> int:
     return 0
 
 
+def _archive(args: argparse.Namespace) -> int:
+    if args.files:
+        sources = []
+        for entry in args.files:
+            name, separator, path = entry.partition("=")
+            if not separator or not name or not path:
+                raise PublishError(
+                    f"invalid file entry {entry!r}; expected NAME=PATH"
+                )
+            sources.append((name, Path(path)))
+    else:
+        if args.input is None or args.manifest is None:
+            raise PublishError(
+                "the archive needs --input and --manifest, or one --file per member"
+            )
+        sources = bundle_sources(args.input, read_manifest(args.manifest))
+
+    names = write_archive(sources, args.output, prefix=args.prefix)
+    for name in names:
+        print(name)
+    print(f"wrote {len(names)} files to {args.output}")
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
 
@@ -200,6 +268,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _publish(args)
         if args.command == "verify":
             return _verify(args)
+        if args.command == "archive":
+            return _archive(args)
         return _check(args)
     except PublishError as error:
         print(f"typcast-publish: error: {error}", file=sys.stderr)

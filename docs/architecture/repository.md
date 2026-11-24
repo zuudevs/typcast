@@ -141,16 +141,17 @@ Current targets include:
 | `//tools/codegen/tests:unit_tests` | Seven generator unit tests. |
 | `//tools/publish:publish_schemas` | Publisher binary. |
 | `//tools/publish:publish_schemas_lib` | Publisher library. |
-| `//tools/publish/tests:publish_tests` | Twenty-three publisher unit tests. |
+| `//tools/publish/tests:publish_tests` | Forty-one publisher unit tests. |
 | `//scripts:docs_checks` | Documentation, requirement, and decision checks. |
-| `//specs/schemas:schema_bundle` | Five staged or generated schema files. |
+| `//specs/schemas:schema_bundle` | Six staged or generated schema files. |
 | `//specs/schemas:schema_manifest` | The names of the bundle files. |
+| `//specs/schemas:archive` | The deterministic archive of the bundle. |
 | `//specs/schemas:schema_tests` | Validates the built bundle against the schema contract. |
 | `//packages/python:typcast` | Python library placeholder. |
 | `//packages/typescript:typcast` | TypeScript project placeholder. |
 
-The MVP must add packaging targets for the Python wheel and sdist, the npm
-tarball, and the schema archive. Target names are specified in
+The MVP must add packaging targets for the Python wheel and sdist and for the
+npm tarball. The schema archive target exists. Target names are specified in
 `development/release.md`.
 
 ## Generated artifacts

@@ -100,13 +100,14 @@ requirement ID and a status of `CONFIRMED` or `IMPLEMENTED`.
 
 | Area | Current state | Evidence |
 |---|---|---|
-| Bazel build | Implemented | `bazel build //...` succeeds with 25 targets. |
-| Bazel test | Implemented for codegen, the publisher, the release version check, the repository checks, and the schema bundle | `bazel test //...` runs five test targets: seven unittest cases, 28 publisher cases, 10 version cases, the documentation check, and the schema bundle check. |
-| Documentation checks | Implemented | `//scripts:docs_checks` validates the documents, the requirement index, the ADR index, the schema references, and the workflow files. |
+| Bazel build | Implemented | `bazel build //...` succeeds with 26 targets. |
+| Bazel test | Implemented for codegen, the publisher, the release version check, the repository checks, and the schema bundle | `bazel test //...` runs five test targets: seven unittest cases, 41 publisher cases, 10 version cases, the documentation check, and the schema bundle check. |
+| Documentation checks | Implemented | `//scripts:docs_checks` validates the documents, the requirement index, the ADR index, the schema references, the workflow files, and the CODEOWNERS file. |
 | JSON Schema generator | Implemented | `tools/codegen/` and `bazel/codegen.bzl`. |
 | Schema bundle | Implemented | `//specs/schemas:schema_bundle` builds six files that implement the document IR. |
 | Schema bundle validation | Implemented | `//specs/schemas:schema_tests` validates the built bundle and reports no violation. |
 | Schema publisher | Implemented | `//tools/publish:publish_schemas` writes the published bundle with the identity of a release tag and verifies the versioned raw URLs. |
+| Schema archive | Implemented | `//specs/schemas:archive` builds a deterministic gzip tarball of the bundle. |
 | Release version check | Implemented | `//scripts:check_version` compares the manifests and the changelog with the tag. |
 | Python SDK | Placeholder | `packages/python/src/typcast/__init__.py` is empty. |
 | TypeScript SDK | Placeholder | `packages/typescript/src/index.ts` is empty and the package is private. |

@@ -2,11 +2,17 @@ import functools
 import http.server
 import json
 import os
+import tarfile
 import tempfile
 import threading
 import unittest
 from pathlib import Path
 
+from typcast_publish.archive import (
+    ARCHIVE_PREFIX,
+    bundle_sources,
+    write_archive,
+)
 from typcast_publish.errors import PublishError
 from typcast_publish.publisher import (
     check_published_bundle,
@@ -397,6 +403,148 @@ class PublishedBundleTests(unittest.TestCase):
         )
 
         self.assertEqual(problems, [])
+
+    def test_the_built_bundle_archives_to_the_manifest_files(self) -> None:
+        output = self.root / "archive.tar.gz"
+
+        names = write_archive(
+            bundle_sources(self.bundle, self.manifest),
+            output,
+        )
+
+        self.assertEqual(len(names), len(self.manifest))
+        with tarfile.open(output, mode="r:gz") as archive:
+            self.assertEqual(
+                archive.getnames(),
+                [f"{ARCHIVE_PREFIX}/{path}" for path in sorted(self.manifest)],
+            )
+
+    def test_the_archive_of_the_bundle_is_reproducible(self) -> None:
+        first = self.root / "first.tar.gz"
+        second = self.root / "second.tar.gz"
+
+        write_archive(bundle_sources(self.bundle, self.manifest), first)
+        write_archive(bundle_sources(self.bundle, self.manifest), second)
+
+        self.assertEqual(first.read_bytes(), second.read_bytes())
+
+
+class ArchiveTests(unittest.TestCase):
+    """Checks the deterministic archive of the schema bundle."""
+
+    def setUp(self) -> None:
+        self.temporary_directory = tempfile.TemporaryDirectory()
+        self.root = Path(self.temporary_directory.name)
+        self.bundle = self.root / "bundle"
+        (self.bundle / "api" / "types").mkdir(parents=True)
+        (self.bundle / "validator.schema.json").write_text(
+            '{"type": "object"}\n', encoding="utf-8"
+        )
+        (self.bundle / "api" / "types" / "paper.schema.json").write_text(
+            '{"type": "string"}\n', encoding="utf-8"
+        )
+        self.manifest = ["api/types/paper.schema.json", "validator.schema.json"]
+
+    def tearDown(self) -> None:
+        self.temporary_directory.cleanup()
+
+    def archive(self, name: str = "schemas.tar.gz") -> Path:
+        output = self.root / name
+        write_archive(bundle_sources(self.bundle, self.manifest), output)
+        return output
+
+    def test_the_archive_holds_every_manifest_file(self) -> None:
+        output = self.archive()
+
+        with tarfile.open(output, mode="r:gz") as archive:
+            names = archive.getnames()
+
+        self.assertEqual(
+            names,
+            [
+                f"{ARCHIVE_PREFIX}/api/types/paper.schema.json",
+                f"{ARCHIVE_PREFIX}/validator.schema.json",
+            ],
+        )
+
+    def test_the_archive_holds_the_content_of_the_bundle(self) -> None:
+        output = self.archive()
+
+        with tarfile.open(output, mode="r:gz") as archive:
+            for relative_path in self.manifest:
+                member = archive.extractfile(f"{ARCHIVE_PREFIX}/{relative_path}")
+                self.assertIsNotNone(member)
+                self.assertEqual(
+                    member.read(),
+                    (self.bundle / relative_path).read_bytes(),
+                )
+
+    def test_two_archives_are_identical(self) -> None:
+        first = self.archive("first.tar.gz").read_bytes()
+        second = self.archive("second.tar.gz").read_bytes()
+
+        self.assertEqual(first, second)
+
+    def test_the_archive_does_not_depend_on_the_file_time(self) -> None:
+        first = self.archive("first.tar.gz").read_bytes()
+        os.utime(self.bundle / "validator.schema.json", (1234567890, 1234567890))
+
+        second = self.archive("second.tar.gz").read_bytes()
+
+        self.assertEqual(first, second)
+
+    def test_the_archive_does_not_depend_on_the_output_path(self) -> None:
+        first = self.archive("first.tar.gz").read_bytes()
+        nested = self.root / "nested" / "directory"
+
+        second = nested / "second.tar.gz"
+        write_archive(bundle_sources(self.bundle, self.manifest), second)
+
+        self.assertEqual(first, second.read_bytes())
+
+    def test_the_gzip_header_has_no_timestamp_and_no_name(self) -> None:
+        data = self.archive().read_bytes()
+
+        self.assertEqual(data[:2], b"\x1f\x8b")
+        self.assertEqual(data[2], 0x08)
+        self.assertEqual(data[3], 0x00)
+        self.assertEqual(data[4:8], b"\x00\x00\x00\x00")
+
+    def test_the_member_metadata_is_fixed(self) -> None:
+        output = self.archive()
+
+        with tarfile.open(output, mode="r:gz") as archive:
+            member = archive.getmember(f"{ARCHIVE_PREFIX}/validator.schema.json")
+
+        self.assertEqual(member.mtime, 0)
+        self.assertEqual(member.uid, 0)
+        self.assertEqual(member.gid, 0)
+        self.assertEqual(member.uname, "")
+        self.assertEqual(member.gname, "")
+        self.assertEqual(member.mode, 0o644)
+        self.assertEqual(member.type, tarfile.REGTYPE)
+
+    def test_a_missing_file_is_rejected(self) -> None:
+        with self.assertRaises(PublishError):
+            write_archive(
+                [("missing.schema.json", self.bundle / "missing.schema.json")],
+                self.root / "archive.tar.gz",
+            )
+
+    def test_a_missing_bundle_is_rejected(self) -> None:
+        with self.assertRaises(PublishError):
+            bundle_sources(self.root / "missing", self.manifest)
+
+    def test_an_empty_manifest_is_rejected(self) -> None:
+        with self.assertRaises(PublishError):
+            bundle_sources(self.bundle, [])
+
+    def test_a_path_that_leaves_the_bundle_is_rejected(self) -> None:
+        with self.assertRaises(PublishError):
+            write_archive(
+                [("../outside.schema.json", self.bundle / "validator.schema.json")],
+                self.root / "archive.tar.gz",
+            )
 
 
 class QuietHandler(http.server.SimpleHTTPRequestHandler):

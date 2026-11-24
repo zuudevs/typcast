@@ -27,13 +27,13 @@ change impact analysis.
 | Diagnostics | `specifications/diagnostics.md` | `DIAG-001` to `DIAG-012` | Negative and parity tests. |
 | Assets | `specifications/assets.md` | `ASSET-001` to `ASSET-020` | Path and workspace tests. |
 | Compatibility | `specifications/compatibility.md` | `COMPAT-001` to `COMPAT-019` | CI matrix. |
-| Build | `development/build.md` | `BUILD-001` to `BUILD-020` | Bazel commands. |
-| Testing | `development/testing.md` | `TEST-001` to `TEST-028` | Test inventory. |
+| Build | `development/build.md` | `BUILD-001` to `BUILD-021` | Bazel commands. |
+| Testing | `development/testing.md` | `TEST-001` to `TEST-029` | Test inventory. |
 | Benchmarking | `development/benchmarking.md` | `PERF-001` to `PERF-015` | Benchmark job. |
 | CI/CD | `development/ci-cd.md` | `CI-001` to `CI-028` | Workflow review. |
-| Release | `development/release.md` | `REL-001` to `REL-034` | Release checklist. |
+| Release | `development/release.md` | `REL-001` to `REL-035` | Release checklist. |
 | Security | `development/security.md` | `SEC-001` to `SEC-025` | Security review. |
-| Documentation | `development/documentation.md` | `DOC-001` to `DOC-022` | Docs gate. |
+| Documentation | `development/documentation.md` | `DOC-001` to `DOC-023` | Docs gate. |
 | Governance | `governance/contributing.md` | `GOV-001` to `GOV-021` | Repository settings. |
 | Traceability | This document | `TRACE-001` to `TRACE-005` | Review. |
 
@@ -50,6 +50,7 @@ change impact analysis.
 | Stable diagnostics | `DIAG-002`, `DIAG-003`, `DIAG-004`, `API-016` | Diagnostics parity tests. |
 | Public distribution | `PRD-015`, `REL-005`, `REL-006`, `REL-008`, `CI-016` | Install tests and release check. |
 | Schema distribution | `SCH-021`, `REL-029`, `REL-030`, `REL-031`, `COMPAT-019`, `CI-026` | Release check and URL verification. |
+| Release artifacts | `REL-005`, `REL-006`, `REL-007`, `REL-008`, `REL-035`, `BUILD-014`, `BUILD-021` | Artifact build and checksum check. |
 | Apache-2.0 licensing | `PRD-016`, `SEC-001`, `SEC-002`, `REL-010`, `REL-022` | Package and license checks. |
 | Stable `1.0.0` gate | `PRD-017`, `REL-003`, `REL-013`, `CI-006` | Release checklist. |
 | Documentation quality | `DOC-001`, `DOC-002`, `DOC-012`, `CI-014` | Docs gate. |
@@ -130,6 +131,7 @@ a target for the MVP and is not yet verified in the repository.
 | `BUILD-018` | The clean checkout build proves that the build does not depend on a warm cache or on an untracked file. | The `Clean build` job of the workflows; the first run passed. |
 | `BUILD-019` | The Bazel cache is separated by operating system and keyed by the Bazel version, the lockfile, and the build files. | The cache configuration of the workflows. |
 | `BUILD-016` | `//specs/schemas/templates/api/types:schema_templates` and `//specs/catalogs/enums:enum_catalogs` were removed; `schema_bundle` remains the bundle entry point. | `bazel query "rdeps(//..., //specs/schemas:schema_bundle)"` and `bazel build //...`. |
+| `BUILD-021` | `//specs/schemas:archive` writes a deterministic gzip tarball: the member order, the member metadata, and the gzip header are fixed, and the bytes do not depend on the modification time of the files. | `//specs/schemas:archive`; `//tools/publish/tests:publish_tests` compares two archives byte for byte. |
 | `SCH-011` | `read_csv_column` rejects an empty value in the selected column. | `test_empty_value_in_selected_column_reports_an_error` in `//tools/codegen/tests:unit_tests`. |
 | `SCH-012` | `read_csv_column` skips fully blank rows. | `test_fully_blank_rows_are_skipped` in `//tools/codegen/tests:unit_tests`. |
 | `SCH-001` | Every schema of the bundle declares the draft 2020-12 dialect. | `//specs/schemas:schema_tests`; the dialect rule. |
@@ -141,15 +143,17 @@ a target for the MVP and is not yet verified in the repository.
 | `SCH-020` | The ten prototype defects `SCH-D01` to `SCH-D10` are closed. | `specifications/schema.md`; the bundle test reports no violation. |
 | `DOC-015` | The root `README.md` uses standard code fences and LF line endings. | Documentation validation script run on 2026-11-24. |
 | `DOC-016` | `.gitattributes` pins LF for text files and `.editorconfig` pins UTF-8, LF, final newline, and indentation. | Files present at the repository root. |
-| `DOC-021` | `scripts/validate_docs.py` validates the documents, the requirement index, the ADR index, and the schema references with the standard library only. | `//scripts:docs_checks`; 56 files, 448 requirements, and 3 workflows checked with 0 errors. |
+| `DOC-021` | `scripts/validate_docs.py` validates the documents, the requirement index, the ADR index, and the schema references with the standard library only. | `//scripts:docs_checks`; 56 files, 451 requirements, and 3 workflows checked with 0 errors. |
 | `DOC-012` | The documentation gate runs on pull requests. | The `Documentation gate` job of `.github/workflows/pr.yml`. |
 | `DOC-013` | The documentation gate runs on `main`. | The `Documentation gate` job of `.github/workflows/main.yml`. |
 | `DOC-022` | The repository gate validates the workflow files: pinned actions, declared permissions, no write access or secret in a pull request workflow, and no `pull_request_target`. | `//scripts:docs_checks`; 3 workflows checked. |
+| `DOC-023` | The repository gate validates the CODEOWNERS file: it exists, every rule names an owner, and one rule covers every path. | `//scripts:docs_checks`; the CODEOWNERS file is checked. |
 | `TEST-016` | `//specs/schemas:schema_tests` validates every bundle file and resolves every relative `$ref`. | `//specs/schemas:schema_tests`; 6 bundle files checked, 0 violations. |
 | `TEST-025` | The test lane runs on Windows and Linux. | The `Test` jobs of the workflows; the first run passed on `windows-latest` and `ubuntu-latest`. |
-| `TEST-026` | `//tools/publish/tests:publish_tests` covers the publisher with unit tests and with an integration test against the built bundle. | `//tools/publish/tests:publish_tests`; 28 cases. |
+| `TEST-026` | `//tools/publish/tests:publish_tests` covers the publisher with unit tests and with an integration test against the built bundle. | `//tools/publish/tests:publish_tests`; 41 cases. |
 | `TEST-027` | `//scripts/tests:version_tests` covers the release version check. | `//scripts/tests:version_tests`; 10 cases. |
 | `TEST-028` | The publisher tests serve the published files from a local server, so the test suite needs no network access. | `//tools/publish/tests:publish_tests`; the `PublishedUrlTests` cases. |
+| `TEST-029` | The publisher tests cover the content, the member metadata, and the byte-for-byte determinism of the schema archive. | `//tools/publish/tests:publish_tests`; the `ArchiveTests` cases. |
 | `REL-032` | `//tools/publish:publish_schemas` publishes exactly the files of the bundle manifest, sets the `$id` of every file to the versioned raw URL of the release tag, and rejects a version that is not a release tag. | `//tools/publish:publish_schemas`; `publish` and `check` verified against the built bundle with an illustrative `v1.0.0` tag. |
 | `REL-033` | `//scripts:check_version` compares the version of every manifest and the changelog with the tag, and reports every mismatch. | `//scripts:check_version`; `//scripts/tests:version_tests`; 10 cases. |
 | `REL-034` | `publish_schemas verify` fetches every published schema from its versioned raw URL and compares the served bytes with the file of the tagged commit. | `//tools/publish:publish_tests`; the `PublishedUrlTests` cases. |

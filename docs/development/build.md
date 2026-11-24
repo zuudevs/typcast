@@ -70,15 +70,16 @@ root.
 
 | Check | Result |
 |---|---|
-| `bazel build //...` | Pass, 25 targets. |
-| `bazel test //...` | Pass, 5 test targets: 7 unittest cases, 28 publisher cases, 10 version cases, 1 documentation check, 1 schema bundle check. |
+| `bazel build //...` | Pass, 26 targets. |
+| `bazel test //...` | Pass, 5 test targets: 7 unittest cases, 41 publisher cases, 10 version cases, 1 documentation check, 1 schema bundle check. |
 | `bazel build //specs/schemas:schema_bundle` | Pass, 6 schema files. |
 | `bazel build //specs/schemas:schema_manifest` | Pass, 6 paths. |
+| `bazel build //specs/schemas:archive` | Pass, 6 members, deterministic gzip tarball. |
 | `bazel test //specs/schemas:schema_tests` | Pass, 6 bundle files, 0 violations. |
-| `bazel test //scripts:docs_checks` | Pass, 56 files, 448 requirements, and 3 workflows checked, 0 errors. |
+| `bazel test //scripts:docs_checks` | Pass, 56 files, 451 requirements, and 3 workflows checked, 0 errors. |
 | `bazel test //scripts/tests:version_tests` | Pass, 10 cases. |
-| `bazel test //tools/publish/tests:publish_tests` | Pass, 28 publisher cases. |
-| `bazel query "kind(rule, //...)"` | 25 rules; 5 test targets. |
+| `bazel test //tools/publish/tests:publish_tests` | Pass, 41 publisher cases. |
+| `bazel query "kind(rule, //...)"` | 26 rules; 5 test targets. |
 | `--test_filter` on the unittest target | Ignored; all 7 cases run. |
 
 The schema bundle contains:
@@ -95,7 +96,7 @@ bazel-bin/specs/schemas/
 
 ## Current targets
 
-`bazel query "kind(rule, //...)"` reports 25 rules. All of them:
+`bazel query "kind(rule, //...)"` reports 26 rules. All of them:
 
 | Target | Kind | Purpose |
 |---|---|---|
@@ -118,6 +119,7 @@ bazel-bin/specs/schemas/
 | `//specs/schemas:paper_schema` | `typcast_json_schema` | Generate paper schema. |
 | `//specs/schemas:schema_bundle` | `filegroup` | Collect the schema bundle. |
 | `//specs/schemas:schema_manifest` | `typcast_schema_manifest` | Name every file of the bundle. |
+| `//specs/schemas:archive` | `typcast_schema_archive` | Deterministic gzip tarball of the bundle. |
 | `//specs/schemas:schema_tests` | `py_test` | Validate the built bundle against the contract. |
 | `//specs/schemas/definitions:bound_schema` | `typcast_schema_copy` | Stage the bound schema. |
 | `//specs/schemas/definitions:node_schema` | `typcast_schema_copy` | Stage the node schema. |
@@ -223,6 +225,41 @@ the published set changes.
 - CI must run the same `bazel build //...` and `bazel test //...` commands.
 - Case-sensitive paths must be used consistently.
 
+## Schema archive
+
+`//specs/schemas:archive` packages the bundle as a gzip-compressed tarball for
+the GitHub Release asset.
+
+```shell
+bazel build //specs/schemas:archive
+```
+
+The archive is deterministic, so its SHA-256 checksum is the same on every
+platform and in every build:
+
+| Property | Rule |
+|---|---|
+| Member order | The sorted order of the bundle manifest. |
+| Member names | `typcast-schemas/<path relative to specs/schemas>`. |
+| Member metadata | No modification time, no owner, mode `0644`. |
+| Gzip header | No modification time and no file name. |
+| Compression level | Fixed at the best level. |
+| Content | The bytes of the bundle file, unchanged. |
+
+The publisher writes the archive, so the same code produces the release asset:
+
+```shell
+bazel-bin/tools/publish/publish_schemas.exe archive \
+  --input specs/schemas \
+  --manifest bazel-bin/specs/schemas/schema_manifest.txt \
+  --output typcast-schemas-v1.0.0.tar.gz
+```
+
+The release lane archives the published bundle of the tagged commit, so the
+asset and the tagged commit carry the same bytes. The archive keeps the
+identity of every file as it is, which means that the published identity of the
+release tag stays in the asset.
+
 ## Future targets
 
 The MVP must add these targets. The names are final:
@@ -232,13 +269,12 @@ The MVP must add these targets. The names are final:
 | `//packages/python:wheel` | Python wheel. |
 | `//packages/python:sdist` | Python source distribution. |
 | `//packages/typescript:npm_package` | npm tarball. |
-| `//specs/schemas:archive` | Schema archive for release. |
 | `//tests/contract:parity_tests` | Cross-language parity tests. |
 | `//tests/integration:compiler_tests` | Compiler integration tests. |
 
-`//specs/schemas:archive` packages the same bundle for the GitHub Release
-asset, and the release commit publishes the bundle under `specs/schemas/` so
-that the versioned raw URLs resolve. See `development/release.md` and ADR-0022.
+`//specs/schemas:archive` packages the bundle for the GitHub Release asset,
+and the release commit publishes the bundle under `specs/schemas/` so that the
+versioned raw URLs resolve. See `development/release.md` and ADR-0022.
 
 The artifact requirements for the packaging targets are defined in
 `development/release.md`.
@@ -267,10 +303,10 @@ The artifact requirements for the packaging targets are defined in
 | BUILD-018 | CI MUST build the repository from a clean checkout to prove reproducibility. | IMPLEMENTED | The `Clean build` job of the workflows disables every cache and runs `bazel build //...`; the first run passed. |
 | BUILD-019 | CI MUST cache Bazel outputs per operating system, keyed by the Bazel version, `MODULE.bazel.lock`, and build files. | IMPLEMENTED | The cache configuration of the workflows; the key holds the operating system, the architecture, the Bazel version, the lockfile, and the build files. |
 | BUILD-020 | Build logs MUST NOT contain secrets or document content. | CONFIRMED | Security review. |
+| BUILD-021 | The `//specs/schemas:archive` target MUST produce a deterministic gzip tarball: a fixed member order, fixed member metadata, no timestamp in the gzip header, and no dependency on the modification time of the files. | IMPLEMENTED | `//specs/schemas:archive`; `//tools/publish/tests:publish_tests` compares two archives byte for byte. |
 
 ## Open questions
 
-- Should the schema archive be a `.tar.gz` or a `.zip`?
 - Should the repository use a remote cache in a later phase?
 - Should `bazel test //...` run compiler tests when Typst is available?
 

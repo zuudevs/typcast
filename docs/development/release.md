@@ -185,6 +185,33 @@ A file that does not resolve, or that resolves to a different content, fails
 the check. The command uses the network, so it belongs to the release lane and
 not to the repository checks.
 
+### The schema archive
+
+`//specs/schemas:archive` packages the bundle as a gzip-compressed tarball for
+the GitHub Release asset.
+
+```shell
+bazel build //specs/schemas:archive
+```
+
+The archive is deterministic: the member order, the member metadata, and the
+gzip header are fixed, so the bytes and the checksum of the asset are the same
+on Windows and on Linux. The rules are listed in `development/build.md`.
+
+The release lane archives the published bundle of the tagged commit, so that
+the asset carries exactly the files that the versioned raw URLs serve.
+
+```shell
+bazel-bin/tools/publish/publish_schemas.exe archive \
+  --input specs/schemas \
+  --manifest bazel-bin/specs/schemas/schema_manifest.txt \
+  --output typcast-schemas-v1.0.0.tar.gz
+```
+
+The command keeps the content of every file as it is, including the identity
+of the release tag that the publisher wrote. The release attaches the archive
+and its SHA-256 checksum to the GitHub Release.
+
 ## Release gates
 
 | Gate | Requirement |
@@ -290,7 +317,7 @@ Stable `1.0.0`:
 | License | `LICENSE` present at the repository root. |
 | Security policy | `SECURITY.md` present at the repository root. |
 | Tag | None. |
-| Schema archive | None. |
+| Schema archive | `//specs/schemas:archive` builds a deterministic gzip tarball of the bundle. The release asset is produced by the same code from the published bundle. |
 | Published schema bundle | None. The publisher exists, but the release commit step is not implemented. |
 | Schema domain | None. The MVP does not require a dedicated schema domain. |
 | SBOM | None. |
@@ -305,7 +332,7 @@ Stable `1.0.0`:
 | REL-004 | Pre-releases MUST use `-alpha.N` or `-beta.N`. | CONFIRMED | Tag check. |
 | REL-005 | The release MUST produce a wheel and sdist. | CONFIRMED | Artifact check. |
 | REL-006 | The release MUST produce an npm tarball. | CONFIRMED | Artifact check. |
-| REL-007 | The release MUST produce a schema archive. | CONFIRMED | Artifact check. |
+| REL-007 | The release MUST produce a schema archive as a gzip-compressed tarball whose bytes are identical on every platform. | CONFIRMED | Artifact check. |
 | REL-008 | The release MUST publish SHA-256 checksums. | CONFIRMED | Artifact check. |
 | REL-009 | The release MUST publish an SBOM. | CONFIRMED | Artifact check. |
 | REL-010 | The release MUST include `LICENSE`. | CONFIRMED | Package check. |
@@ -333,6 +360,7 @@ Stable `1.0.0`:
 | REL-032 | The publisher MUST set the `$id` of every published schema to the versioned raw URL of the release tag, MUST publish exactly the files of the bundle, and MUST reject a version that is not a release tag. | IMPLEMENTED | `//tools/publish:publish_schemas`; `//tools/publish/tests:publish_tests`. |
 | REL-033 | The release MUST compare the version of every manifest and the changelog with the tag, and MUST fail when one of them differs. | IMPLEMENTED | `//scripts:check_version`; `//scripts/tests:version_tests`. |
 | REL-034 | The release MUST verify that every published schema resolves at its versioned raw URL and serves the content of the tagged commit. | IMPLEMENTED | `publish_schemas verify`; `//tools/publish/tests:publish_tests`. |
+| REL-035 | The release MUST attach the schema archive of the published bundle as a GitHub Release asset, and the archive MUST be byte-identical on every platform. | CONFIRMED | Release check. |
 
 ## Open questions
 

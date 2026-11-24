@@ -39,6 +39,12 @@ No release has been published yet. Every change so far is listed under
 - The security policy and the Apache-2.0 license.
 - The node schema, `specs/schemas/definitions/node.schema.json`, which defines
   the block and the inline span unions of the document IR.
+- A schema archive target, `//specs/schemas:archive`, which packages the
+  bundle as a deterministic gzip tarball. The member order, the member
+  metadata, and the gzip header are fixed, so the bytes and the checksum of
+  the release asset are the same on every platform.
+- A CODEOWNERS file at `.github/CODEOWNERS`, which routes every path to the
+  maintainer and is checked by the repository gate.
 
 ### Changed
 
@@ -59,5 +65,6 @@ No release has been published yet. Every change so far is listed under
 
 - The project does not validate a document against the schema yet. That needs
   a JSON Schema implementation that the repository does not depend on.
-- The Typcast SDK core, the packaging targets, and the publishing jobs of the
-  release workflow are not implemented.
+- The Typcast SDK core, the packaging targets for the wheel, the source
+  distribution, and the npm tarball, and the publishing jobs of the release
+  workflow are not implemented.

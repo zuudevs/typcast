@@ -3,7 +3,7 @@ load(
     "typcast_json_schema",
     "typcast_schema_copy",
 )
-load("//bazel:publish.bzl", "typcast_schema_manifest")
+load("//bazel:publish.bzl", "typcast_schema_archive", "typcast_schema_manifest")
 load("@rules_python//python:defs.bzl", "py_test")
 
 package(
@@ -66,6 +66,13 @@ filegroup(
 # of a directory scan, because the build directory holds other outputs too.
 typcast_schema_manifest(
     name = "schema_manifest",
+    srcs = [":schema_bundle"],
+)
+
+# The release archive of the bundle. The publisher writes a deterministic
+# gzip tarball, so the checksum of the asset is the same on every platform.
+typcast_schema_archive(
+    name = "archive",
     srcs = [":schema_bundle"],
 )
 
