@@ -76,7 +76,7 @@ root.
 | `bazel build //specs/schemas:schema_manifest` | Pass, 6 paths. |
 | `bazel build //specs/schemas:archive` | Pass, 6 members, deterministic gzip tarball. |
 | `bazel test //specs/schemas:schema_tests` | Pass, 6 bundle files, 0 violations. |
-| `bazel test //scripts:docs_checks` | Pass, 56 files, 451 requirements, and 3 workflows checked, 0 errors. |
+| `bazel test //scripts:docs_checks` | Pass, 57 files, 452 requirements, and 3 workflows checked, 0 errors. |
 | `bazel test //scripts/tests:version_tests` | Pass, 10 cases. |
 | `bazel test //tools/publish/tests:publish_tests` | Pass, 41 publisher cases. |
 | `bazel query "kind(rule, //...)"` | 26 rules; 5 test targets. |

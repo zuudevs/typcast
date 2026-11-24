@@ -20,6 +20,8 @@ problems that the gate in `docs/development/documentation.md` must catch:
 - Workflows: every action is pinned to a commit SHA, every workflow declares
   its permissions, and no pull request workflow runs with write access or
   reads a secret.
+- Governance: the CODEOWNERS file exists, every rule names an owner, and one
+  rule covers every path.
 
 Usage:
 
@@ -127,7 +129,8 @@ def find_root(explicit: str | None) -> Path:
     raise SystemExit("repository root not found; pass --root")
 
 
-def markdown_files(root: Path) -> list[Path]:
+def checked_files(root: Path) -> list[Path]:
+    """Returns the files that the repository checks read."""
     files = [
         root / "README.md",
         root / "CHANGELOG.md",
@@ -138,6 +141,7 @@ def markdown_files(root: Path) -> list[Path]:
         root / ".gitattributes",
         root / ".editorconfig",
         root / ".github" / "PULL_REQUEST_TEMPLATE.md",
+        root / ".github" / "CODEOWNERS",
     ]
     files.extend(sorted((root / "docs").rglob("*.md")))
     return [path for path in files if path.exists()]
@@ -598,6 +602,44 @@ def check_schema_files(root: Path, bundle: Path | None, report: Report) -> int:
     return checked
 
 
+def check_codeowners(root: Path, report: Report) -> int:
+    """Checks the CODEOWNERS file of the repository.
+
+    Every rule needs a pattern and at least one owner, and one rule must
+    cover every path of the repository.
+    """
+    path = root / ".github" / "CODEOWNERS"
+    if not path.is_file():
+        report.error(".github/CODEOWNERS: the file is missing")
+        return 0
+
+    owners = 0
+    covers_everything = False
+    for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        text = line.strip()
+        if not text or text.startswith("#"):
+            continue
+        parts = text.split()
+        if len(parts) < 2:
+            report.error(
+                f".github/CODEOWNERS:{lineno}: a rule needs a pattern and an owner"
+            )
+            continue
+        pattern, rule_owners = parts[0], parts[1:]
+        for owner in rule_owners:
+            if not owner.startswith("@"):
+                report.error(
+                    f".github/CODEOWNERS:{lineno}: the owner {owner} does not start with @"
+                )
+        if pattern == "*":
+            covers_everything = True
+        owners += len(rule_owners)
+
+    if not covers_everything:
+        report.error(".github/CODEOWNERS: no rule covers every path")
+    return owners
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", default=None, help="repository root")
@@ -612,7 +654,7 @@ def main(argv: list[str] | None = None) -> int:
             bundle = (root / bundle).resolve()
 
     report = Report()
-    files = markdown_files(root)
+    files = checked_files(root)
     workflows = workflow_files(root)
     check_encoding(root, files + workflows, report)
     check_markdown(root, files, report)
@@ -622,6 +664,7 @@ def main(argv: list[str] | None = None) -> int:
     urls = check_schema_references(root, files, report)
     schemas = check_schema_files(root, bundle, report)
     workflow_count = check_workflows(root, workflows, report)
+    codeowners = check_codeowners(root, report)
 
     print(f"files checked: {len(files)}")
     print(f"requirements: {len(statuses)} {dict(sorted(Counter(statuses.values()).items()))}")
@@ -629,6 +672,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"raw URLs: {urls}")
     print(f"schema files: {schemas}")
     print(f"workflows checked: {workflow_count}")
+    print(f"code owners: {codeowners}")
     print(f"errors: {len(report.errors)}")
     for error in report.errors:
         print(f"ERROR {error}")

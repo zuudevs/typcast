@@ -161,13 +161,15 @@ bazel test //scripts:docs_checks
 | Schema references | Every published raw URL uses a repository path, and no current document keeps the retired publishing domain. |
 | Schemas | Valid JSON, and every relative `$ref` resolves except the references that are tracked as open defects. |
 | Workflows | Every action is pinned to a commit SHA, every workflow declares its permissions, no pull request workflow grants write access or reads a secret, and no workflow uses `pull_request_target`. |
+| Governance | The CODEOWNERS file exists, every rule names an owner, and one rule covers every path. |
 
 A new document must be added to the `docs_sources` group in the root
 `BUILD.bazel`, so that it becomes part of the gate. The group holds the root
 policy files `README.md`, `CHANGELOG.md`, `CODE_OF_CONDUCT.md`,
 `CONTRIBUTING.md`, `SECURITY.md`, `LICENSE`, `.gitattributes`, and
-`.editorconfig`, the pull request template, and every document under `docs/`.
-A new workflow file is picked up by the `workflow_sources` group.
+`.editorconfig`, the pull request template, the CODEOWNERS file, and every
+document under `docs/`. A new workflow file is picked up by the
+`workflow_sources` group.
 
 The script does not replace the full gate. Markdown lint, external link
 checks, and a Mermaid parser are still not configured. The checks run in the
@@ -188,6 +190,7 @@ pull request lane and in the main lane.
 | Mermaid validation | Structural check only. A Mermaid parser is not configured. |
 | Encoding checks | Implemented in `//scripts:docs_checks`. |
 | Workflow checks | Implemented in `//scripts:docs_checks`; three workflow files are checked. |
+| Governance checks | Implemented in `//scripts:docs_checks`; the CODEOWNERS file is checked. |
 | Docs CI | The `Documentation gate` job of the pull request lane and of the main lane. |
 
 ## Requirements
@@ -216,6 +219,7 @@ pull request lane and in the main lane.
 | DOC-020 | The traceability index MUST be updated with requirement changes. | CONFIRMED | Review. |
 | DOC-021 | A repository script MUST validate the documents, the requirement index, the ADR index, and the schema references without SDK installation or network access. | IMPLEMENTED | `//scripts:docs_checks`. |
 | DOC-022 | The repository gate MUST validate the workflow files: pinned actions, declared permissions, no write access or secret in a pull request workflow, and no `pull_request_target`. | IMPLEMENTED | `//scripts:docs_checks`; three workflow files are checked. |
+| DOC-023 | The repository gate MUST validate the CODEOWNERS file: it exists, every rule names an owner, and one rule covers every path. | IMPLEMENTED | `//scripts:docs_checks`; the CODEOWNERS file is checked. |
 
 ## Open questions
 

@@ -183,11 +183,18 @@ A bug report includes:
 
 ## CODEOWNERS
 
-CODEOWNERS is optional for the MVP. It becomes required when:
+The repository has a CODEOWNERS file at `.github/CODEOWNERS`. It routes every
+path to the maintainer, so a pull request always has a reviewer. The repository
+check verifies that the file exists, that every rule names an owner, and that
+one rule covers every path.
+
+Area-specific ownership is added when:
 
 - More than one maintainer owns distinct areas.
 - Review routing becomes ambiguous.
 - A release requires area-specific approval.
+
+Until then, the file stays a single rule for the whole repository.
 
 ## Code of conduct
 
@@ -206,7 +213,7 @@ explains how a requirement, a decision, and the changelog are updated.
 | Gap | Status |
 |---|---|
 | `CONTRIBUTING.md` at repository root | CLOSED. Present at the repository root. |
-| `CODEOWNERS` | DEFERRED |
+| `CODEOWNERS` | CLOSED. Present at `.github/CODEOWNERS`. It routes every path to the maintainer until a second maintainer joins. |
 | PR template | CLOSED. Present at `.github/PULL_REQUEST_TEMPLATE.md`. |
 | Issue templates | DEFERRED |
 | `CHANGELOG.md` | CLOSED. Present at the repository root. |
@@ -229,7 +236,7 @@ explains how a requirement, a decision, and the changelog are updated.
 | GOV-007 | Issue templates are DEFERRED for the MVP; an issue is a free-form report. | DEFERRED | Scope review. |
 | GOV-008 | A changelog MUST be maintained and reviewed at release. | CONFIRMED | `CHANGELOG.md` present; the release review is pending. |
 | GOV-009 | Release MUST require manual environment approval. | CONFIRMED | Environment settings. |
-| GOV-010 | CODEOWNERS MUST be added when maintainer count requires it. | DEFERRED | Future review. |
+| GOV-010 | Area-specific CODEOWNERS MUST be added when the maintainer count requires it. | DEFERRED | Future review. The file is present and routes every path to the maintainer. |
 | GOV-011 | Significant decisions MUST use an ADR. | CONFIRMED | ADR review. |
 | GOV-012 | Security reports MUST use a private channel. | CONFIRMED | `SECURITY.md`. |
 | GOV-013 | Direct pushes to `main` MUST be disabled. | IMPLEMENTED | Branch protection of `main`; an administrator may merge a pull request without a second reviewer while the project has one maintainer. |
@@ -244,7 +251,7 @@ explains how a requirement, a decision, and the changelog are updated.
 
 ## Open questions
 
-- When should CODEOWNERS become mandatory?
+- When should the CODEOWNERS rules become area specific?
 - Is a maintainer-only release approval sufficient for `1.0.0`?
 - Should the project use a contributor license agreement?
 - What is the issue triage cadence?
