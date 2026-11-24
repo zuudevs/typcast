@@ -1,0 +1,109 @@
+# Pull request validation.
+#
+# The lane builds every target and runs the test suite on Windows and Linux,
+# and it runs the documentation gate. It has read-only permissions, it uses no
+# secret, and it never publishes anything.
+#
+# Every action is pinned to a commit SHA. The repository gate in
+# `scripts/validate_docs.py` rejects a workflow that uses a tag or a branch.
+
+name: PR validation
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - windows-latest
+          - ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Bazelisk
+        uses: bazel-contrib/setup-bazel@f34d6a05eae3c24acab7fa54587492daeaeffdab # 0.19.2
+        with:
+          bazelisk-cache: true
+          disk-cache: "true"
+          repository-cache: |
+            - MODULE.bazel
+            - MODULE.bazel.lock
+            - .bazelversion
+          cache-save: false
+      - name: Build every target
+        run: bazel build //...
+
+  test:
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - windows-latest
+          - ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Bazelisk
+        uses: bazel-contrib/setup-bazel@f34d6a05eae3c24acab7fa54587492daeaeffdab # 0.19.2
+        with:
+          bazelisk-cache: true
+          disk-cache: "true"
+          repository-cache: |
+            - MODULE.bazel
+            - MODULE.bazel.lock
+            - .bazelversion
+          cache-save: false
+      - name: Run the test lane
+        run: bazel test //...
+
+  clean-build:
+    name: Clean build (ubuntu-latest)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Bazelisk
+        uses: bazel-contrib/setup-bazel@f34d6a05eae3c24acab7fa54587492daeaeffdab # 0.19.2
+        with:
+          bazelisk-cache: false
+          disk-cache: "false"
+          repository-cache: false
+          external-cache: ""
+      - name: Build from a clean checkout without a cache
+        run: bazel build //...
+
+  docs:
+    name: Documentation gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Bazelisk
+        uses: bazel-contrib/setup-bazel@f34d6a05eae3c24acab7fa54587492daeaeffdab # 0.19.2
+        with:
+          bazelisk-cache: true
+          disk-cache: "true"
+          repository-cache: |
+            - MODULE.bazel
+            - MODULE.bazel.lock
+            - .bazelversion
+          cache-save: false
+      - name: Run the documentation checks
+        run: bazel test //scripts:docs_checks
