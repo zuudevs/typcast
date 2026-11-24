@@ -192,7 +192,7 @@ The exact CI matrix is defined in `development/ci-cd.md`.
 | COMPAT-013 | A newer major schema version MUST be rejected. | CONFIRMED | Negative test. |
 | COMPAT-014 | A newer minor schema version with unknown fields MUST be rejected. | CONFIRMED | Negative test. |
 | COMPAT-015 | macOS support MUST be documented as best-effort. | CONFIRMED | Documentation review. |
-| COMPAT-016 | Linux CI MUST prove that Bazel starts with the current `.bazelrc`; if the Windows symlink startup flag is rejected, it moves to a Windows-only rc file. | CONFIRMED | Linux CI startup check. |
+| COMPAT-016 | Linux CI MUST prove that Bazel starts with the current `.bazelrc`; if the Windows symlink startup flag is rejected, it moves to a Windows-only rc file. | IMPLEMENTED | The first Linux CI run passed with the current `.bazelrc` on 2026-11-24. |
 | COMPAT-017 | The npm package MUST be ESM-only for `1.0.0`; CommonJS support is DEFERRED. | CONFIRMED | Package and consumer tests. |
 | COMPAT-018 | Browser support MUST be documented as untested. | CONFIRMED | Documentation review. |
 | COMPAT-019 | A consumer MUST pin an exact schema release tag and MUST NOT use a `main` or floating reference as a stable schema reference. | CONFIRMED | Consumer documentation review. |

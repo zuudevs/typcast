@@ -70,14 +70,15 @@ root.
 
 | Check | Result |
 |---|---|
-| `bazel build //...` | Pass, 19 targets. |
-| `bazel test //...` | Pass, 4 test targets: 7 unittest cases, 1 documentation check, 1 schema bundle check, 1 publisher check. |
+| `bazel build //...` | Pass, 24 targets. |
+| `bazel test //...` | Pass, 5 test targets: 7 unittest cases, 28 publisher cases, 10 version cases, 1 documentation check, 1 schema bundle check. |
 | `bazel build //specs/schemas:schema_bundle` | Pass, 5 schema files. |
 | `bazel build //specs/schemas:schema_manifest` | Pass, 5 paths. |
 | `bazel test //specs/schemas:schema_tests` | Pass, 5 bundle files, 26 tracked violations, 0 errors. |
-| `bazel test //scripts:docs_checks` | Pass, 56 files and 441 requirements checked, 0 errors. |
-| `bazel test //tools/publish/tests:publish_tests` | Pass, 23 publisher cases. |
-| `bazel query "kind(rule, //...)"` | 19 rules; 4 test targets. |
+| `bazel test //scripts:docs_checks` | Pass, 56 files, 441 requirements, and 3 workflows checked, 0 errors. |
+| `bazel test //scripts/tests:version_tests` | Pass, 10 cases. |
+| `bazel test //tools/publish/tests:publish_tests` | Pass, 28 publisher cases. |
+| `bazel query "kind(rule, //...)"` | 24 rules; 5 test targets. |
 | `--test_filter` on the unittest target | Ignored; all 7 cases run. |
 
 The schema bundle contains:
@@ -93,7 +94,7 @@ bazel-bin/specs/schemas/
 
 ## Current targets
 
-`bazel query "kind(rule, //...)"` reports 19 rules. All of them:
+`bazel query "kind(rule, //...)"` reports 24 rules. All of them:
 
 | Target | Kind | Purpose |
 |---|---|---|
@@ -103,8 +104,13 @@ bazel-bin/specs/schemas/
 | `//tools/publish:publish_schemas` | `py_binary` | Publisher CLI. |
 | `//tools/publish:publish_schemas_lib` | `py_library` | Publisher library. |
 | `//tools/publish/tests:publish_tests` | `py_test` | Publisher tests. |
-| `//scripts:docs_checks` | `py_test` | Documentation, requirement, and decision checks. |
+| `//scripts:check_version` | `py_binary` | Release version check. |
+| `//scripts:check_version_lib` | `py_library` | Release version check library. |
+| `//scripts:docs_checks` | `py_test` | Documentation, requirement, decision, and workflow checks. |
+| `//scripts/tests:version_tests` | `py_test` | Ten release version check tests. |
 | `//:docs_sources` | `filegroup` | The documents that the checks read. |
+| `//:release_manifests` | `filegroup` | The manifests that carry the release version. |
+| `//:workflow_sources` | `filegroup` | The workflow files that the checks read. |
 | `//specs/schemas:validator_schema` | `typcast_schema_copy` | Stage the root schema. |
 | `//specs/schemas:alignment_schema` | `typcast_json_schema` | Generate alignment schema. |
 | `//specs/schemas:length_schema` | `typcast_json_schema` | Generate length schema. |
@@ -241,14 +247,14 @@ The artifact requirements for the packaging targets are defined in
 | BUILD-009 | Generated artifacts MUST NOT be committed to the development branch; the published schema bundle MUST be committed only in the tagged release commit (`REL-030`). | CONFIRMED | Review. |
 | BUILD-010 | The generator MUST support absolute input and output paths. | IMPLEMENTED | Manual run. |
 | BUILD-011 | The build MUST NOT rely on `--test_filter` for this `py_test`. | CONFIRMED | Verified behavior. |
-| BUILD-012 | Linux CI MUST prove that Bazel starts with the current `.bazelrc`; if the Windows symlink startup flag is rejected, it moves to a Windows-only rc file. | CONFIRMED | Linux CI startup check. |
+| BUILD-012 | Linux CI MUST prove that Bazel starts with the current `.bazelrc`; if the Windows symlink startup flag is rejected, it moves to a Windows-only rc file. | IMPLEMENTED | The first Linux CI run passed with the current `.bazelrc` on 2026-11-24. |
 | BUILD-013 | TypeScript compiler version MUST come from the root manifest. | CONFIRMED | `MODULE.bazel`. |
 | BUILD-014 | The packaging targets MUST be `//packages/python:wheel`, `//packages/python:sdist`, `//packages/typescript:npm_package`, and `//specs/schemas:archive`. | CONFIRMED | Release review. |
 | BUILD-015 | Schema validation MUST run in `//specs/schemas:schema_tests` against the built bundle. | IMPLEMENTED | `//specs/schemas:schema_tests` validates the bundle that `//specs/schemas:schema_bundle` produces. |
 | BUILD-016 | Hand-written filegroups with no consumer MUST be removed; `schema_bundle` MUST be kept as the published schema entry point. | IMPLEMENTED | `bazel query "rdeps(//..., //specs/schemas:schema_bundle)"`; unused aggregates removed. |
 | BUILD-017 | Documentation checks MUST NOT require SDK installation. | IMPLEMENTED | `//scripts:docs_checks` runs with the hermetic Python toolchain and no SDK dependency. |
-| BUILD-018 | CI MUST build the repository from a clean checkout to prove reproducibility. | CONFIRMED | Clean-checkout CI job. |
-| BUILD-019 | CI MUST cache Bazel outputs per operating system, keyed by the Bazel version, `MODULE.bazel.lock`, and build files. | CONFIRMED | CI review. |
+| BUILD-018 | CI MUST build the repository from a clean checkout to prove reproducibility. | IMPLEMENTED | The `Clean build` job of the workflows disables every cache and runs `bazel build //...`; the first run passed. |
+| BUILD-019 | CI MUST cache Bazel outputs per operating system, keyed by the Bazel version, `MODULE.bazel.lock`, and build files. | IMPLEMENTED | The cache configuration of the workflows; the key holds the operating system, the architecture, the Bazel version, the lockfile, and the build files. |
 | BUILD-020 | Build logs MUST NOT contain secrets or document content. | CONFIRMED | Security review. |
 
 ## Open questions

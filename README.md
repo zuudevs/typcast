@@ -39,7 +39,7 @@ Run all tests:
 bazel test //...
 ```
 
-Run the documentation, requirement, and decision checks:
+Run the documentation, requirement, decision, and workflow checks:
 
 ```shell
 bazel test //scripts:docs_checks
@@ -108,6 +108,19 @@ the corresponding target instead.
 
 `MODULE.bazel.lock` is intentionally version-controlled once Bazel generates
 it, so dependency resolution remains reproducible across machines.
+
+## Continuous integration
+
+Three GitHub Actions workflows run the repository:
+
+| Workflow | Trigger | Purpose |
+|---|---|---|
+| Pull request validation | Pull request on `main` | Build, test, clean checkout build, and the documentation gate on Windows and Linux. |
+| Main integration | Push to `main` | The same jobs, and the cache for the next run. |
+| Release | Tag `v*` | The version check, the tagged build and tests, the published schema bundle, and the versioned raw URLs. |
+
+Every action is pinned to a commit SHA, every workflow has read-only
+permissions, and no workflow publishes. See [CI/CD](docs/development/ci-cd.md).
 
 ## Schema distribution
 

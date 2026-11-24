@@ -27,10 +27,10 @@ creating circular dependencies.
 | `tests/integration/` | Compiler, filesystem, and install tests. | Placeholder directory. |
 | `examples/python/` | Python examples. | Placeholder directory. |
 | `examples/typescript/` | TypeScript examples. | Placeholder directory. |
-| `scripts/` | Repository automation. | Documentation and requirement checks. |
+| `scripts/` | Repository automation. | Documentation and workflow checks, and the release version check. |
 | `docs/` | Product, architecture, contract, and engineering docs. | This document set. |
 | `.github/PULL_REQUEST_TEMPLATE.md` | The single pull request template. | Present. |
-| `.github/workflows/` | CI and release workflows. | Placeholder only. |
+| `.github/workflows/` | CI and release workflows. | Three workflows: pull request validation, main integration, and release verification. |
 | `CONTRIBUTING.md` | The contributing guide. | Present. |
 | `CODE_OF_CONDUCT.md` | The code of conduct, Contributor Covenant 2.1. | Present. |
 | `CHANGELOG.md` | The changelog, Keep a Changelog style. | Present. |
@@ -190,7 +190,7 @@ tarball, and the schema archive. Target names are specified in
 | TS package name mismatch | Publication would use the wrong name. | TypeScript SDK |
 | No shared fixtures | Parity cannot be tested. | Testing |
 | No packaging targets | Release cannot produce artifacts. | Release |
-| No CI workflows | Gates are not enforced. | CI |
+| No required checks | The merge is not blocked by a failing lane. The workflows run, but the branch protection of `main` is not configured. | CI |
 
 ## Open questions
 

@@ -10,9 +10,9 @@ This document defines the CI/CD workflows for pull requests, main integration,
 and release. The MVP uses three separate workflows so that publishing
 credentials are never available to pull request code.
 
-The repository currently has no active workflow. `.github/workflows/` contains
-only `.gitkeep`. This document specifies the target; it does not create or enable
-publishing.
+The three workflow files exist. They build, test, and check the repository, and
+the release lane verifies the release. The publishing jobs are not part of them
+yet, because the packaging targets do not exist.
 
 ## Workflow overview
 
@@ -41,6 +41,30 @@ flowchart TD
   PUB --> GH["GitHub Release assets"]
 ```
 
+## Implemented workflows
+
+| File | Trigger | Jobs |
+|---|---|---|
+| `.github/workflows/pr.yml` | `pull_request` on `main`, manual | `Build`, `Test`, `Clean build`, `Documentation gate` |
+| `.github/workflows/main.yml` | `push` to `main`, manual | The same four jobs |
+| `.github/workflows/release.yml` | `push` of a `v*` tag, manual | `Verify`, `Published schema bundle` |
+
+Every job installs Bazelisk and reads the Bazel version from `.bazelversion`.
+The `Build` and `Test` jobs run on `windows-latest` and `ubuntu-latest`. The
+`Clean build` job runs on Linux with every cache disabled, so it proves that
+the build does not depend on a warm cache or on an untracked file. The
+`Documentation gate` job runs `bazel test //scripts:docs_checks` on its own,
+so that a reviewer sees the documentation result as a check of its own.
+
+The release lane checks the version consistency of the manifests and the tag,
+it builds and tests the tagged commit, it compares the published schema bundle
+of the tagged commit with the build, and it fetches every published schema from
+its versioned raw URL. It does not publish; the publishing jobs arrive with
+the packaging targets.
+
+The actions are pinned to commit SHAs, and the repository gate rejects a
+workflow that uses a tag or a branch.
+
 ## PR validation
 
 Triggers:
@@ -60,6 +84,9 @@ Jobs:
 7. Cross-language parity tests.
 8. Repository checks: `bazel test //scripts:docs_checks`.
 9. Dependency and secret scanning where available.
+
+Steps 5 to 7 have no target yet, and step 9 is a repository setting. The
+workflow runs the steps that have a target today.
 
 Permissions:
 
@@ -158,6 +185,13 @@ Bazel cache:
 - Cache is not shared between pull requests from forks and trusted branches.
 - Cache contents are never treated as trusted build outputs.
 
+The workflows use `bazel-contrib/setup-bazel`, which caches the Bazelisk
+downloads, the repository cache, the external repositories, and the action
+outputs. The cache key holds the operating system, the architecture, the Bazel
+version, the lockfile, and the build files. The pull request lane restores the
+cache but does not save it, so a fork pull request cannot fill the cache of the
+trusted branches. The main lane saves it.
+
 Other caches:
 
 - Python package cache for install tests.
@@ -180,6 +214,11 @@ The matrix is `CONFIRMED`. The pull request lane keeps the minimum and newest
 Python versions to control runtime. The full lane covers every supported
 Python and Node version. The release lane repeats the full lane against the
 built artifacts.
+
+The workflows run the operating system dimension today. The Python, Node.js,
+and Typst dimensions become active when the SDK, the compiler adapter, and the
+install tests exist, because the current tests run with the hermetic toolchain
+of the repository and need no runtime of the runner.
 
 The clean-checkout build job checks out the repository without any Bazel cache
 and runs `bazel build //...` to prove the build does not depend on a warm
@@ -219,51 +258,62 @@ cache or on untracked files.
 
 | Item | Current |
 |---|---|
-| Workflows | None; only `.gitkeep`. |
-| Cache | None. |
-| Matrix | None. |
+| Workflows | Three: `.github/workflows/pr.yml`, `main.yml`, and `release.yml`. |
+| Pull request checks | `Build`, `Test`, `Clean build`, and `Documentation gate`, on Windows and Linux. |
+| Cache | Bazel cache per operating system, keyed by version, lockfile, and build files. |
+| Matrix | The operating system dimension. The runtime dimensions wait for the SDK. |
+| Action pinning | Every action is pinned to a commit SHA. The repository gate enforces it. |
+| Release lane | Verifies the version, the tagged build, the published bundle, and the raw URLs. It does not publish. |
 | Release environment | None. |
 | Trusted publishing | None. |
-| Required checks | None. |
+| Required checks | None. The branch protection of `main` is not configured. |
 | Published schema bundle | None; the release commit step is not implemented. |
+
+The first pull request run of the workflows passed on 2026-11-24: the build,
+the test lane, the clean checkout build, and the documentation gate passed on
+`windows-latest` and `ubuntu-latest`. The Linux run also proved that Bazel
+starts with the current `.bazelrc`.
 
 ## Requirements
 
 | ID | Requirement | Status | Verification |
 |---|---|---|---|
-| CI-001 | The repository MUST have PR validation, main integration, and release workflows. | CONFIRMED | Workflow review. |
-| CI-002 | PR workflows MUST have read-only permissions. | CONFIRMED | Workflow review. |
-| CI-003 | PR workflows MUST NOT access publishing secrets. | CONFIRMED | Workflow review. |
-| CI-004 | Main integration MUST run on every push to `main`. | CONFIRMED | Workflow review. |
-| CI-005 | Release MUST run only on `v*` tags with manual approval. | CONFIRMED | Workflow review. |
-| CI-006 | Release MUST verify version consistency before publishing. | CONFIRMED | Release check. |
+| CI-001 | The repository MUST have PR validation, main integration, and release workflows. | IMPLEMENTED | `.github/workflows/pr.yml`, `.github/workflows/main.yml`, and `.github/workflows/release.yml`. |
+| CI-002 | PR workflows MUST have read-only permissions. | IMPLEMENTED | `permissions: contents: read` in `pr.yml` and `main.yml`; the repository gate rejects write access in a pull request workflow. |
+| CI-003 | PR workflows MUST NOT access publishing secrets. | IMPLEMENTED | No workflow reads a secret; the repository gate rejects a secret in a pull request workflow. |
+| CI-004 | Main integration MUST run on every push to `main`. | IMPLEMENTED | `.github/workflows/main.yml`. |
+| CI-005 | Release MUST run only on `v*` tags with manual approval. | CONFIRMED | The tag trigger is implemented. The protected environment is a repository setting and is not configured. |
+| CI-006 | Release MUST verify version consistency before publishing. | CONFIRMED | `//scripts:check_version` and the release lane. The publishing step does not exist yet. |
 | CI-007 | Release MUST build artifacts from the tagged commit. | CONFIRMED | Release check. |
 | CI-008 | Release MUST run install tests before publishing. | CONFIRMED | Release check. |
 | CI-009 | Release MUST use OIDC or environment secrets, never repository secrets. | CONFIRMED | Workflow review. |
-| CI-010 | Bazel cache MUST be separated by OS. | CONFIRMED | Workflow review. |
-| CI-011 | Cache keys MUST include Bazel version and lockfile. | CONFIRMED | Workflow review. |
-| CI-012 | CI MUST run on Windows and Linux. | CONFIRMED | Matrix review. |
+| CI-010 | Bazel cache MUST be separated by OS. | IMPLEMENTED | The cache key of the workflows holds the operating system and the architecture. |
+| CI-011 | Cache keys MUST include Bazel version and lockfile. | IMPLEMENTED | The cache key hashes `.bazelversion`, `MODULE.bazel.lock`, and the build files. |
+| CI-012 | CI MUST run on Windows and Linux. | IMPLEMENTED | The build and test lanes run on `windows-latest` and `ubuntu-latest`; the first run passed on both. |
 | CI-013 | Compiler integration MUST run on main and release. | CONFIRMED | Matrix review. |
-| CI-014 | Documentation gate MUST run on PRs and main. | CONFIRMED | Workflow review. |
+| CI-014 | Documentation gate MUST run on PRs and main. | IMPLEMENTED | The `Documentation gate` job of `pr.yml` and `main.yml`. |
 | CI-015 | Security checks MUST run on PRs where available. | CONFIRMED | Workflow review. |
 | CI-016 | Release MUST attach checksums and SBOM. | CONFIRMED | Release check. |
-| CI-017 | Release MUST use a concurrency lock. | CONFIRMED | Workflow review. |
+| CI-017 | Release MUST use a concurrency lock. | IMPLEMENTED | The release workflow uses one concurrency group per tag and does not cancel a run. |
 | CI-018 | CI artifacts MUST have documented retention. | CONFIRMED | This document. |
-| CI-019 | Third-party actions MUST be pinned. | CONFIRMED | Workflow review. |
-| CI-020 | CI MUST NOT publish from pull requests. | CONFIRMED | Workflow review. |
-| CI-021 | CI MUST report test results and logs for failures. | CONFIRMED | Workflow review. |
+| CI-019 | Third-party actions MUST be pinned. | IMPLEMENTED | Every action is pinned to a commit SHA; the repository gate rejects a tag or a branch. |
+| CI-020 | CI MUST NOT publish from pull requests. | IMPLEMENTED | No workflow publishes; the pull request workflow has read-only permissions. |
+| CI-021 | CI MUST report test results and logs for failures. | IMPLEMENTED | The Bazel test lane prints the output of every failing test, through `test --test_output=errors` in `.bazelrc`. |
 | CI-022 | CI MUST NOT print secrets or document content. | CONFIRMED | Review. |
 | CI-023 | The release environment MUST require manual approval. | CONFIRMED | Environment settings. |
 | CI-024 | The CI matrix MUST cover Windows and Linux, Python 3.11 to 3.14, Node.js 22 and 24, and Typst 0.15.1, with the pull request lane limited to the minimum and newest Python versions. | CONFIRMED | Matrix review. |
-| CI-025 | The workflow files MUST be added in a separate implementation change. | CONFIRMED | Scope control. |
-| CI-026 | The release lane MUST verify that the tagged commit contains the complete published schema bundle and that every published schema resolves at its versioned raw URL. | CONFIRMED | Release check. |
+| CI-025 | The workflow files MUST be added in a separate implementation change. | IMPLEMENTED | The three workflow files are in their own commits. |
+| CI-026 | The release lane MUST verify that the tagged commit contains the complete published schema bundle and that every published schema resolves at its versioned raw URL. | CONFIRMED | The release lane runs `publish_schemas check` and `publish_schemas verify`. The check has not run against a tag, because no release exists yet. |
+| CI-027 | The pull request and main lanes MUST run the Bazel build and the test lane on Windows and Linux, and the release lane MUST verify the version consistency, the tagged build, the published bundle, and the versioned raw URLs. | IMPLEMENTED | The three workflow files; the first pull request run passed on 2026-11-24. |
+| CI-028 | The repository gate MUST reject an action that is not pinned to a commit SHA, a workflow without a permissions block, a pull request workflow with write access, a pull request workflow that reads a secret, and a workflow that uses `pull_request_target`. | IMPLEMENTED | `scripts/validate_docs.py`; `//scripts:docs_checks` checks three workflow files. |
 
 ## Open questions
 
-- Which GitHub-hosted runner images are used for Windows and Linux?
+- Which release environment protects the publishing jobs, and who approves it?
 - Is a self-hosted runner needed for stable benchmarks?
-- Which action versions and commit SHAs are approved?
 - Is npm trusted publishing available for the chosen account?
+- Which dependency review and secret scanning settings are enabled on the
+  repository?
 
 ## Related documents
 

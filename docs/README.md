@@ -100,20 +100,21 @@ requirement ID and a status of `CONFIRMED` or `IMPLEMENTED`.
 
 | Area | Current state | Evidence |
 |---|---|---|
-| Bazel build | Implemented | `bazel build //...` succeeds with 19 targets. |
-| Bazel test | Implemented for codegen, the publisher, the repository checks, and the schema bundle | `bazel test //...` runs four test targets: seven unittest cases, 23 publisher cases, the documentation check, and the schema bundle check. |
-| Documentation checks | Implemented | `//scripts:docs_checks` validates the documents, the requirement index, the ADR index, and the schema references. |
+| Bazel build | Implemented | `bazel build //...` succeeds with 24 targets. |
+| Bazel test | Implemented for codegen, the publisher, the release version check, the repository checks, and the schema bundle | `bazel test //...` runs five test targets: seven unittest cases, 28 publisher cases, 10 version cases, the documentation check, and the schema bundle check. |
+| Documentation checks | Implemented | `//scripts:docs_checks` validates the documents, the requirement index, the ADR index, the schema references, and the workflow files. |
 | JSON Schema generator | Implemented | `tools/codegen/` and `bazel/codegen.bzl`. |
 | Schema bundle | Implemented, incomplete | `//specs/schemas:schema_bundle` builds five files; `node.schema.json` is missing. |
 | Schema bundle validation | Implemented | `//specs/schemas:schema_tests` validates the built bundle and reports the 26 tracked prototype violations. |
-| Schema publisher | Implemented | `//tools/publish:publish_schemas` writes the published bundle with the identity of a release tag. |
+| Schema publisher | Implemented | `//tools/publish:publish_schemas` writes the published bundle with the identity of a release tag and verifies the versioned raw URLs. |
+| Release version check | Implemented | `//scripts:check_version` compares the manifests and the changelog with the tag. |
 | Python SDK | Placeholder | `packages/python/src/typcast/__init__.py` is empty. |
 | TypeScript SDK | Placeholder | `packages/typescript/src/index.ts` is empty and the package is private. |
 | Document model, builder, emitter | Not implemented | No source files exist. |
 | Typst compiler adapter | Not implemented | No source files or tests exist. |
-| Packaging and release | Not implemented | No wheel, npm tarball, or release workflow exists. |
+| Packaging and release | Not implemented | No wheel, npm tarball, or publishing job exists. |
 | Schema distribution | Decided, not implemented | Versioned raw URLs at the release tag; see ADR-0022 and ADR-0023. |
-| CI workflows | Not implemented | `.github/workflows/` contains only `.gitkeep`. |
+| CI workflows | Implemented for build, test, and verification | `.github/workflows/pr.yml`, `main.yml`, and `release.yml`; the first pull request run passed on Windows and Linux. |
 | Pull request template | Implemented | `.github/PULL_REQUEST_TEMPLATE.md`. |
 | License | Implemented | `LICENSE` at the repository root. |
 | Security policy | Implemented | `SECURITY.md` at the repository root. |

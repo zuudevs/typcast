@@ -160,16 +160,18 @@ bazel test //scripts:docs_checks
 | Decisions | An ADR index that lists every ADR, links that resolve, and supersede relations that point at a known ADR. |
 | Schema references | Every published raw URL uses a repository path, and no current document keeps the retired publishing domain. |
 | Schemas | Valid JSON, and every relative `$ref` resolves except the references that are tracked as open defects. |
+| Workflows | Every action is pinned to a commit SHA, every workflow declares its permissions, no pull request workflow grants write access or reads a secret, and no workflow uses `pull_request_target`. |
 
 A new document must be added to the `docs_sources` group in the root
 `BUILD.bazel`, so that it becomes part of the gate. The group holds the root
 policy files `README.md`, `CHANGELOG.md`, `CODE_OF_CONDUCT.md`,
 `CONTRIBUTING.md`, `SECURITY.md`, `LICENSE`, `.gitattributes`, and
 `.editorconfig`, the pull request template, and every document under `docs/`.
+A new workflow file is picked up by the `workflow_sources` group.
 
 The script does not replace the full gate. Markdown lint, external link
-checks, and a Mermaid parser are still not configured, and the checks do not
-run in CI yet.
+checks, and a Mermaid parser are still not configured. The checks run in the
+pull request lane and in the main lane.
 
 ## Current state
 
@@ -185,7 +187,8 @@ run in CI yet.
 | Link checker | Internal links are checked by the repository script. External links are not checked. |
 | Mermaid validation | Structural check only. A Mermaid parser is not configured. |
 | Encoding checks | Implemented in `//scripts:docs_checks`. |
-| Docs CI | None. |
+| Workflow checks | Implemented in `//scripts:docs_checks`; three workflow files are checked. |
+| Docs CI | The `Documentation gate` job of the pull request lane and of the main lane. |
 
 ## Requirements
 
@@ -202,8 +205,8 @@ run in CI yet.
 | DOC-009 | Mermaid diagrams MUST parse. | CONFIRMED | Mermaid validation. |
 | DOC-010 | External links MUST be checked with a timeout and MUST produce a warning, not a blocking failure, when unreachable. | CONFIRMED | Link checker. |
 | DOC-011 | Requirement IDs MUST be unique and stable. | CONFIRMED | Review and script. |
-| DOC-012 | The docs gate MUST run on changed documents in PRs. | CONFIRMED | CI review. |
-| DOC-013 | The docs gate MUST run on all documents on main. | CONFIRMED | CI review. |
+| DOC-012 | The docs gate MUST run on changed documents in PRs. | IMPLEMENTED | The `Documentation gate` job of the pull request lane. |
+| DOC-013 | The docs gate MUST run on all documents on main. | IMPLEMENTED | The `Documentation gate` job of the main lane. |
 | DOC-014 | Documentation tooling MUST NOT add SDK runtime dependencies. | CONFIRMED | Dependency review. |
 | DOC-015 | README code fences MUST be fixed before the gate is enabled. | IMPLEMENTED | Review; README uses standard fences and LF. |
 | DOC-016 | `.gitattributes` and `.editorconfig` MUST enforce LF and UTF-8. | IMPLEMENTED | Repository review. |
@@ -212,6 +215,7 @@ run in CI yet.
 | DOC-019 | Examples MUST be updated when the public API changes. | CONFIRMED | Review. |
 | DOC-020 | The traceability index MUST be updated with requirement changes. | CONFIRMED | Review. |
 | DOC-021 | A repository script MUST validate the documents, the requirement index, the ADR index, and the schema references without SDK installation or network access. | IMPLEMENTED | `//scripts:docs_checks`. |
+| DOC-022 | The repository gate MUST validate the workflow files: pinned actions, declared permissions, no write access or secret in a pull request workflow, and no `pull_request_target`. | IMPLEMENTED | `//scripts:docs_checks`; three workflow files are checked. |
 
 ## Open questions
 
