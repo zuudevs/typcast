@@ -38,11 +38,33 @@ Run all tests:
 bazel test //...
 \`\`\`
 
-Build the generated JSON Schemas:
+Build the complete set of currently available JSON Schema artifacts:
 
 \`\`\`shell
-bazel build //specs/schemas/templates/api/types:generated_schemas
+bazel build //specs/schemas:schema_bundle
 \`\`\`
+
+The schema bundle is staged in the Bazel output tree while preserving the
+relative paths used by the schemas' \`$ref\` values:
+
+\`\`\`text
+bazel-bin/
+└── specs/
+    └── schemas/
+        ├── validator.schema.json
+        ├── api/
+        │   └── types/
+        │       ├── alignment.schema.json
+        │       ├── length.schema.json
+        │       └── paper.schema.json
+        └── definitions/
+            └── bound.schema.json
+\`\`\`
+
+Static schemas are staged with Bazel symlink actions; generated schemas are
+produced from the templates and CSV catalogs. Source files remain under
+\`specs/schemas/\`; Bazel does not copy ordinary source files into \`bazel-bin\`
+unless a build action declares an output for them.
 
 Run the generator directly:
 
@@ -61,11 +83,18 @@ All files referenced by a template must also be declared in the corresponding
 Bazel generation rule's \`catalogs\` attribute. This makes the inputs explicit
 to Bazel and allows it to invalidate cached outputs when a catalog changes.
 
+## Current schema limitation
+
+\`validator.schema.json\` currently references
+\`definitions/node.schema.json\`, but that schema is not present in the repository
+yet. The bundle contains all schema files currently available; the node
+definition must be added before every reference in the validator can resolve.
+
 ## Build outputs
 
-Generated files are written to Bazel's output tree. Do not edit generated
-artifacts manually. Change the source catalog or template and rebuild the
-corresponding target instead.
+Generated and staged files are written to Bazel's output tree. Do not edit
+generated artifacts manually. Change the source catalog or template and rebuild
+the corresponding target instead.
 
 \`MODULE.bazel.lock\` is intentionally version-controlled once Bazel generates
 it, so dependency resolution remains reproducible across machines.

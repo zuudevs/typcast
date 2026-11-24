@@ -1,3 +1,9 @@
+load(
+    "//bazel:codegen.bzl",
+    "typcast_json_schema",
+    "typcast_schema_copy",
+)
+
 package(
     default_visibility = ["//visibility:public"],
 )
@@ -5,3 +11,50 @@ package(
 exports_files([
     "validator.schema.json",
 ])
+
+# Static schema: expose it as an output artifact next to the generated schemas.
+typcast_schema_copy(
+    name = "validator_schema",
+    source = "validator.schema.json",
+    output = "validator.schema.json",
+)
+
+# Generated schemas are placed at the paths used by the relative $ref values
+# in validator.schema.json and definitions/bound.schema.json.
+typcast_json_schema(
+    name = "alignment_schema",
+    template = "//specs/schemas/templates/api/types:alignment.schema.json.tmpl",
+    catalogs = [
+        "//specs/catalogs/enums:alignment-values.csv",
+    ],
+    output = "api/types/alignment.schema.json",
+)
+
+typcast_json_schema(
+    name = "length_schema",
+    template = "//specs/schemas/templates/api/types:length.schema.json.tmpl",
+    catalogs = [
+        "//specs/catalogs/enums:length-suffixes.csv",
+    ],
+    output = "api/types/length.schema.json",
+)
+
+typcast_json_schema(
+    name = "paper_schema",
+    template = "//specs/schemas/templates/api/types:paper.schema.json.tmpl",
+    catalogs = [
+        "//specs/catalogs/enums:paper-variants.csv",
+    ],
+    output = "api/types/paper.schema.json",
+)
+
+filegroup(
+    name = "schema_bundle",
+    srcs = [
+        ":validator_schema",
+        ":alignment_schema",
+        ":length_schema",
+        ":paper_schema",
+        "//specs/schemas/definitions:bound_schema",
+    ],
+)

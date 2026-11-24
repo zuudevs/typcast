@@ -1,12 +1,20 @@
-"""Bazel rules for generating Typcast JSON artifacts."""
+"""Bazel rules for assembling Typcast JSON Schema artifacts."""
+
+def _declare_schema_output(ctx, output_path):
+    if not output_path:
+        fail("'output' must not be empty.")
+
+    if output_path.startswith("/") or "\\" in output_path:
+        fail("'output' must be a relative path using '/': {}".format(output_path))
+
+    for segment in output_path.split("/"):
+        if segment in ["", ".", ".."]:
+            fail("'output' contains an invalid path segment: {}".format(output_path))
+
+    return ctx.actions.declare_file(output_path)
 
 def _typcast_json_schema_impl(ctx):
-    output_name = ctx.attr.output
-
-    if "/" in output_name or "\\" in output_name:
-        fail("'output' must be a file name, not a path: {}".format(output_name))
-
-    output = ctx.actions.declare_file(output_name)
+    output = _declare_schema_output(ctx, ctx.attr.output)
 
     args = ctx.actions.args()
     args.add("--input", ctx.file.template.path)
@@ -21,7 +29,7 @@ def _typcast_json_schema_impl(ctx):
         outputs = [output],
         arguments = [args],
         mnemonic = "TypcastJsonSchema",
-        progress_message = "Generating JSON artifact %{output}",
+        progress_message = "Generating JSON Schema %{output}",
     )
 
     return [
@@ -49,5 +57,34 @@ typcast_json_schema = rule(
             cfg = "exec",
         ),
     },
-    doc = "Expands a JSON template using its declared CSV catalog inputs.",
+    doc = "Expands a JSON template and writes the generated schema at the requested package-relative path.",
+)
+
+def _typcast_schema_copy_impl(ctx):
+    output = _declare_schema_output(ctx, ctx.attr.output)
+
+    ctx.actions.symlink(
+        output = output,
+        target_file = ctx.file.source,
+        progress_message = "Staging JSON Schema %{output}",
+    )
+
+    return [
+        DefaultInfo(
+            files = depset([output]),
+        ),
+    ]
+
+typcast_schema_copy = rule(
+    implementation = _typcast_schema_copy_impl,
+    attrs = {
+        "source": attr.label(
+            allow_single_file = [".json"],
+            mandatory = True,
+        ),
+        "output": attr.string(
+            mandatory = True,
+        ),
+    },
+    doc = "Stages an existing JSON Schema source file into the Bazel output tree.",
 )

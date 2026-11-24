@@ -1,41 +1,18 @@
-load("//bazel:codegen.bzl", "typcast_json_schema")
-
 package(
     default_visibility = ["//visibility:public"],
 )
 
-typcast_json_schema(
-    name = "alignment_schema",
-    template = "alignment.schema.json.tmpl",
-    catalogs = [
-        "//specs/catalogs/enums:alignment-values.csv",
-    ],
-    output = "alignment.schema.json",
-)
-
-typcast_json_schema(
-    name = "length_schema",
-    template = "length.schema.json.tmpl",
-    catalogs = [
-        "//specs/catalogs/enums:length-suffixes.csv",
-    ],
-    output = "length.schema.json",
-)
-
-typcast_json_schema(
-    name = "paper_schema",
-    template = "paper.schema.json.tmpl",
-    catalogs = [
-        "//specs/catalogs/enums:paper-variants.csv",
-    ],
-    output = "paper.schema.json",
-)
+exports_files([
+    "alignment.schema.json.tmpl",
+    "length.schema.json.tmpl",
+    "paper.schema.json.tmpl",
+])
 
 filegroup(
-    name = "generated_schemas",
+    name = "schema_templates",
     srcs = [
-        ":alignment_schema",
-        ":length_schema",
-        ":paper_schema",
+        "alignment.schema.json.tmpl",
+        "length.schema.json.tmpl",
+        "paper.schema.json.tmpl",
     ],
 )
