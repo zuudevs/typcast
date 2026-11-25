@@ -1,0 +1,21 @@
+load("@rules_python//python:defs.bzl", "py_test")
+
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+py_test(
+    name = "publish_tests",
+    size = "small",
+    srcs = [
+        "test_publisher.py",
+    ],
+    main = "test_publisher.py",
+    data = [
+        "//specs/schemas:schema_bundle",
+        "//specs/schemas:schema_manifest",
+    ],
+    deps = [
+        "//tools/publish:publish_schemas_lib",
+    ],
+)

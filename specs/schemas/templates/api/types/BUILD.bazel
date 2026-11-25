@@ -1,0 +1,9 @@
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+exports_files([
+    "alignment.schema.json.tmpl",
+    "length.schema.json.tmpl",
+    "paper.schema.json.tmpl",
+])

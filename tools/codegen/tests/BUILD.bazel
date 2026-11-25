@@ -1,0 +1,17 @@
+load("@rules_python//python:defs.bzl", "py_test")
+
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+py_test(
+    name = "unit_tests",
+    size = "small",
+    srcs = [
+        "test_generator.py",
+    ],
+    main = "test_generator.py",
+    deps = [
+        "//tools/codegen:typcast_codegen_lib",
+    ],
+)

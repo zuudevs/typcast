@@ -1,10 +1,20 @@
 {
-	"type": "object",
-	"properties": {
-		"value": { "type": "number" },
-		"unit": { 
-			"type": "string", 
-			"enum": <./data/enums/length-suffixes.csv:Unit>
-		}
-	}
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/zuudevs/typcast/v1.0.0/specs/schemas/api/types/length.schema.json",
+  "type": "object",
+  "properties": {
+    "value": {
+      "type": "number",
+      "minimum": 0
+    },
+    "unit": {
+      "type": "string",
+      "enum": <../../../../catalogs/enums/length-suffixes.csv:Unit>
+    }
+  },
+  "required": [
+    "value",
+    "unit"
+  ],
+  "additionalProperties": false
 }

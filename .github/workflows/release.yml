@@ -1,0 +1,111 @@
+# Release verification.
+#
+# The lane runs when a release tag is pushed. It verifies the version
+# consistency of the manifests and the tag, it builds and tests the tagged
+# commit on Windows and Linux, it checks that the tagged commit carries the
+# complete published schema bundle, that the archive of the published bundle
+# is the archive of the build, and that every published schema resolves at
+# its versioned raw URL.
+#
+# The lane has read-only permissions and creates no release. The publishing
+# jobs arrive with the packaging targets (`BUILD-014`).
+
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release tag to verify, for example v1.0.0
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.event.inputs.version || github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  RELEASE_TAG: ${{ github.event.inputs.version || github.ref_name }}
+
+jobs:
+  verify:
+    name: Verify (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - windows-latest
+          - ubuntu-latest
+    steps:
+      - name: Check out the tagged commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.inputs.version || github.ref }}
+      - name: Set up Bazelisk
+        uses: bazel-contrib/setup-bazel@f34d6a05eae3c24acab7fa54587492daeaeffdab # 0.19.2
+        with:
+          bazelisk-cache: true
+          disk-cache: "true"
+          repository-cache: |
+            - MODULE.bazel
+            - MODULE.bazel.lock
+            - .bazelversion
+          cache-save: true
+      - name: Check the version consistency
+        run: bazel run //scripts:check_version -- --version "${{ env.RELEASE_TAG }}"
+      # The check reads the source tree of the checkout. On the tagged release
+      # commit the published bundle is committed, so the check verifies that
+      # the commit is a release commit.
+      - name: Run the repository checks
+        run: bazel run //scripts:repository_checks
+      - name: Build every target
+        run: bazel build //...
+      - name: Run the test lane
+        run: bazel test //...
+
+  schema:
+    name: Published schema bundle
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the tagged commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.inputs.version || github.ref }}
+      - name: Set up Bazelisk
+        uses: bazel-contrib/setup-bazel@f34d6a05eae3c24acab7fa54587492daeaeffdab # 0.19.2
+        with:
+          bazelisk-cache: true
+          disk-cache: "true"
+          repository-cache: |
+            - MODULE.bazel
+            - MODULE.bazel.lock
+            - .bazelversion
+          cache-save: true
+      - name: Build the bundle, the manifest, and the publisher
+        run: bazel build //specs/schemas:schema_bundle //specs/schemas:schema_manifest //tools/publish:publish_schemas
+      - name: Check the published bundle against the build
+        run: |
+          bazel-bin/tools/publish/publish_schemas check \
+            --version "${{ env.RELEASE_TAG }}" \
+            --input "$GITHUB_WORKSPACE/bazel-bin/specs/schemas" \
+            --manifest "$GITHUB_WORKSPACE/bazel-bin/specs/schemas/schema_manifest.txt" \
+            --published "$GITHUB_WORKSPACE/specs/schemas"
+      - name: Compare the archive of the published bundle with the archive of the build
+        run: |
+          bazel-bin/tools/publish/publish_schemas compare-archives \
+            --input "$GITHUB_WORKSPACE/bazel-bin/specs/schemas" \
+            --manifest "$GITHUB_WORKSPACE/bazel-bin/specs/schemas/schema_manifest.txt" \
+            --published "$GITHUB_WORKSPACE/specs/schemas"
+      - name: Check that every published schema resolves at its versioned raw URL
+        run: |
+          bazel-bin/tools/publish/publish_schemas verify \
+            --version "${{ env.RELEASE_TAG }}" \
+            --manifest "$GITHUB_WORKSPACE/bazel-bin/specs/schemas/schema_manifest.txt" \
+            --published "$GITHUB_WORKSPACE/specs/schemas"

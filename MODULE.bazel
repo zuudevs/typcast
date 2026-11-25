@@ -1,13 +1,22 @@
-
 module(
     name = "typcast",
     version = "0.1.0",
 )
 
-# Python
+# Python build rules and a hermetic Python 3.14 toolchain.
 bazel_dep(
     name = "rules_python",
     version = "2.5.1",
+)
+
+# Require explicit __init__.py files instead of generating them implicitly.
+rules_python_config = use_extension(
+    "@rules_python//python/extensions:config.bzl",
+    "config",
+)
+
+rules_python_config.explicit_init_py(
+    default = True,
 )
 
 python = use_extension(
@@ -23,13 +32,18 @@ python.toolchain(
     python_version = "3.14",
 )
 
-# JavaScript / Node.js
+use_repo(
+    python,
+    "python_3_14",
+)
+
+# JavaScript build rules.
 bazel_dep(
     name = "aspect_rules_js",
     version = "3.6.1",
 )
 
-# TypeScript
+# TypeScript build rules and the TypeScript compiler repository.
 bazel_dep(
     name = "aspect_rules_ts",
     version = "3.10.1",

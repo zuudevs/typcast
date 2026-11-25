@@ -1,0 +1,25 @@
+load("@rules_python//python:defs.bzl", "py_binary", "py_library")
+
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+py_library(
+    name = "typcast_codegen_lib",
+    srcs = glob(
+        ["src/typcast_codegen/**/*.py"],
+        exclude = ["src/typcast_codegen/__main__.py"],
+    ),
+    imports = ["src"],
+)
+
+py_binary(
+    name = "typcast_codegen",
+    srcs = [
+        "src/typcast_codegen/__main__.py",
+    ],
+    main = "src/typcast_codegen/__main__.py",
+    deps = [
+        ":typcast_codegen_lib",
+    ],
+)

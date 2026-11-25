@@ -1,15 +1,6 @@
 {
-	"type": "object",
-	"properties": {
-		"paper": { 
-			"type": "object",
-			"properties": {
-				"paper": { 
-					"type": "string",
-					"enum": <./data/enums/paper-variants.csv:Variant>
-				},
-				"margin": { "$ref": "#/$defs/bound" }
-			}
-		}
-	}
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/zuudevs/typcast/v1.0.0/specs/schemas/api/types/paper.schema.json",
+  "type": "string",
+  "enum": <../../../../catalogs/enums/paper-variants.csv:Variant>
 }

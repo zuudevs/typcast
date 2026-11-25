@@ -1,0 +1,20 @@
+load("@rules_python//python:defs.bzl", "py_library")
+
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+# The manifest carries the version of the release. The release gate reads it.
+exports_files([
+    "pyproject.toml",
+])
+
+py_library(
+    name = "typcast",
+    srcs = glob([
+        "src/typcast/**/*.py",
+    ]),
+    imports = [
+        "src",
+    ],
+)

@@ -1,0 +1,7 @@
+# The owners of the paths in this repository.
+#
+# The project has one maintainer today. The rule below routes every pull
+# request to that maintainer. It becomes area specific when a second
+# maintainer joins the project.
+
+* @zuudevs

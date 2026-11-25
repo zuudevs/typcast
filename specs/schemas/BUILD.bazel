@@ -1,0 +1,105 @@
+load(
+    "//bazel:codegen.bzl",
+    "typcast_json_schema",
+    "typcast_schema_copy",
+)
+load("//bazel:publish.bzl", "typcast_schema_archive", "typcast_schema_manifest")
+load("@rules_python//python:defs.bzl", "py_test")
+
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+exports_files([
+    "validator.schema.json",
+])
+
+# Static schema: expose it as an output artifact next to the generated schemas.
+typcast_schema_copy(
+    name = "validator_schema",
+    source = "validator.schema.json",
+    output = "validator.schema.json",
+)
+
+# Generated schemas are placed at the paths used by the relative $ref values
+# in validator.schema.json and definitions/bound.schema.json.
+typcast_json_schema(
+    name = "alignment_schema",
+    template = "//specs/schemas/templates/api/types:alignment.schema.json.tmpl",
+    catalogs = [
+        "//specs/catalogs/enums:alignment-values.csv",
+    ],
+    output = "api/types/alignment.schema.json",
+)
+
+typcast_json_schema(
+    name = "length_schema",
+    template = "//specs/schemas/templates/api/types:length.schema.json.tmpl",
+    catalogs = [
+        "//specs/catalogs/enums:length-suffixes.csv",
+    ],
+    output = "api/types/length.schema.json",
+)
+
+typcast_json_schema(
+    name = "paper_schema",
+    template = "//specs/schemas/templates/api/types:paper.schema.json.tmpl",
+    catalogs = [
+        "//specs/catalogs/enums:paper-variants.csv",
+    ],
+    output = "api/types/paper.schema.json",
+)
+
+filegroup(
+    name = "schema_bundle",
+    srcs = [
+        ":validator_schema",
+        ":alignment_schema",
+        ":length_schema",
+        ":paper_schema",
+        "//specs/schemas/definitions:bound_schema",
+        "//specs/schemas/definitions:node_schema",
+    ],
+)
+
+# The manifest names every file of the bundle. The publisher uses it instead
+# of a directory scan, because the build directory holds other outputs too.
+typcast_schema_manifest(
+    name = "schema_manifest",
+    srcs = [":schema_bundle"],
+)
+
+# The release archive of the bundle. The publisher writes a deterministic
+# gzip tarball, so the checksum of the asset is the same on every platform.
+typcast_schema_archive(
+    name = "archive",
+    srcs = [":schema_bundle"],
+)
+
+# The bundle is the authoritative artifact set. The test validates it against
+# the contract rules and reports the violations that an open defect explains.
+py_test(
+    name = "schema_tests",
+    size = "small",
+    srcs = [
+        "schema_tests.py",
+    ],
+    main = "schema_tests.py",
+    data = [
+        ":schema_bundle",
+    ],
+)
+
+# The release tag validation of the contract. The pattern must match the
+# whole tag, so the test pins the behavior of the contract and of the
+# publisher.
+py_test(
+    name = "release_tag_tests",
+    size = "small",
+    srcs = [
+        "schema_tests.py",
+        "test_release_tag.py",
+    ],
+    main = "test_release_tag.py",
+    imports = ["."],
+)

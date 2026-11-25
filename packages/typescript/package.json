@@ -1,0 +1,11 @@
+{
+  "name": "typcast",
+  "version": "0.1.0",
+  "description": "JavaScript and TypeScript SDK for generating Typst documents with Typcast.",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=22"
+  }
+}
