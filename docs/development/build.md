@@ -71,7 +71,7 @@ root.
 | Check | Result |
 |---|---|
 | `bazel build //...` | Pass, 55 targets. |
-| `bazel test //...` | Pass, 19 test targets: 16 unittest cases, 45 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 43 repository structure cases, 4 release tag cases, 32 documentation gate cases, 4 link check cases, 1 documentation check, 1 schema bundle check, 52 document model cases, 6 contract fixture cases, and the TypeScript model, contract, and type-check targets. |
+| `bazel test //...` | Pass, 17 of 17 test targets of the 19 test rules, because the two transitive type-check rules are tagged `manual`: 16 unittest cases, 45 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 43 repository structure cases, 4 release tag cases, 32 documentation gate cases, 4 link check cases, 1 documentation check, 1 schema bundle check, 52 document model cases, 6 contract fixture cases, and the TypeScript model, contract, and type-check targets. |
 | `bazel build //specs/schemas:schema_bundle` | Pass, 6 schema files. |
 | `bazel build //specs/schemas:schema_manifest` | Pass, 6 paths. |
 | `bazel build //specs/schemas:archive` | Pass, 6 members, deterministic gzip tarball. |
