@@ -169,6 +169,41 @@ function constructorTests(): void {
     "a day of a leap year must be accepted",
   );
   expectCode(
+    "TYPCAST-VAL-0011",
+    () => new Metadata("Title", null, "\u0662\u0660\u0662\u0666-01-01"),
+    "a date with Unicode digits must be rejected",
+  );
+  expectCode(
+    "TYPCAST-VAL-0011",
+    () => new Metadata("Title", null, "2026-01-01\n"),
+    "a date with a trailing newline must be rejected",
+  );
+  expectCode(
+    "TYPCAST-VAL-0013",
+    () => new Metadata("T".repeat(513)),
+    "a title of more than 512 code points must be rejected",
+  );
+  expectCode(
+    "TYPCAST-VAL-0013",
+    () => new Metadata("Title", "A".repeat(513)),
+    "an author of more than 512 code points must be rejected",
+  );
+  expectCode(
+    "TYPCAST-VAL-0013",
+    () => new Metadata("\u{1f600}".repeat(513)),
+    "more than 512 characters outside the basic multilingual plane must be rejected",
+  );
+  checkEqual(
+    new Metadata("T".repeat(512)).title.length,
+    512,
+    "a title of 512 code points must be accepted",
+  );
+  checkEqual(
+    new Metadata("\u{1f600}".repeat(512)).title.length,
+    1024,
+    "a character outside the basic multilingual plane must count as one code point",
+  );
+  expectCode(
     "TYPCAST-VAL-0003",
     () => new Page("a4", "diagonal" as "portrait", margin()),
     "an unknown orientation must be rejected",

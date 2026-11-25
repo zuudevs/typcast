@@ -148,6 +148,42 @@ class ConstructorValidationTests(unittest.TestCase):
             lambda: Metadata(title="Title", date="1900-02-29"),
         )
 
+    def test_a_date_with_unicode_digits_is_rejected(self) -> None:
+        self.assert_code(
+            "TYPCAST-VAL-0011",
+            lambda: Metadata(title="Title", date="\u0662\u0660\u0662\u0666-01-01"),
+        )
+
+    def test_a_date_with_a_trailing_newline_is_rejected(self) -> None:
+        self.assert_code(
+            "TYPCAST-VAL-0011",
+            lambda: Metadata(title="Title", date="2026-01-01\n"),
+        )
+
+    def test_a_title_of_more_than_512_code_points_is_rejected(self) -> None:
+        self.assert_code(
+            "TYPCAST-VAL-0013",
+            lambda: Metadata(title="T" * 513),
+        )
+
+    def test_an_author_of_more_than_512_code_points_is_rejected(self) -> None:
+        self.assert_code(
+            "TYPCAST-VAL-0013",
+            lambda: Metadata(title="Title", author="A" * 513),
+        )
+
+    def test_a_title_of_512_code_points_is_accepted(self) -> None:
+        metadata = Metadata(title="T" * 512)
+        self.assertEqual(len(metadata.title), 512)
+
+    def test_a_character_outside_the_basic_multilingual_plane_counts_once(self) -> None:
+        metadata = Metadata(title="\U0001f600" * 512)
+        self.assertEqual(len(metadata.title), 512)
+        self.assert_code(
+            "TYPCAST-VAL-0013",
+            lambda: Metadata(title="\U0001f600" * 513),
+        )
+
     def test_invalid_orientation_is_rejected(self) -> None:
         self.assert_code(
             "TYPCAST-VAL-0003",

@@ -176,6 +176,14 @@ No release has been published yet. Every change so far is listed under
   Python holds such a character in a string. The result was a text that no
   UTF-8 encoder can encode. The Python SDK now rejects the value with the
   same diagnostic as the TypeScript SDK.
+- The Python SDK read a date with a pattern that matches every Unicode
+  decimal digit and that accepts a final newline. A date such as
+  `2026-01-01\n` was therefore accepted by the Python SDK and rejected by the
+  TypeScript SDK. Both SDKs now read the same dates.
+- Both SDKs accepted a title or an author of more than 512 Unicode code
+  points, which the schema of the contract rejects. Both SDKs now check the
+  limit and report it with the new code `TYPCAST-VAL-0013`. The catalog of
+  the diagnostics allows a new code in a minor release.
 
 ### Known issues
 

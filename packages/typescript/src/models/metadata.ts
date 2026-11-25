@@ -1,9 +1,14 @@
 /** The metadata of the document IR. */
 
 import { CODE_INVALID_DATE, throwValidation } from "../diagnostics.js";
-import { requireString } from "./base.js";
+import { requireBoundedString } from "./base.js";
 
-const DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
+// The pattern holds the ASCII digits only. The `\d` of JavaScript matches
+// the ASCII digits alone, and the pattern has no `m` flag, so the text must
+// end with the date.
+const DATE_PATTERN = /^([0-9]{4})-([0-9]{2})-([0-9]{2})$/;
+
+const MAX_TEXT_LENGTH = 512;
 
 const DAYS_IN_MONTH = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
@@ -27,9 +32,11 @@ export class Metadata {
     author: string | null = null,
     date: string | null = null,
   ) {
-    this.title = requireString(title, "/title");
+    this.title = requireBoundedString(title, "/title", MAX_TEXT_LENGTH);
     this.author =
-      author === null ? null : requireString(author, "/author", true);
+      author === null
+        ? null
+        : requireBoundedString(author, "/author", MAX_TEXT_LENGTH, true);
     this.date = date === null ? null : checkDate(date);
     Object.freeze(this);
   }

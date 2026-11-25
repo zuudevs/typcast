@@ -87,6 +87,7 @@ codes must not be renumbered or reused.
 | `TYPCAST-VAL-0010` | error | validation | Raw content exceeds the size limit. |
 | `TYPCAST-VAL-0011` | error | validation | Date is not a valid `YYYY-MM-DD` value. |
 | `TYPCAST-VAL-0012` | error | validation | Image or module path is absolute or unsafe. |
+| `TYPCAST-VAL-0013` | error | validation | Text holds more code points than the contract allows. |
 
 ### Serialization
 

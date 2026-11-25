@@ -8,11 +8,13 @@ from dataclasses import dataclass
 from typing import Any
 
 from typcast.diagnostics import CODE_INVALID_DATE, raise_validation
-from typcast.models.base import require_string
+from typcast.models.base import require_bounded_string
 
 __all__ = ["Metadata"]
 
-_DATE_PATTERN = re.compile(r"^(\d{4})-(\d{2})-(\d{2})$")
+_DATE_PATTERN = re.compile(r"([0-9]{4})-([0-9]{2})-([0-9]{2})")
+
+MAX_TEXT_LENGTH = 512
 
 
 @dataclass(frozen=True)
@@ -24,12 +26,21 @@ class Metadata:
     date: str | None = None
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "title", require_string(self.title, "/title"))
+        object.__setattr__(
+            self,
+            "title",
+            require_bounded_string(self.title, "/title", MAX_TEXT_LENGTH),
+        )
         if self.author is not None:
             object.__setattr__(
                 self,
                 "author",
-                require_string(self.author, "/author", allow_empty=True),
+                require_bounded_string(
+                    self.author,
+                    "/author",
+                    MAX_TEXT_LENGTH,
+                    allow_empty=True,
+                ),
             )
         if self.date is not None:
             self._check_date(self.date)
@@ -42,7 +53,11 @@ class Metadata:
                 "'/date' must be a string.",
                 "/date",
             )
-        match = _DATE_PATTERN.match(value)
+        # The pattern holds the ASCII digits only, and the match covers the
+        # whole text. The `\d` of Python matches every Unicode decimal digit,
+        # and a `$` matches before a final newline, so a date that the
+        # TypeScript SDK rejects would pass here.
+        match = _DATE_PATTERN.fullmatch(value)
         if match is None:
             raise_validation(
                 CODE_INVALID_DATE,

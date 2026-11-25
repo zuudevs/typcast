@@ -11,6 +11,7 @@ import {
   CODE_EMPTY_CONTENT,
   CODE_INVALID_ENUM,
   CODE_REQUIRED_FIELD,
+  CODE_STRING_TOO_LONG,
   throwValidation,
 } from "../diagnostics.js";
 
@@ -31,6 +32,32 @@ export function requireString(
     );
   }
   return value;
+}
+
+/**
+ * Returns a string argument after checking its type and its length.
+ *
+ * The length is counted in Unicode code points, as the contract counts it.
+ * A JavaScript string counts UTF-16 code units, so a character outside the
+ * basic multilingual plane counts twice here and once in the Python SDK.
+ */
+export function requireBoundedString(
+  value: unknown,
+  path: string,
+  maxLength: number,
+  allowEmpty = false,
+): string {
+  const text = requireString(value, path, allowEmpty);
+  const length = [...text].length;
+  if (length > maxLength) {
+    throwValidation(
+      CODE_STRING_TOO_LONG,
+      `'${path}' must not hold more than ${maxLength} code points.`,
+      path,
+      { maxLength, length },
+    );
+  }
+  return text;
 }
 
 /** Returns an enum argument after checking that it is a known literal. */

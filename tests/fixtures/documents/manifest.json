@@ -29,6 +29,7 @@
     { "file": "invalid-module-alias.json", "code": "TYPCAST-VAL-0008" },
     { "file": "module-alias-and-items.json", "code": "TYPCAST-VAL-0009" },
     { "file": "invalid-date.json", "code": "TYPCAST-VAL-0011" },
+    { "file": "invalid-title-length.json", "code": "TYPCAST-VAL-0013" },
     { "file": "invalid-type.json", "code": "TYPCAST-IR-0004" }
   ]
 }

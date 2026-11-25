@@ -17,6 +17,7 @@ from typcast.diagnostics import (
     CODE_EMPTY_CONTENT,
     CODE_INVALID_ENUM,
     CODE_REQUIRED_FIELD,
+    CODE_STRING_TOO_LONG,
     raise_validation,
 )
 
@@ -24,6 +25,7 @@ __all__ = [
     "Block",
     "Span",
     "require_bool",
+    "require_bounded_string",
     "require_enum",
     "require_instance",
     "require_int",
@@ -55,6 +57,30 @@ def require_string(
             path,
         )
     return value
+
+
+def require_bounded_string(
+    value: Any,
+    path: str,
+    max_length: int,
+    *,
+    allow_empty: bool = False,
+) -> str:
+    """Returns a string argument after checking its type and its length.
+
+    The length is counted in Unicode code points, as the contract counts it.
+    A Python string counts code points, while a JavaScript string counts
+    code units, so the TypeScript SDK counts the code points itself.
+    """
+    text = require_string(value, path, allow_empty=allow_empty)
+    if len(text) > max_length:
+        raise_validation(
+            CODE_STRING_TOO_LONG,
+            f"'{path}' must not hold more than {max_length} code points.",
+            path,
+            {"maxLength": max_length, "length": len(text)},
+        )
+    return text
 
 
 def require_enum(

@@ -364,6 +364,7 @@ of the document, in declaration order. Remote modules are not supported.
 | Table shape | Every row must have the same number of cells as `columns`. |
 | Table alignment | `align` must be `left`, `center`, or `right`. |
 | Length | Value must be finite and non-negative; unit must be supported. |
+| Text length | `title` and `author` hold at most 512 Unicode code points. |
 | Image path | Must be relative, normalized, and inside `assetRoot`. |
 | Module path | Must be relative, normalized, and inside `assetRoot`. |
 | Module alias | Must be a valid identifier and unique within the document. |
@@ -375,7 +376,7 @@ first two layers only.
 
 | Layer | Rules | State |
 |---|---|---|
-| Model and reader | Required fields, closed objects, discriminator, table alignment, length, module alias, raw value, schema version. | Implemented. |
+| Model and reader | Required fields, closed objects, discriminator, table alignment, length, text length, module alias, raw value, schema version. | Implemented. |
 | Validation engine | Table shape, module alias uniqueness, raw size. | Not implemented. |
 | Asset layer | Image path, module path. | Not implemented. |
 
