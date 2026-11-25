@@ -20,6 +20,7 @@
     { "file": "missing-metadata.json", "code": "TYPCAST-VAL-0001" },
     { "file": "unknown-node-field.json", "code": "TYPCAST-VAL-0002" },
     { "file": "unknown-discriminator.json", "code": "TYPCAST-VAL-0003" },
+    { "file": "inherited-discriminator.json", "code": "TYPCAST-VAL-0003" },
     { "file": "invalid-orientation.json", "code": "TYPCAST-VAL-0003" },
     { "file": "invalid-length.json", "code": "TYPCAST-VAL-0004" },
     { "file": "invalid-heading-level.json", "code": "TYPCAST-VAL-0005" },

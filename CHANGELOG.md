@@ -164,6 +164,18 @@ No release has been published yet. Every change so far is listed under
   the run failed with ERR_MODULE_NOT_FOUND while the test on Windows passed.
   Both runners now declare the compiled SDK and the manifest of the package
   in their data.
+- The TypeScript SDK read a date with the `Date.UTC` function, which maps a
+  year below 100 to the year 1900 and above. The SDK therefore rejected a
+  date such as `0001-01-01` that the Python SDK accepts. Both SDKs now check
+  the calendar with the same arithmetic.
+- The TypeScript SDK looked a discriminator up with the `in` operator, which
+  accepts an inherited key such as `constructor` or `toString`. Such a value
+  raised a raw `TypeError` instead of the documented diagnostic. The lookup
+  now checks the own keys of the table.
+- The Python SDK wrote a lone surrogate into the canonical JSON text, because
+  Python holds such a character in a string. The result was a text that no
+  UTF-8 encoder can encode. The Python SDK now rejects the value with the
+  same diagnostic as the TypeScript SDK.
 
 ### Known issues
 

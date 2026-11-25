@@ -123,7 +123,9 @@ def document_from_dict(value: Any) -> Document:
 
 def document_to_json(document: Document) -> str:
     """Returns the canonical JSON text of a document."""
-    return _dumps(document_to_dict(document)) + "\n"
+    value = document_to_dict(document)
+    _assert_encodable(value, "")
+    return _dumps(value) + "\n"
 
 
 def document_from_json(source: str) -> Document:
@@ -513,6 +515,42 @@ def _parse_blocks(value: Any, path: str) -> tuple[Block, ...]:
 # ---------------------------------------------------------------------------
 # Canonical JSON writer
 # ---------------------------------------------------------------------------
+
+
+def _assert_encodable(value: Any, path: str) -> None:
+    """Rejects a value that holds a character that UTF-8 cannot encode.
+
+    Python holds a lone surrogate in a string, and the writer writes such a
+    character literally because it keeps the text of the document. The result
+    would be a JSON text that no UTF-8 encoder can encode. The TypeScript SDK
+    rejects the same value, so both SDKs reject it.
+    """
+    if isinstance(value, str):
+        for index, character in enumerate(value):
+            code = ord(character)
+            if 0xD800 <= code <= 0xDBFF:
+                following = ord(value[index + 1]) if index + 1 < len(value) else 0
+                if not 0xDC00 <= following <= 0xDFFF:
+                    _raise_unencodable(path)
+            elif 0xDC00 <= code <= 0xDFFF:
+                _raise_unencodable(path)
+        return
+    if isinstance(value, Mapping):
+        for name, item in value.items():
+            _assert_encodable(name, path)
+            _assert_encodable(item, f"{path}/{name}")
+        return
+    if isinstance(value, (list, tuple)):
+        for index, item in enumerate(value):
+            _assert_encodable(item, f"{path}/{index}")
+
+
+def _raise_unencodable(path: str) -> None:
+    raise_serialization(
+        CODE_NOT_SERIALIZABLE,
+        f"'{path}' holds a surrogate that UTF-8 cannot encode.",
+        path if path else None,
+    )
 
 
 def _dumps(value: Any) -> str:

@@ -126,6 +126,28 @@ class ConstructorValidationTests(unittest.TestCase):
             lambda: Metadata(title="Title", date="2026-02-30"),
         )
 
+    def test_the_year_zero_is_rejected(self) -> None:
+        self.assert_code(
+            "TYPCAST-VAL-0011",
+            lambda: Metadata(title="Title", date="0000-01-01"),
+        )
+
+    def test_a_date_below_the_year_100_is_accepted(self) -> None:
+        metadata = Metadata(title="Title", date="0001-01-01")
+        self.assertEqual(metadata.date, "0001-01-01")
+        metadata = Metadata(title="Title", date="0099-12-31")
+        self.assertEqual(metadata.date, "0099-12-31")
+
+    def test_a_day_of_a_leap_year_is_accepted(self) -> None:
+        metadata = Metadata(title="Title", date="2000-02-29")
+        self.assertEqual(metadata.date, "2000-02-29")
+
+    def test_a_day_of_a_century_that_is_not_a_leap_year_is_rejected(self) -> None:
+        self.assert_code(
+            "TYPCAST-VAL-0011",
+            lambda: Metadata(title="Title", date="1900-02-29"),
+        )
+
     def test_invalid_orientation_is_rejected(self) -> None:
         self.assert_code(
             "TYPCAST-VAL-0003",
@@ -247,6 +269,24 @@ class SerializationTests(unittest.TestCase):
         self.assertIn("보고서", text)
         self.assertNotIn("\\u", text)
 
+    def test_a_lone_surrogate_is_rejected(self) -> None:
+        built = document(metadata=Metadata(title="Title\uD800"))
+        with self.assertRaises(SerializationError) as caught:
+            built.to_json()
+        self.assertEqual(
+            caught.exception.diagnostics[0].code,
+            "TYPCAST-IR-0003",
+        )
+
+    def test_a_lone_trailing_surrogate_is_rejected(self) -> None:
+        built = document(metadata=Metadata(title="Title\uDC00"))
+        with self.assertRaises(SerializationError) as caught:
+            built.to_json()
+        self.assertEqual(
+            caught.exception.diagnostics[0].code,
+            "TYPCAST-IR-0003",
+        )
+
     def test_the_output_is_valid_json(self) -> None:
         value = json.loads(document().to_json())
         self.assertEqual(value["schemaVersion"], "1.0.0")
@@ -335,6 +375,13 @@ class DeserializationTests(unittest.TestCase):
     def test_an_unknown_discriminator_is_rejected(self) -> None:
         value = document().to_dict()
         value["contents"][0]["type"] = "quote"
+        with self.assertRaises(ValidationError) as caught:
+            Document.from_dict(value)
+        self.assertEqual(caught.exception.diagnostics[0].code, "TYPCAST-VAL-0003")
+
+    def test_an_inherited_key_is_not_a_discriminator(self) -> None:
+        value = document().to_dict()
+        value["contents"][0]["type"] = "constructor"
         with self.assertRaises(ValidationError) as caught:
             Document.from_dict(value)
         self.assertEqual(caught.exception.diagnostics[0].code, "TYPCAST-VAL-0003")

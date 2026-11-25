@@ -144,6 +144,31 @@ function constructorTests(): void {
     "an impossible date must be rejected",
   );
   expectCode(
+    "TYPCAST-VAL-0011",
+    () => new Metadata("Title", null, "0000-01-01"),
+    "the year zero must be rejected",
+  );
+  checkEqual(
+    new Metadata("Title", null, "0001-01-01").date,
+    "0001-01-01",
+    "a date below the year 100 must be accepted",
+  );
+  checkEqual(
+    new Metadata("Title", null, "0099-12-31").date,
+    "0099-12-31",
+    "the last date below the year 100 must be accepted",
+  );
+  expectCode(
+    "TYPCAST-VAL-0011",
+    () => new Metadata("Title", null, "1900-02-29"),
+    "a day of a century that is not a leap year must be rejected",
+  );
+  checkEqual(
+    new Metadata("Title", null, "2000-02-29").date,
+    "2000-02-29",
+    "a day of a leap year must be accepted",
+  );
+  expectCode(
     "TYPCAST-VAL-0003",
     () => new Page("a4", "diagonal" as "portrait", margin()),
     "an unknown orientation must be rejected",
@@ -271,6 +296,17 @@ function serializationTests(): void {
   check(unicode.includes("보고서"), "the output must preserve Unicode");
   check(!unicode.includes("\\u"), "the output must not escape Unicode");
 
+  expectCode(
+    "TYPCAST-IR-0003",
+    () => buildDocument(new Metadata("Title\uD800")).toJSONString(),
+    "a lone surrogate must be rejected",
+  );
+  expectCode(
+    "TYPCAST-IR-0003",
+    () => buildDocument(new Metadata("Title\uDC00")).toJSONString(),
+    "a lone trailing surrogate must be rejected",
+  );
+
   const built = buildDocument(
     undefined,
     undefined,
@@ -373,6 +409,27 @@ function deserializationTests(): void {
     "TYPCAST-VAL-0003",
     () => Document.fromJSON(unknownType),
     "an unknown discriminator must be rejected",
+  );
+
+  const inheritedType = buildDocument().toJSON() as Record<string, unknown>;
+  (inheritedType["contents"] as Record<string, unknown>[])[0]!["type"] =
+    "constructor";
+  expectCode(
+    "TYPCAST-VAL-0003",
+    () => Document.fromJSON(inheritedType),
+    "an inherited key must not be a block discriminator",
+  );
+
+  const inheritedSpanType = buildDocument().toJSON() as Record<string, unknown>;
+  (
+    (inheritedSpanType["contents"] as Record<string, unknown>[])[0]![
+      "content"
+    ] as Record<string, unknown>[]
+  )[0]!["type"] = "toString";
+  expectCode(
+    "TYPCAST-VAL-0003",
+    () => Document.fromJSON(inheritedSpanType),
+    "an inherited key must not be a span discriminator",
   );
 
   const unsupported = buildDocument().toJSON() as Record<string, unknown>;

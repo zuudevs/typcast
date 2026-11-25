@@ -396,7 +396,13 @@ function parseModules(value: unknown, path: string): readonly Module[] {
 function parseSpan(value: unknown, path: string): Span {
   const obj = asObject(value, path);
   const discriminator = obj["type"];
-  if (typeof discriminator !== "string" || !(discriminator in SPAN_FIELDS)) {
+  // The lookup checks the own keys of the table. An inherited key such as
+  // `constructor` is not a discriminator, and it must be rejected with the
+  // documented diagnostic instead of reaching the field check.
+  if (
+    typeof discriminator !== "string" ||
+    !Object.hasOwn(SPAN_FIELDS, discriminator)
+  ) {
     throwValidation(
       CODE_INVALID_ENUM,
       `'${path}/type' must be one of ${Object.keys(SPAN_FIELDS).sort().join(", ")}.`,
@@ -474,7 +480,13 @@ function parseRow(value: unknown, path: string): readonly (readonly Span[])[] {
 function parseBlock(value: unknown, path: string): Block {
   const obj = asObject(value, path);
   const discriminator = obj["type"];
-  if (typeof discriminator !== "string" || !(discriminator in BLOCK_FIELDS)) {
+  // The lookup checks the own keys of the table. An inherited key such as
+  // `constructor` is not a discriminator, and it must be rejected with the
+  // documented diagnostic instead of reaching the field check.
+  if (
+    typeof discriminator !== "string" ||
+    !Object.hasOwn(BLOCK_FIELDS, discriminator)
+  ) {
     throwValidation(
       CODE_INVALID_ENUM,
       `'${path}/type' must be one of ${Object.keys(BLOCK_FIELDS).sort().join(", ")}.`,
