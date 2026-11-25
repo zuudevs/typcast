@@ -311,6 +311,13 @@ check verifies that the commit is a release commit.
 - The Windows startup flag must not break Bazel startup.
 - CI must run the same `bazel build //...` and `bazel test //...` commands.
 - Case-sensitive paths must be used consistently.
+- The sandbox of Linux holds only the declared inputs of an action, while
+  Windows runs the action in the workspace. A TypeScript project therefore
+  needs the `package.json` of its package as an input: under `module`
+  NodeNext and `verbatimModuleSyntax`, TypeScript classifies a `.ts` file as
+  an ECMAScript module only when the nearest `package.json` declares
+  `"type": "module"`. Without the manifest as an input, the compilation
+  fails with TS1295 on Linux while it passes on Windows.
 
 ## Schema archive
 

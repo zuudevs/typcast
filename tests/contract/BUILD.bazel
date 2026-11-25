@@ -8,6 +8,9 @@ package(
 
 # The TypeScript contract runner. It reads the shared fixtures and the
 # manifest, so it depends on the fixture filegroup and on the TypeScript SDK.
+# The runner uses the `.mts` extension, so TypeScript classifies it as an
+# ECMAScript module without a `package.json` next to it, and Node runs the
+# emitted `.mjs` as an ECMAScript module in every sandbox.
 ts_project(
     name = "contract_ts",
     srcs = [

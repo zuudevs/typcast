@@ -154,6 +154,11 @@ No release has been published yet. Every change so far is listed under
   build directory could own a Python module and the SDK isolation check could
   report a false error. The walk now skips the output trees, and a unit test
   covers the case.
+- The TypeScript unit test project of the SDK did not carry the manifest of
+  the package as an input. The sandbox of Linux therefore classified the test
+  file as a CommonJS file, and the compilation failed with TS1295 while the
+  build on Windows passed. The manifest is now an input of the project, as it
+  already was for the project of the SDK.
 
 ### Known issues
 

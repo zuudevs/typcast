@@ -10,6 +10,13 @@ exports_files([
     "package.json",
 ])
 
+# The manifest is an input of the project on purpose. Under `module` NodeNext
+# and `verbatimModuleSyntax`, TypeScript classifies a `.ts` file as an
+# ECMAScript module only when the nearest `package.json` declares
+# `"type": "module"`. The manifest is the one of the SDK, and it sits next to
+# the sources of the project, so the classification is the same in every
+# sandbox. Without it the sandbox of Linux has no manifest, the file becomes a
+# CommonJS file, and the compilation fails with TS1295.
 ts_project(
     name = "typcast",
     srcs = glob([
@@ -23,11 +30,13 @@ ts_project(
     out_dir = "lib",
 )
 
-# The unit tests of the immutable document model.
+# The unit tests of the immutable document model. The manifest is an input for
+# the same reason as in the project above.
 ts_project(
     name = "model_test",
     srcs = [
         "tests/model.test.ts",
+        "package.json",
     ],
     tsconfig = {
         "compilerOptions": {
