@@ -26,7 +26,7 @@ from typcast.diagnostics import (
     raise_validation,
     with_path,
 )
-from typcast.models.base import Block, Span
+from typcast.models.base import Block, Span, to_binary64
 from typcast.models.blocks import (
     Heading,
     Image,
@@ -195,29 +195,44 @@ def _as_bool(value: Any, path: str) -> bool:
 
 
 def _as_int(value: Any, path: str) -> int:
-    if isinstance(value, bool) or not isinstance(value, int):
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise_serialization(
             CODE_ROOT_SHAPE,
             f"'{path}' must be a JSON integer.",
             path,
         )
-    return value
+    # A JSON integer is a number without a fractional part, as the
+    # `Number.isInteger` function of JavaScript defines it, so a value of
+    # `1.0` is an integer. A Python integer is narrowed to the number domain
+    # of the IR first, exactly as `JSON.parse` does in JavaScript.
+    number = to_binary64(value) if isinstance(value, int) else value
+    if not math.isfinite(number) or not number.is_integer():
+        raise_serialization(
+            CODE_ROOT_SHAPE,
+            f"'{path}' must be a JSON integer.",
+            path,
+        )
+    return int(number)
 
 
-def _as_number(value: Any, path: str) -> float | int:
+def _as_number(value: Any, path: str) -> float:
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise_serialization(
             CODE_ROOT_SHAPE,
             f"'{path}' must be a JSON number.",
             path,
         )
-    if isinstance(value, float) and not math.isfinite(value):
+    # The number domain of the IR is the binary64 domain of ECMAScript, so a
+    # Python integer is narrowed to that domain, exactly as `JSON.parse` does
+    # in JavaScript.
+    number = to_binary64(value) if isinstance(value, int) else value
+    if not math.isfinite(number):
         raise_serialization(
             CODE_ROOT_SHAPE,
             f"'{path}' must be a finite JSON number.",
             path,
         )
-    return value
+    return number
 
 
 def _check_fields(value: Mapping[str, Any], allowed: frozenset[str], path: str) -> None:

@@ -35,7 +35,7 @@ JSON field names are defined by the IR and do not change between languages.
 | `Metadata` | Title, author, and date. |
 | `Page` | Paper, orientation, and margin. |
 | `Margin` | Top, right, bottom, and left lengths. |
-| `Length` | Numeric value and unit. |
+| `Length` | Numeric value and unit. The value lives in the binary64 number domain of ECMAScript. |
 | `Heading` | Heading block. |
 | `Paragraph` | Paragraph block. |
 | `ListBlock` | Ordered or unordered list block. |

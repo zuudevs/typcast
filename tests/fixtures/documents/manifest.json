@@ -8,7 +8,8 @@
     { "file": "empty-collections.json" },
     { "file": "modules.json" },
     { "file": "unicode.json" },
-    { "file": "patch-version.json" }
+    { "file": "patch-version.json" },
+    { "file": "large-number.json" }
   ],
   "invalid": [
     { "file": "malformed.txt", "code": "TYPCAST-IR-0001" },

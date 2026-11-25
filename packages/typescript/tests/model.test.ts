@@ -229,6 +229,26 @@ function constructorTests(): void {
     "an invalid heading level must be rejected",
   );
   expectCode(
+    "TYPCAST-VAL-0001",
+    () => new Heading(1.5, [new Text("Heading")]),
+    "a fractional heading level must be rejected",
+  );
+  checkEqual(
+    new Heading(1.0, [new Text("Heading")]).level,
+    1,
+    "an integer valued float heading level must be accepted",
+  );
+  checkEqual(
+    new Length(9007199254740993, "cm").value,
+    9007199254740992,
+    "a length that the number domain cannot hold must be narrowed",
+  );
+  expectCode(
+    "TYPCAST-VAL-0004",
+    () => new Length(Number.POSITIVE_INFINITY, "cm"),
+    "a length that overflows the number domain must be rejected",
+  );
+  expectCode(
     "TYPCAST-VAL-0006",
     () => new Paragraph([]),
     "empty content must be rejected",
@@ -242,6 +262,16 @@ function constructorTests(): void {
     "TYPCAST-VAL-0008",
     () => new Module("modules/report.typ", "1report"),
     "an invalid module alias must be rejected",
+  );
+  expectCode(
+    "TYPCAST-VAL-0008",
+    () => new Module("modules/report.typ", "report\n"),
+    "a module alias with a trailing newline must be rejected",
+  );
+  expectCode(
+    "TYPCAST-VAL-0008",
+    () => new Module("modules/report.typ", null, ["summary\n"]),
+    "a module item with a trailing newline must be rejected",
   );
   expectCode(
     "TYPCAST-VAL-0009",
@@ -282,6 +312,16 @@ function constructorTests(): void {
     "TYPCAST-IR-0002",
     () => new Document(new Metadata("Title"), new Page("a4", "portrait", margin()), [new Paragraph([new Text("Body")])], [], "2.0.0"),
     "an unsupported schema version must be rejected",
+  );
+  expectCode(
+    "TYPCAST-IR-0002",
+    () => new Document(new Metadata("Title"), new Page("a4", "portrait", margin()), [new Paragraph([new Text("Body")])], [], "\u0661.0.0"),
+    "a schema version with Unicode digits must be rejected",
+  );
+  expectCode(
+    "TYPCAST-IR-0002",
+    () => new Document(new Metadata("Title"), new Page("a4", "portrait", margin()), [new Paragraph([new Text("Body")])], [], "1.0.0\n"),
+    "a schema version with a trailing newline must be rejected",
   );
 }
 
@@ -325,6 +365,15 @@ function serializationTests(): void {
   check(
     fractional.toJSONString().includes('"value": 2.5,'),
     "a fractional length must keep its shortest form",
+  );
+
+  const large = buildDocument(
+    undefined,
+    new Page("a4", "portrait", margin(9007199254740992)),
+  );
+  check(
+    large.toJSONString().includes('"value": 9007199254740992,'),
+    "a large number must be written in the number domain of the contract",
   );
 
   const unicode = buildDocument(new Metadata("보고서")).toJSONString();
@@ -481,6 +530,44 @@ function deserializationTests(): void {
     Document.fromJSON(patch).schemaVersion,
     "1.0.7",
     "a supported patch version must be accepted",
+  );
+
+  const unicodeDigits = buildDocument().toJSON() as Record<string, unknown>;
+  unicodeDigits["schemaVersion"] = "\u0661.0.0";
+  expectCode(
+    "TYPCAST-IR-0002",
+    () => Document.fromJSON(unicodeDigits),
+    "a version with Unicode digits must be rejected",
+  );
+
+  const trailingNewline = buildDocument().toJSON() as Record<string, unknown>;
+  trailingNewline["schemaVersion"] = "1.0.0\n";
+  expectCode(
+    "TYPCAST-IR-0002",
+    () => Document.fromJSON(trailingNewline),
+    "a version with a trailing newline must be rejected",
+  );
+
+  const floatLevel = buildDocument().toJSON() as Record<string, unknown>;
+  floatLevel["contents"] = [
+    { type: "heading", level: 1.0, content: [{ type: "text", value: "H" }] },
+  ];
+  const parsedLevel = Document.fromJSON(floatLevel).contents[0] as Heading;
+  checkEqual(
+    parsedLevel.level,
+    1,
+    "an integer valued float level must be accepted",
+  );
+
+  const overflow = buildDocument().toJSON() as Record<string, unknown>;
+  const page = overflow["page"] as Record<string, unknown>;
+  const margins = page["margin"] as Record<string, unknown>;
+  const top = margins["top"] as Record<string, unknown>;
+  top["value"] = 1e400;
+  expectCode(
+    "TYPCAST-IR-0004",
+    () => Document.fromJSON(overflow),
+    "a number that overflows the number domain must be rejected",
   );
 
   const withoutModules = buildDocument().toJSON() as Record<string, unknown>;

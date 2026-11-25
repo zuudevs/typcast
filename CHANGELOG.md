@@ -184,6 +184,26 @@ No release has been published yet. Every change so far is listed under
   points, which the schema of the contract rejects. Both SDKs now check the
   limit and report it with the new code `TYPCAST-VAL-0013`. The catalog of
   the diagnostics allows a new code in a minor release.
+- The Python SDK read the schema version with a pattern that matches every
+  Unicode decimal digit and that accepts a final newline. A version such as
+  `١.0.0` or `1.0.0\n` was therefore accepted by the Python SDK and rejected
+  by the TypeScript SDK. Both SDKs now read the same versions.
+- The Python SDK checked a module alias and a module item with a pattern that
+  accepts a final newline. An identifier that ends with a newline was
+  therefore accepted by the Python SDK and rejected by the TypeScript SDK.
+  Both SDKs now accept the same identifiers.
+- The Python SDK held a length value as an arbitrary precision integer, so a
+  value that the binary64 number domain cannot hold exactly was rounded when
+  the canonical text was written. The document in the model and the document
+  in the text were therefore different, and the round trip did not preserve
+  the document. Both SDKs now hold the numbers of a document in the binary64
+  domain of ECMAScript, so a value that the domain cannot hold is narrowed
+  the same way in both SDKs, and a value that overflows the domain is
+  rejected in both SDKs.
+- The Python SDK rejected a JSON number with a zero fractional part, such as
+  the level `1.0` of a heading, while the TypeScript SDK accepted it. A JSON
+  integer is a number without a fractional part, so both SDKs now accept the
+  same values.
 
 ### Known issues
 

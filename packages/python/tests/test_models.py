@@ -205,6 +205,30 @@ class ConstructorValidationTests(unittest.TestCase):
             lambda: Heading(level=7, content=[Text("Heading")]),
         )
 
+    def test_a_fractional_heading_level_is_rejected(self) -> None:
+        self.assert_code(
+            "TYPCAST-VAL-0001",
+            lambda: Heading(level=1.5, content=[Text("Heading")]),
+        )
+
+    def test_an_integer_valued_float_heading_level_is_accepted(self) -> None:
+        heading = Heading(level=1.0, content=[Text("Heading")])
+        self.assertEqual(heading.level, 1)
+
+    def test_a_length_that_the_number_domain_cannot_hold_is_narrowed(self) -> None:
+        # The numbers of the IR live in the binary64 domain of ECMAScript, so
+        # a Python integer that the domain cannot hold exactly is rounded to
+        # the nearest representable value, exactly as TypeScript does.
+        length = Length(value=9007199254740993, unit="cm")
+        self.assertEqual(length.value, 9007199254740992.0)
+        self.assertEqual(length.to_dict()["value"], 9007199254740992)
+
+    def test_a_length_that_overflows_the_number_domain_is_rejected(self) -> None:
+        self.assert_code(
+            "TYPCAST-VAL-0004",
+            lambda: Length(value=10**400, unit="cm"),
+        )
+
     def test_empty_content_is_rejected(self) -> None:
         self.assert_code("TYPCAST-VAL-0006", lambda: Paragraph(content=[]))
 
@@ -215,6 +239,18 @@ class ConstructorValidationTests(unittest.TestCase):
         self.assert_code(
             "TYPCAST-VAL-0008",
             lambda: Module(path="modules/report.typ", alias="1report"),
+        )
+
+    def test_a_module_alias_with_a_trailing_newline_is_rejected(self) -> None:
+        self.assert_code(
+            "TYPCAST-VAL-0008",
+            lambda: Module(path="modules/report.typ", alias="report\n"),
+        )
+
+    def test_a_module_item_with_a_trailing_newline_is_rejected(self) -> None:
+        self.assert_code(
+            "TYPCAST-VAL-0008",
+            lambda: Module(path="modules/report.typ", items=("summary\n",)),
         )
 
     def test_module_alias_and_items_are_exclusive(self) -> None:
@@ -299,6 +335,18 @@ class SerializationTests(unittest.TestCase):
             page=Page(paper="a4", orientation="portrait", margin=margin(2.5))
         ).to_dict()
         self.assertEqual(value["page"]["margin"]["top"]["value"], 2.5)
+
+    def test_a_large_number_is_written_in_the_number_domain_of_the_contract(
+        self,
+    ) -> None:
+        built = document(
+            page=Page(
+                paper="a4",
+                orientation="portrait",
+                margin=margin(9007199254740992),
+            )
+        )
+        self.assertIn('"value": 9007199254740992,', built.to_json())
 
     def test_unicode_is_preserved(self) -> None:
         text = document(metadata=Metadata(title="보고서")).to_json()
@@ -428,6 +476,35 @@ class DeserializationTests(unittest.TestCase):
         with self.assertRaises(SerializationError) as caught:
             Document.from_dict(value)
         self.assertEqual(caught.exception.diagnostics[0].code, "TYPCAST-IR-0002")
+
+    def test_a_version_with_unicode_digits_is_rejected(self) -> None:
+        value = document().to_dict()
+        value["schemaVersion"] = "\u0661.0.0"
+        with self.assertRaises(SerializationError) as caught:
+            Document.from_dict(value)
+        self.assertEqual(caught.exception.diagnostics[0].code, "TYPCAST-IR-0002")
+
+    def test_a_version_with_a_trailing_newline_is_rejected(self) -> None:
+        value = document().to_dict()
+        value["schemaVersion"] = "1.0.0\n"
+        with self.assertRaises(SerializationError) as caught:
+            Document.from_dict(value)
+        self.assertEqual(caught.exception.diagnostics[0].code, "TYPCAST-IR-0002")
+
+    def test_an_integer_valued_float_level_is_accepted(self) -> None:
+        value = document().to_dict()
+        value["contents"] = [
+            {"type": "heading", "level": 1.0, "content": [{"type": "text", "value": "H"}]}
+        ]
+        parsed = Document.from_dict(value)
+        self.assertEqual(parsed.contents[0].level, 1)
+
+    def test_a_number_that_overflows_the_number_domain_is_rejected(self) -> None:
+        value = document().to_dict()
+        value["page"]["margin"]["top"]["value"] = 10**400
+        with self.assertRaises(SerializationError) as caught:
+            Document.from_dict(value)
+        self.assertEqual(caught.exception.diagnostics[0].code, "TYPCAST-IR-0004")
 
     def test_a_supported_patch_version_is_accepted(self) -> None:
         value = document().to_dict()

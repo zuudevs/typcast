@@ -26,12 +26,16 @@ SCHEMA_VERSION = "1.0.0"
 SUPPORTED_SCHEMA_MAJOR = 1
 SUPPORTED_SCHEMA_MINOR = 0
 
-_VERSION_PATTERN = re.compile(r"^(\d+)\.(\d+)\.(\d+)$")
+# The pattern holds the ASCII digits only, and the match covers the whole
+# text. The `\d` of Python matches every Unicode decimal digit, and a `$`
+# matches before a final newline, so a version that the TypeScript SDK
+# rejects would pass here.
+_VERSION_PATTERN = re.compile(r"([0-9]+)\.([0-9]+)\.([0-9]+)")
 
 
 def parse_schema_version(value: str) -> tuple[int, int, int]:
     """Returns the major, minor, and patch numbers of a version string."""
-    match = _VERSION_PATTERN.match(value)
+    match = _VERSION_PATTERN.fullmatch(value)
     if match is None:
         raise_serialization(
             CODE_UNSUPPORTED_VERSION,

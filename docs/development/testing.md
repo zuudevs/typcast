@@ -16,7 +16,7 @@ compiler integration, and package installation.
 | Area | Current state |
 |---|---|
 | Test targets | Fifteen hand-written test targets: `//tools/codegen/tests:unit_tests`, `//tools/publish/tests:publish_tests`, `//scripts/tests:version_tests`, `//scripts/tests:release_tests`, `//scripts/tests:release_flow_tests`, `//scripts/tests:repository_tests`, `//scripts/tests:docs_tests`, `//scripts/tests:link_tests`, `//scripts:docs_checks`, `//specs/schemas:schema_tests`, `//specs/schemas:release_tag_tests`, `//packages/python/tests:model_tests`, `//packages/typescript:model_test_run`, `//tests/contract:contract_py`, and `//tests/contract:contract_ts_test`. The TypeScript toolchain adds two generated type-check targets. |
-| Test cases | Sixteen generator cases, 45 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 43 repository structure cases, 4 release tag cases, 32 documentation gate cases, 4 link check cases, one documentation check, one schema bundle check, 58 document model cases, and 6 contract fixture cases. |
+| Test cases | Sixteen generator cases, 45 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 43 repository structure cases, 4 release tag cases, 32 documentation gate cases, 4 link check cases, one documentation check, one schema bundle check, 69 document model cases, and 6 contract fixture cases. |
 | Schema tests | `//specs/schemas:schema_tests` validates the built bundle. Meta-schema and instance validation are missing. |
 | Release tag tests | `//specs/schemas:release_tag_tests` covers the release tag pattern of the contract, so that the contract and the publisher agree on what a release tag is. |
 | Publisher tests | `//tools/publish/tests:publish_tests` covers the publisher, the published identity of the built bundle, the resolution of the versioned raw URLs, and the deterministic archive. |
@@ -129,6 +129,7 @@ tests/
       modules.json
       unicode.json
       patch-version.json
+      large-number.json
       malformed.txt
       root-array.json
       missing-version.json
@@ -180,6 +181,8 @@ Rules:
 - Fixtures cover Unicode text.
 - Fixtures cover paths with `/` and Windows-normalized input.
 - Fixtures cover raw content and module imports.
+- Fixtures cover the number domain of the IR, so that both SDKs write the same
+  text for a large, a fractional, and an exponential number.
 - The manifest and the fixture directory must list the same files, so a fixture
   that no runner reads fails the contract tests.
 - A fixture change requires a review of expected output.

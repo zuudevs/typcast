@@ -15,7 +15,10 @@ from typcast.models.base import require_string, require_tuple
 
 __all__ = ["Module"]
 
-_IDENTIFIER_PATTERN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+# The pattern has no anchor at the end, and the match covers the whole text.
+# A `$` of Python matches before a final newline, so an identifier that ends
+# with a newline would pass here and would be rejected by the TypeScript SDK.
+_IDENTIFIER_PATTERN = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 
 
 @dataclass(frozen=True)
@@ -48,7 +51,10 @@ class Module:
 
     @staticmethod
     def _check_identifier(value: str, path: str) -> None:
-        if not isinstance(value, str) or _IDENTIFIER_PATTERN.match(value) is None:
+        if (
+            not isinstance(value, str)
+            or _IDENTIFIER_PATTERN.fullmatch(value) is None
+        ):
             raise_validation(
                 CODE_INVALID_MODULE_ALIAS,
                 f"'{path}' must match [A-Za-z_][A-Za-z0-9_]*, got {value!r}.",

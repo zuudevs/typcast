@@ -12,7 +12,12 @@ from typcast.diagnostics import (
     CODE_REQUIRED_FIELD,
     raise_validation,
 )
-from typcast.models.base import require_enum, require_instance, require_string
+from typcast.models.base import (
+    require_enum,
+    require_instance,
+    require_string,
+    to_binary64,
+)
 
 __all__ = [
     "Length",
@@ -28,9 +33,16 @@ ORIENTATIONS = ("portrait", "landscape")
 
 @dataclass(frozen=True)
 class Length:
-    """A numeric length with a unit."""
+    """A numeric length with a unit.
 
-    value: float | int
+    The value lives in the number domain of the IR, which is the binary64
+    domain of ECMAScript. A Python integer that the domain cannot hold
+    exactly is rounded to the nearest representable value, exactly as the
+    TypeScript SDK and `JSON.parse` do, so that the number in the model is
+    the number that the canonical text holds.
+    """
+
+    value: float
     unit: str
 
     def __post_init__(self) -> None:
@@ -41,7 +53,9 @@ class Length:
                 "'/value' must be a number.",
                 "/value",
             )
-        if isinstance(value, float) and not math.isfinite(value):
+        if isinstance(value, int):
+            value = to_binary64(value)
+        if not math.isfinite(value):
             raise_validation(
                 CODE_INVALID_LENGTH,
                 "'/value' must be a finite number.",
@@ -65,8 +79,8 @@ class Length:
         object.__setattr__(self, "value", value)
 
     def to_dict(self) -> dict[str, Any]:
-        value: float | int = self.value
-        if isinstance(value, float) and value.is_integer():
+        value: float = self.value
+        if value.is_integer():
             value = int(value)
         return {"value": value, "unit": self.unit}
 

@@ -32,9 +32,25 @@ __all__ = [
     "require_number",
     "require_string",
     "require_tuple",
+    "to_binary64",
 ]
 
 T = TypeVar("T")
+
+
+def to_binary64(value: int) -> float:
+    """Returns an integer in the number domain of the document IR.
+
+    The canonical JSON text of the IR follows the number format of
+    ECMAScript, so the numbers of a document live in the binary64 domain.
+    An integer that the domain cannot hold exactly is rounded to the nearest
+    representable value, exactly as TypeScript and `JSON.parse` do, and an
+    integer that overflows the domain becomes an infinity.
+    """
+    try:
+        return float(value)
+    except OverflowError:
+        return math.inf
 
 
 def require_string(
@@ -130,31 +146,49 @@ def require_bool(value: Any, path: str) -> bool:
 
 
 def require_int(value: Any, path: str) -> int:
-    """Returns an integer argument after checking its type."""
-    if isinstance(value, bool) or not isinstance(value, int):
+    """Returns an integer argument after checking its type.
+
+    An integer of the document IR is a number without a fractional part, as
+    the `Number.isInteger` function of JavaScript defines it, so a value of
+    `1.0` is an integer. A Python integer is narrowed to the number domain of
+    the IR first, because that domain holds the numbers of a document.
+    """
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise_validation(
             CODE_REQUIRED_FIELD,
             f"'{path}' must be an integer.",
             path,
         )
-    return value
+    number = to_binary64(value) if isinstance(value, int) else value
+    if not math.isfinite(number) or not number.is_integer():
+        raise_validation(
+            CODE_REQUIRED_FIELD,
+            f"'{path}' must be an integer.",
+            path,
+        )
+    return int(number)
 
 
-def require_number(value: Any, path: str) -> float | int:
-    """Returns a numeric argument after checking its type."""
+def require_number(value: Any, path: str) -> float:
+    """Returns a numeric argument after checking its type.
+
+    The value is narrowed to the number domain of the IR, so that the number
+    in the model is the number that the canonical text holds.
+    """
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise_validation(
             CODE_REQUIRED_FIELD,
             f"'{path}' must be a number.",
             path,
         )
-    if isinstance(value, float) and not math.isfinite(value):
+    number = to_binary64(value) if isinstance(value, int) else value
+    if not math.isfinite(number):
         raise_validation(
             CODE_REQUIRED_FIELD,
             f"'{path}' must be a finite number.",
             path,
         )
-    return value
+    return number
 
 
 def require_tuple(
