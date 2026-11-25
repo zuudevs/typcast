@@ -60,6 +60,11 @@ jobs:
           cache-save: true
       - name: Check the version consistency
         run: bazel run //scripts:check_version -- --version "${{ env.RELEASE_TAG }}"
+      # The check reads the source tree of the checkout. On the tagged release
+      # commit the published bundle is committed, so the check verifies that
+      # the commit is a release commit.
+      - name: Run the repository checks
+        run: bazel run //scripts:repository_checks
       - name: Build every target
         run: bazel build //...
       - name: Run the test lane

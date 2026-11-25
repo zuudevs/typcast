@@ -206,6 +206,34 @@ The rules of the script are covered by unit tests.
 bazel test //scripts/tests:link_tests
 ```
 
+## Repository structure checks
+
+`scripts/check_repository.py` reads the source tree of the repository and
+checks the rules that the architecture and the build documents state: the
+dependency direction between `specs/`, the two SDKs, and the repository
+checks, the `__init__.py` of every Python package directory, the hermetic
+Python toolchain, the committed lock file, the TypeScript compiler version of
+the root manifest, the template of every architecture decision record, and the
+rule that the generated published schemas are committed only in a release
+commit.
+
+The check reads the working tree, so it runs against the checkout and not
+against the runfiles tree.
+
+```shell
+bazel run //scripts:repository_checks
+```
+
+The rules are covered by unit tests that build a synthetic repository for
+every case.
+
+```shell
+bazel test //scripts/tests:repository_tests
+```
+
+The check runs in the pull request lane, in the main lane, and in the release
+lane.
+
 ## Current state
 
 | Item | Current |
@@ -222,7 +250,9 @@ bazel test //scripts/tests:link_tests
 | Encoding checks | Implemented in `//scripts:docs_checks`. |
 | Workflow checks | Implemented in `//scripts:docs_checks`; three workflow files are checked. |
 | Governance checks | Implemented in `//scripts:docs_checks`; the CODEOWNERS file is checked. |
+| Repository structure checks | Implemented in `//scripts:repository_checks`; the rules are covered by `//scripts/tests:repository_tests`. |
 | Docs CI | The `Documentation gate` job and the `Link check` job of the pull request lane and of the main lane. |
+| Repository CI | The `Repository checks` job of the pull request lane and of the main lane, and the `verify` job of the release lane. |
 
 ## Requirements
 
@@ -241,10 +271,10 @@ bazel test //scripts/tests:link_tests
 | DOC-011 | Requirement IDs MUST be unique and stable. | CONFIRMED | Review and script. |
 | DOC-012 | The docs gate MUST run on changed documents in PRs. | IMPLEMENTED | The `Documentation gate` job of the pull request lane. |
 | DOC-013 | The docs gate MUST run on all documents on main. | IMPLEMENTED | The `Documentation gate` job of the main lane. |
-| DOC-014 | Documentation tooling MUST NOT add SDK runtime dependencies. | CONFIRMED | Dependency review. |
+| DOC-014 | Documentation tooling MUST NOT add SDK runtime dependencies. | IMPLEMENTED | `//scripts:repository_checks` rejects a module of `scripts/` that imports the SDK package. |
 | DOC-015 | README code fences MUST be fixed before the gate is enabled. | IMPLEMENTED | Review; README uses standard fences and LF. |
 | DOC-016 | `.gitattributes` and `.editorconfig` MUST enforce LF and UTF-8. | IMPLEMENTED | Repository review. |
-| DOC-017 | ADRs MUST use the documented template. | CONFIRMED | Review. |
+| DOC-017 | ADRs MUST use the documented template. | IMPLEMENTED | `//scripts:repository_checks` checks the title, the fields, and the sections of every ADR against the template of `docs/decisions/README.md`. |
 | DOC-018 | Accepted ADRs MUST NOT be edited to change decisions. | CONFIRMED | Review. |
 | DOC-019 | Examples MUST be updated when the public API changes. | CONFIRMED | Review. |
 | DOC-020 | The traceability index MUST be updated with requirement changes. | CONFIRMED | Review. |
@@ -253,6 +283,7 @@ bazel test //scripts/tests:link_tests
 | DOC-023 | The repository gate MUST validate the CODEOWNERS file: it exists, every rule names an owner, and one rule covers every path. | IMPLEMENTED | `//scripts:docs_checks`; the CODEOWNERS file is checked. |
 | DOC-024 | The external link check MUST run in the pull request lane and in the main lane, MUST use a timeout, and MUST NOT block the merge. | IMPLEMENTED | The `Link check` job of `pr.yml` and `main.yml`; `//scripts:check_links`. |
 | DOC-025 | The rules of the repository gate and of the external link check MUST be covered by unit tests. | IMPLEMENTED | `//scripts/tests:docs_tests`; `//scripts/tests:link_tests`. The encoding rules are covered too. |
+| DOC-026 | The rules of the repository structure checks MUST be covered by unit tests, and the checks MUST run in the pull request lane, in the main lane, and in the release lane. | IMPLEMENTED | `//scripts/tests:repository_tests`; the `Repository checks` job of `pr.yml` and `main.yml`; the `verify` job of `release.yml`. |
 
 ## Open questions
 

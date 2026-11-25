@@ -70,16 +70,18 @@ root.
 
 | Check | Result |
 |---|---|
-| `bazel build //...` | Pass, 35 targets. |
-| `bazel test //...` | Pass, 9 test targets: 11 unittest cases, 44 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 29 documentation gate cases, 4 link check cases, 1 documentation check, 1 schema bundle check. |
+| `bazel build //...` | Pass, 38 targets. |
+| `bazel test //...` | Pass, 10 test targets: 11 unittest cases, 44 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 30 repository structure cases, 29 documentation gate cases, 4 link check cases, 1 documentation check, 1 schema bundle check. |
 | `bazel build //specs/schemas:schema_bundle` | Pass, 6 schema files. |
 | `bazel build //specs/schemas:schema_manifest` | Pass, 6 paths. |
 | `bazel build //specs/schemas:archive` | Pass, 6 members, deterministic gzip tarball. |
 | `bazel test //specs/schemas:schema_tests` | Pass, 6 bundle files, 0 violations. |
-| `bazel test //scripts:docs_checks` | Pass, 57 files, 455 requirements, and 3 workflows checked, 0 errors. |
+| `bazel test //scripts:docs_checks` | Pass, 57 files, 459 requirements, and 3 workflows checked, 0 errors. |
 | `bazel test //scripts/tests:version_tests` | Pass, 15 cases. |
 | `bazel test //scripts/tests:release_tests` | Pass, 20 cases. |
 | `bazel test //scripts/tests:release_flow_tests` | Pass, 6 cases. |
+| `bazel run //scripts:repository_checks` | Pass, 1 spec file, 2 SDK files, 13 gate files, 36 Python modules, 8 test modules, 2 toolchain files, 3 TypeScript files, 23 decision records, 0 errors. |
+| `bazel test //scripts/tests:repository_tests` | Pass, 30 cases. |
 | `bazel test //scripts/tests:docs_tests` | Pass, 29 cases. |
 | `bazel test //scripts/tests:link_tests` | Pass, 4 cases. |
 | `bazel test //tools/publish/tests:publish_tests` | Pass, 44 publisher cases. |
@@ -101,7 +103,7 @@ bazel-bin/specs/schemas/
 
 ## Current targets
 
-`bazel query "kind(rule, //...)"` reports 35 rules. All of them:
+`bazel query "kind(rule, //...)"` reports 38 rules. All of them:
 
 | Target | Kind | Purpose |
 |---|---|---|
@@ -117,12 +119,15 @@ bazel-bin/specs/schemas/
 | `//scripts:prepare_release_lib` | `py_library` | Release preparation library. |
 | `//scripts:check_links` | `py_binary` | External link check of the documents. |
 | `//scripts:check_links_lib` | `py_library` | External link check library. |
+| `//scripts:repository_checks` | `py_binary` | Repository structure, dependency, and toolchain checks. |
+| `//scripts:repository_checks_lib` | `py_library` | Repository check library. |
 | `//scripts:docs_checks` | `py_test` | Documentation, requirement, decision, and workflow checks. |
 | `//scripts:docs_lib` | `py_library` | Documentation check library. |
 | `//scripts/tests:docs_tests` | `py_test` | Twenty-nine documentation check tests. |
 | `//scripts/tests:link_tests` | `py_test` | Four external link check tests. |
 | `//scripts/tests:release_flow_tests` | `py_test` | Six release rehearsal tests. |
 | `//scripts/tests:release_tests` | `py_test` | Twenty release preparation tests. |
+| `//scripts/tests:repository_tests` | `py_test` | Thirty repository structure check tests. |
 | `//scripts/tests:version_tests` | `py_test` | Fifteen release version check tests. |
 | `//:docs_sources` | `filegroup` | The documents that the checks read. |
 | `//:release_manifests` | `filegroup` | The manifests and the schema sources that carry the release version. |
@@ -198,6 +203,45 @@ with `typcast_schema_copy`, and add the staged target to `schema_bundle`.
 The bundle test checks that the bundle carries exactly the published files.
 Add the new path to `EXPECTED_FILES` in `specs/schemas/schema_tests.py` when
 the published set changes.
+
+## Repository checks
+
+`//scripts:repository_checks` reads the source tree of the repository and
+reports the problems that the rules of `architecture/repository.md` and of this
+document must catch:
+
+- Dependencies: no module of `specs/` imports the SDK package, each SDK
+  depends on no code outside its own package, and no module of `scripts/`
+  imports the SDK package.
+- Packages: every package directory that holds Python modules holds an
+  `__init__.py`, and every test module is a complete program with an
+  `if __name__ == "__main__":` guard.
+- Toolchain: the Python toolchain is pinned to one version and names no system
+  Python, the lock file of the Bazel module is present and tracked, and the
+  TypeScript compiler version comes from the root manifest.
+- Decisions: every ADR holds the title, the fields, and the sections of the
+  template of `decisions/README.md`.
+- Artifacts: the generated published schemas are committed only when every
+  manifest, every schema source, and the changelog agree on the release
+  version.
+
+The check reads the working tree, so it runs against the checkout and not
+against the runfiles tree:
+
+```shell
+bazel run //scripts:repository_checks
+```
+
+The rules are covered by unit tests that build a synthetic repository for
+every case:
+
+```shell
+bazel test //scripts/tests:repository_tests
+```
+
+The check runs in the pull request lane, in the main lane, and in the release
+lane. On the tagged release commit the published bundle is committed, so the
+check verifies that the commit is a release commit.
 
 ## Generated artifacts
 
@@ -304,17 +348,17 @@ The artifact requirements for the packaging targets are defined in
 |---|---|---|---|
 | BUILD-001 | Bazel MUST remain the primary build system. | CONFIRMED | `bazel build //...`. |
 | BUILD-002 | Bazelisk MUST use the version in `.bazelversion`. | CONFIRMED | Version check. |
-| BUILD-003 | `MODULE.bazel.lock` MUST be committed. | CONFIRMED | Git check. |
-| BUILD-004 | The Bazel Python toolchain MUST be hermetic. | CONFIRMED | `MODULE.bazel`. |
-| BUILD-005 | New Python package directories MUST contain `__init__.py`. | CONFIRMED | Build. |
+| BUILD-003 | `MODULE.bazel.lock` MUST be committed. | IMPLEMENTED | `//scripts:repository_checks` rejects a missing or an empty lock file, and a lock file that git does not track. |
+| BUILD-004 | The Bazel Python toolchain MUST be hermetic. | IMPLEMENTED | `//scripts:repository_checks` reads `MODULE.bazel` and rejects a missing toolchain, a toolchain without a pinned version, two different versions, and a system Python. |
+| BUILD-005 | New Python package directories MUST contain `__init__.py`. | IMPLEMENTED | `//scripts:repository_checks` rejects a package directory that holds Python modules but no `__init__.py`. |
 | BUILD-006 | `bazel build //...` MUST pass before merge. | CONFIRMED | CI. |
 | BUILD-007 | `bazel test //...` MUST pass before merge. | CONFIRMED | CI. |
 | BUILD-008 | Every CSV used by a template MUST be declared in `catalogs`. | IMPLEMENTED | The generator rejects a placeholder whose catalog is not declared as an input of the rule; `//tools/codegen/tests:unit_tests`. |
-| BUILD-009 | Generated artifacts MUST NOT be committed to the development branch; the published schema bundle MUST be committed only in the tagged release commit (`REL-030`). | CONFIRMED | Review. |
+| BUILD-009 | Generated artifacts MUST NOT be committed to the development branch; the published schema bundle MUST be committed only in the tagged release commit (`REL-030`). | IMPLEMENTED | `//scripts:repository_checks` rejects committed generated schemas unless every manifest, every schema source, and the changelog agree on the release version. |
 | BUILD-010 | The generator MUST support absolute input and output paths. | IMPLEMENTED | Manual run. |
-| BUILD-011 | The build MUST NOT rely on `--test_filter` for this `py_test`. | CONFIRMED | Verified behavior. |
+| BUILD-011 | The build MUST NOT rely on `--test_filter` for this `py_test`. | IMPLEMENTED | `//scripts:repository_checks` rejects a test module that is not a complete program with an `if __name__ == "__main__":` guard, so every case of every test target runs. |
 | BUILD-012 | Linux CI MUST prove that Bazel starts with the current `.bazelrc`; if the Windows symlink startup flag is rejected, it moves to a Windows-only rc file. | IMPLEMENTED | The first Linux CI run passed with the current `.bazelrc` on 2026-11-24. |
-| BUILD-013 | TypeScript compiler version MUST come from the root manifest. | CONFIRMED | `MODULE.bazel`. |
+| BUILD-013 | TypeScript compiler version MUST come from the root manifest. | IMPLEMENTED | `//scripts:repository_checks` reads the root manifest, the SDK manifest, and the module file of Bazel. |
 | BUILD-014 | The packaging targets MUST be `//packages/python:wheel`, `//packages/python:sdist`, `//packages/typescript:npm_package`, and `//specs/schemas:archive`. | CONFIRMED | Release review. |
 | BUILD-015 | Schema validation MUST run in `//specs/schemas:schema_tests` against the built bundle. | IMPLEMENTED | `//specs/schemas:schema_tests` validates the bundle that `//specs/schemas:schema_bundle` produces. |
 | BUILD-016 | Hand-written filegroups with no consumer MUST be removed; `schema_bundle` MUST be kept as the published schema entry point. | IMPLEMENTED | `bazel query "rdeps(//..., //specs/schemas:schema_bundle)"`; unused aggregates removed. |

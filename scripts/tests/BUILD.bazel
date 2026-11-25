@@ -58,6 +58,22 @@ py_test(
     ],
 )
 
+# The rules of the repository checks. Every rule is exercised against a
+# synthetic repository, so that a rule cannot pass because of the state of the
+# checkout.
+py_test(
+    name = "repository_tests",
+    size = "small",
+    srcs = [
+        "__init__.py",
+        "test_check_repository.py",
+    ],
+    main = "test_check_repository.py",
+    deps = [
+        "//scripts:repository_checks_lib",
+    ],
+)
+
 # The rehearsal of the release commit. It uses the manifests, the schema
 # sources, and the bundle of the build, so that the path of the release lane
 # runs in every test lane.

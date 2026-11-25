@@ -108,6 +108,27 @@ jobs:
       - name: Run the documentation checks
         run: bazel test //scripts:docs_checks
 
+  repository:
+    name: Repository checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Bazelisk
+        uses: bazel-contrib/setup-bazel@f34d6a05eae3c24acab7fa54587492daeaeffdab # 0.19.2
+        with:
+          bazelisk-cache: true
+          disk-cache: "true"
+          repository-cache: |
+            - MODULE.bazel
+            - MODULE.bazel.lock
+            - .bazelversion
+          cache-save: false
+      # The check reads the source tree of the checkout, so it runs against the
+      # working directory of the runner and not against the runfiles tree.
+      - name: Run the repository checks
+        run: bazel run //scripts:repository_checks
+
   links:
     name: Link check
     runs-on: ubuntu-latest

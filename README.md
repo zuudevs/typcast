@@ -45,6 +45,12 @@ Run the documentation, requirement, decision, and workflow checks:
 bazel test //scripts:docs_checks
 ```
 
+Run the repository structure, dependency, and toolchain checks:
+
+```shell
+bazel run //scripts:repository_checks
+```
+
 Build the complete set of currently available JSON Schema artifacts:
 
 ```shell

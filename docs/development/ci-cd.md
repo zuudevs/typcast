@@ -28,6 +28,7 @@ flowchart TD
   PV --> B["Build"]
   PV --> F["Fast tests"]
   PV --> D["Docs gate"]
+  PV --> R["Repository checks"]
   PV --> L["Link check"]
   PV --> S["Security checks"]
   M["Push to main"] --> MI["Main integration"]
@@ -46,8 +47,8 @@ flowchart TD
 
 | File | Trigger | Jobs |
 |---|---|---|
-| `.github/workflows/pr.yml` | `pull_request` on `main`, manual | `Build`, `Test`, `Clean build`, `Documentation gate`, `Link check` |
-| `.github/workflows/main.yml` | `push` to `main`, manual | The same five jobs |
+| `.github/workflows/pr.yml` | `pull_request` on `main`, manual | `Build`, `Test`, `Clean build`, `Documentation gate`, `Repository checks`, `Link check` |
+| `.github/workflows/main.yml` | `push` to `main`, manual | The same six jobs |
 | `.github/workflows/release.yml` | `push` of a `v*` tag, manual | `Verify`, `Published schema bundle` |
 
 Every job installs Bazelisk and reads the Bazel version from `.bazelversion`.
@@ -56,8 +57,11 @@ The `Build` and `Test` jobs run on `windows-latest` and `ubuntu-latest`. The
 the build does not depend on a warm cache or on an untracked file. The
 `Documentation gate` job runs `bazel test //scripts:docs_checks` on its own,
 so that a reviewer sees the documentation result as a check of its own. The
-`Link check` job runs `bazel run //scripts:check_links`; it needs the network
-and reports warnings only, so it never blocks a merge.
+`Repository checks` job runs `bazel run //scripts:repository_checks`, which
+reads the source tree of the checkout, so it reports the dependency, package,
+toolchain, decision, and artifact rules of the repository. The `Link check`
+job runs `bazel run //scripts:check_links`; it needs the network and reports
+warnings only, so it never blocks a merge.
 
 The release lane checks the version consistency of the manifests and the tag,
 it builds and tests the tagged commit, it compares the published schema bundle
@@ -86,9 +90,10 @@ Jobs:
 6. Contract and golden tests.
 7. Cross-language parity tests.
 8. Repository checks: `bazel test //scripts:docs_checks`.
-9. Dependency and secret scanning where available.
+9. Repository structure checks: `bazel run //scripts:repository_checks`.
+10. Dependency and secret scanning where available.
 
-Steps 5 to 7 have no target yet, and step 9 is a repository setting. The
+Steps 5 to 7 have no target yet, and step 10 is a repository setting. The
 workflow runs the steps that have a target today.
 
 Permissions:
@@ -115,7 +120,8 @@ Jobs:
 4. Compatibility matrix for Python and Node.
 5. Benchmark job on the main lane.
 6. Documentation gate for all documents.
-7. Cache warm for the next run.
+7. Repository structure checks.
+8. Cache warm for the next run.
 
 Permissions:
 
@@ -140,6 +146,7 @@ Preconditions:
 - Changelog contains the release.
 - All tests pass.
 - Documentation gate passes.
+- Repository structure checks pass.
 - Security checks pass.
 - Artifacts are built from the tagged commit.
 - The tagged commit contains the complete published schema bundle under
@@ -149,17 +156,18 @@ Jobs:
 
 1. Verify version consistency across `MODULE.bazel`, the root `package.json`,
    `pyproject.toml`, `packages/typescript/package.json`, and the tag.
-2. Build wheel, sdist, npm tarball, schema archive, checksums, and SBOM.
-3. Compare the published schema bundle in the tagged commit with the built
+2. Run the repository structure checks against the tagged commit.
+3. Build wheel, sdist, npm tarball, schema archive, checksums, and SBOM.
+4. Compare the published schema bundle in the tagged commit with the built
    bundle.
-4. Run install tests against the built artifacts.
-5. Publish Python to PyPI.
-6. Publish npm package.
-7. Create or update the GitHub Release.
-8. Attach artifacts and checksums.
-9. Fetch every published schema from its versioned raw URL and compare it with
-   the release bundle.
-10. Record the Typst version used for verification.
+5. Run install tests against the built artifacts.
+6. Publish Python to PyPI.
+7. Publish npm package.
+8. Create or update the GitHub Release.
+9. Attach artifacts and checksums.
+10. Fetch every published schema from its versioned raw URL and compare it with
+    the release bundle.
+11. Record the Typst version used for verification.
 
 Permissions:
 
@@ -262,14 +270,14 @@ cache or on untracked files.
 | Item | Current |
 |---|---|
 | Workflows | Three: `.github/workflows/pr.yml`, `main.yml`, and `release.yml`. |
-| Pull request checks | `Build`, `Test`, `Clean build`, `Documentation gate`, and `Link check`. The first four run on Windows and Linux; the link check runs on Linux. |
+| Pull request checks | `Build`, `Test`, `Clean build`, `Documentation gate`, `Repository checks`, and `Link check`. The first four run on Windows and Linux; the repository checks and the link check run on Linux. |
 | Cache | Bazel cache per operating system, keyed by version, lockfile, and build files. |
 | Matrix | The operating system dimension. The runtime dimensions wait for the SDK. |
 | Action pinning | Every action is pinned to a commit SHA. The repository gate enforces it. |
 | Release lane | Verifies the version, the tagged build, the published bundle, the archive of the published bundle, and the raw URLs. It does not publish. |
 | Release environment | None. |
 | Trusted publishing | None. |
-| Required checks | The six checks of the pull request lane. The branch protection of `main` requires them. The link check runs as well, but it reports warnings only and is not required. |
+| Required checks | The seven checks of the pull request lane. The branch protection of `main` requires them. The link check runs as well, but it reports warnings only and is not required. |
 | Published schema bundle | None; the preparation command exists, but no release commit exists yet. |
 
 The first pull request run of the workflows passed on 2026-11-24: the build,
@@ -307,7 +315,7 @@ starts with the current `.bazelrc`.
 | CI-024 | The CI matrix MUST cover Windows and Linux, Python 3.11 to 3.14, Node.js 22 and 24, and Typst 0.15.1, with the pull request lane limited to the minimum and newest Python versions. | CONFIRMED | Matrix review. |
 | CI-025 | The workflow files MUST be added in a separate implementation change. | IMPLEMENTED | The three workflow files are in their own commits. |
 | CI-026 | The release lane MUST verify that the tagged commit contains the complete published schema bundle and that every published schema resolves at its versioned raw URL. | IMPLEMENTED | The release lane runs `publish_schemas check`, `compare-archives`, and `publish_schemas verify`. The rehearsal `//scripts/tests:release_flow_tests` runs the path against the built bundle. |
-| CI-027 | The pull request and main lanes MUST run the Bazel build and the test lane on Windows and Linux, MUST run the documentation gate and the external link check, and the release lane MUST verify the version consistency, the tagged build, the published bundle, the archive of the published bundle, and the versioned raw URLs. | IMPLEMENTED | The three workflow files; the first pull request run passed on 2026-11-24. |
+| CI-027 | The pull request and main lanes MUST run the Bazel build and the test lane on Windows and Linux, MUST run the documentation gate, the repository structure checks, and the external link check, and the release lane MUST verify the version consistency, the tagged build, the published bundle, the archive of the published bundle, and the versioned raw URLs. | IMPLEMENTED | The three workflow files; the first pull request run passed on 2026-11-24. |
 | CI-028 | The repository gate MUST reject an action that is not pinned to a commit SHA, a workflow without a permissions block, a pull request workflow with write access, a pull request workflow that reads a secret, and a workflow that uses `pull_request_target`. | IMPLEMENTED | `scripts/validate_docs.py`; `//scripts:docs_checks` checks three workflow files. |
 
 ## Open questions

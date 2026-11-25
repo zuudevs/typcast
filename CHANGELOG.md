@@ -42,9 +42,18 @@ No release has been published yet. Every change so far is listed under
 - Repository checks, `//scripts:docs_checks`, for the documents, the
   requirement index, the decision index, the schema references, and the
   workflow files.
+- Repository structure checks, `//scripts:repository_checks`, which read the
+  source tree and enforce the dependency direction between `specs/`, the two
+  SDKs, and the repository checks, the `__init__.py` of every Python package
+  directory, the hermetic Python toolchain, the committed lock file, the
+  TypeScript compiler version of the root manifest, the template of every
+  architecture decision record, and the rule that the generated published
+  schemas are committed only in a release commit. The rules are covered by
+  unit tests, and the checks run in the pull request lane, in the main lane,
+  and in the release lane.
 - Three GitHub Actions workflows: pull request validation, main integration,
   and release verification. The pull request lane builds, tests, and checks
-  the repository on Windows and Linux, and the six checks are required before
+  the repository on Windows and Linux, and the seven checks are required before
   a merge into `main`.
 - A pull request template at `.github/PULL_REQUEST_TEMPLATE.md`, this
   changelog, a contributing guide, and a code of conduct.

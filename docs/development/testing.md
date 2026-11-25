@@ -15,13 +15,14 @@ compiler integration, and package installation.
 
 | Area | Current state |
 |---|---|
-| Test targets | Nine `py_test` targets: `//tools/codegen/tests:unit_tests`, `//tools/publish/tests:publish_tests`, `//scripts/tests:version_tests`, `//scripts/tests:release_tests`, `//scripts/tests:release_flow_tests`, `//scripts/tests:docs_tests`, `//scripts/tests:link_tests`, `//scripts:docs_checks`, and `//specs/schemas:schema_tests`. |
-| Test cases | Eleven generator cases, 44 publisher cases, 15 release version cases, 20 release preparation cases, 6 release rehearsal cases, 29 documentation gate cases, 4 link check cases, one documentation check, one schema bundle check. |
+| Test targets | Ten `py_test` targets: `//tools/codegen/tests:unit_tests`, `//tools/publish/tests:publish_tests`, `//scripts/tests:version_tests`, `//scripts/tests:release_tests`, `//scripts/tests:release_flow_tests`, `//scripts/tests:repository_tests`, `//scripts/tests:docs_tests`, `//scripts/tests:link_tests`, `//scripts:docs_checks`, and `//specs/schemas:schema_tests`. |
+| Test cases | Eleven generator cases, 44 publisher cases, 15 release version cases, 20 release preparation cases, 6 release rehearsal cases, 30 repository structure cases, 29 documentation gate cases, 4 link check cases, one documentation check, one schema bundle check. |
 | Schema tests | `//specs/schemas:schema_tests` validates the built bundle. Meta-schema and instance validation are missing. |
 | Publisher tests | `//tools/publish/tests:publish_tests` covers the publisher, the published identity of the built bundle, the resolution of the versioned raw URLs, and the deterministic archive. |
 | Version tests | `//scripts/tests:version_tests` covers the release version check, including the contract version of every schema source. |
 | Release preparation tests | `//scripts/tests:release_tests` covers the release preparation, the publication, the verification, and the cleanup. |
 | Release rehearsal | `//scripts/tests:release_flow_tests` rehearses the release commit with the manifests, the schema sources, and the bundle of the build, so that the path of the release lane runs in every test lane. |
+| Repository structure tests | `//scripts/tests:repository_tests` covers the rules of the repository structure checks against a synthetic repository, so that a rule cannot pass because of the state of the checkout. |
 | Gate tests | `//scripts/tests:docs_tests` and `//scripts/tests:link_tests` cover the rules of the repository gate and of the external link check, including the encoding and the text hygiene rules. |
 | Contract tests | None. |
 | Golden `.typ` tests | None. |
