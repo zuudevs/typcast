@@ -1,0 +1,164 @@
+{
+  "schemaVersion": "1.0.0",
+  "metadata": {
+    "title": "Nested"
+  },
+  "page": {
+    "paper": "letter",
+    "orientation": "portrait",
+    "margin": {
+      "top": {
+        "value": 1,
+        "unit": "in"
+      },
+      "right": {
+        "value": 1,
+        "unit": "in"
+      },
+      "bottom": {
+        "value": 1,
+        "unit": "in"
+      },
+      "left": {
+        "value": 1,
+        "unit": "in"
+      }
+    }
+  },
+  "contents": [
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "bold",
+          "content": [
+            {
+              "type": "italic",
+              "content": [
+                {
+                  "type": "monospace",
+                  "content": [
+                    {
+                      "type": "text",
+                      "value": "nested"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "value": " and "
+            },
+            {
+              "type": "link",
+              "href": "https://example.com",
+              "content": [
+                {
+                  "type": "bold",
+                  "content": [
+                    {
+                      "type": "text",
+                      "value": "a link"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        [
+          {
+            "type": "text",
+            "value": "Item with "
+          },
+          {
+            "type": "italic",
+            "content": [
+              {
+                "type": "text",
+                "value": "emphasis"
+              }
+            ]
+          }
+        ],
+        [
+          {
+            "type": "text",
+            "value": "Item with "
+          },
+          {
+            "type": "bold",
+            "content": [
+              {
+                "type": "italic",
+                "content": [
+                  {
+                    "type": "text",
+                    "value": "both"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "columns": [
+        {
+          "header": [
+            {
+              "type": "bold",
+              "content": [
+                {
+                  "type": "text",
+                  "value": "Header"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "value": " "
+            },
+            {
+              "type": "text",
+              "value": "with emphasis"
+            }
+          ],
+          "align": "center"
+        },
+        {
+          "header": [],
+          "align": "right"
+        }
+      ],
+      "rows": [
+        [
+          [
+            {
+              "type": "text",
+              "value": "Nested"
+            },
+            {
+              "type": "lineBreak"
+            },
+            {
+              "type": "text",
+              "value": "cell"
+            }
+          ],
+          []
+        ]
+      ]
+    }
+  ],
+  "modules": []
+}

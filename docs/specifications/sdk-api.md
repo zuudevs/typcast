@@ -2,7 +2,7 @@
 
 Status: CONFIRMED
 Scope: Normative
-Last updated: 2026-11-24
+Last updated: 2026-11-25
 
 ## Purpose
 
@@ -209,6 +209,11 @@ row with the wrong number of cells is rejected at build time.
 validation errors. `build()`, `to_json()`, `to_typst()`, and `compile_pdf()`
 raise a typed error when an error diagnostic is present.
 
+The current release implements the model types of the list above, the
+serialization rows of this table, and the error hierarchy. The builder,
+`validate()`, `to_typst()`, `compile_pdf()`, and `write_pdf()` are part of the
+contract and are not implemented yet.
+
 ## Configuration
 
 ### Python
@@ -310,21 +315,21 @@ collection. A single error may carry multiple diagnostics.
 | API-001 | The SDK MUST expose an immutable document model and a fluent builder. | CONFIRMED | API review and tests. |
 | API-002 | Builder methods MUST return the builder for chaining. | CONFIRMED | API test. |
 | API-003 | `build()` MUST return an immutable snapshot. | CONFIRMED | Mutation test. |
-| API-004 | Model constructors MUST validate their inputs. | CONFIRMED | Constructor tests. |
+| API-004 | Model constructors MUST validate their inputs. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the constructor cases. |
 | API-005 | Strings passed as content MUST be normalized to text spans. | CONFIRMED | Builder test. |
 | API-006 | `build()` MUST raise `ValidationError` on error diagnostics. | CONFIRMED | Negative test. |
 | API-007 | `validate()` MUST return diagnostics without raising for validation errors. | CONFIRMED | API test. |
 | API-008 | `to_typst()` and `compile_pdf()` MUST validate again before use. | CONFIRMED | Validation test. |
-| API-009 | `to_json()` MUST produce canonical JSON. | CONFIRMED | Serialization parity test. |
-| API-010 | `from_json()` MUST reject unknown fields and unsupported versions. | CONFIRMED | Negative test. |
-| API-011 | Round-trip serialization MUST preserve the document. | CONFIRMED | Contract test. |
+| API-009 | `to_json()` MUST produce canonical JSON. | IMPLEMENTED | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`; every shared fixture is written back byte for byte. |
+| API-010 | `from_json()` MUST reject unknown fields and unsupported versions. | IMPLEMENTED | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`; the negative fixtures of the manifest. |
+| API-011 | Round-trip serialization MUST preserve the document. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the round-trip cases. |
 | API-012 | `compile_pdf()` MUST return a `CompileResult` with the documented fields. | CONFIRMED | Compiler API test. |
 | API-013 | `compile_pdf()` MUST support bytes-only and path-only modes. | CONFIRMED | Compiler API test. |
 | API-014 | `write_pdf()` MUST write atomically and MUST NOT leave partial output. | CONFIRMED | Failure test. |
-| API-015 | Every error MUST inherit from `TypcastError` and expose diagnostics. | CONFIRMED | Error test. |
-| API-016 | Python and TypeScript MUST use the same diagnostic shape. | CONFIRMED | Diagnostics parity test. |
+| API-015 | Every error MUST inherit from `TypcastError` and expose diagnostics. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the error cases. |
+| API-016 | Python and TypeScript MUST use the same diagnostic shape. | IMPLEMENTED | The `Diagnostic` shape of `typcast.diagnostics` and of `packages/typescript/src/diagnostics.ts`; the contract runners compare the code of every negative fixture. |
 | API-017 | Python and TypeScript MUST produce identical `.typ` bytes for the same fixture. | CONFIRMED | Parity test. |
-| API-018 | The package root MUST export the public API. | CONFIRMED | Import test. |
+| API-018 | The package root MUST export the public API. | IMPLEMENTED | `//packages/python/tests:model_tests` imports every public type from `typcast`; `//packages/typescript:model_test_run` imports every public type from the package root. |
 | API-019 | The npm package MUST expose ESM and type declarations. | CONFIRMED | Package test. |
 | API-020 | The public API MUST be stable from `1.0.0`. | CONFIRMED | Release review. |
 | API-021 | Deprecations MUST be documented for at least one minor release. | CONFIRMED | Release review. |

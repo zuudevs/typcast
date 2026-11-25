@@ -2,7 +2,7 @@
 
 Status: CONFIRMED
 Scope: Normative
-Last updated: 2026-11-24
+Last updated: 2026-11-25
 
 ## Purpose
 
@@ -229,6 +229,45 @@ a target for the MVP and is not yet verified in the repository.
 | `GOV-003` | The branch protection of `main` requires one approving review. | The branch protection settings of the repository. |
 | `GOV-004` | The branch protection of `main` requires the eight checks of the pull request lane. | The branch protection settings of the repository; the checks passed on 2026-11-24. |
 | `GOV-013` | Direct pushes to `main` are blocked; an administrator may merge a pull request without a second reviewer while the project has one maintainer. | The branch protection settings of the repository. |
+
+| `IR-001` | The reader of both SDKs rejects a document that misses `schemaVersion`, `metadata`, `page`, or `contents`. | `//packages/python/tests:model_tests`; the missing-required-field case. |
+| `IR-002` | The reader of both SDKs rejects an unknown field of the `page` object. | `//packages/python/tests:model_tests`; the unknown-node-field case. |
+| `IR-003` | The constructor of both SDKs rejects empty contents, and the reader rejects a block without a supported discriminator. | `//packages/python/tests:model_tests`; the empty-contents case and the unknown-discriminator case. |
+| `IR-004` | The reader of both SDKs rejects an unknown discriminator with `TYPCAST-VAL-0003`. | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`; the negative fixture `unknown-discriminator.json`. |
+| `IR-005` | The constructor of both SDKs rejects a heading level outside 1 to 6 with `TYPCAST-VAL-0005`. | `//packages/python/tests:model_tests`; the heading-level case. |
+| `IR-007` | The constructor of both SDKs rejects another table alignment with `TYPCAST-VAL-0003`. | `//packages/python/tests:model_tests`; the alignment case. |
+| `IR-008` | The constructor of both SDKs rejects another length unit with `TYPCAST-VAL-0004`. | `//packages/python/tests:model_tests`; the unit case. |
+| `IR-011` | The constructor of both SDKs rejects an empty raw value with `TYPCAST-VAL-0006`. | `//packages/python/tests:model_tests`; the empty-raw-value case. |
+| `IR-012` | The reader of both SDKs rejects a malformed version with `TYPCAST-IR-0002` and accepts a supported patch version. | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`; the negative fixtures `malformed-version.json` and `unsupported-version.json`, and the fixture `patch-version.json`. |
+| `IR-013` | Both SDKs write every shared fixture back byte for byte in the canonical form. | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`; the valid fixtures of the manifest. |
+| `IR-014` | Both SDKs reject every negative fixture with the diagnostic code that the manifest names. | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`; the negative fixtures of the manifest. |
+| `IR-015` | The reader and the writer of both SDKs preserve the document. | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the round-trip cases. |
+| `IR-017` | The SDKs depend on no Typst compiler, and the model and the contract tests run without a Typst installation. | `//packages/python/tests:model_tests`; `//tests/contract:contract_py`; `//tests/contract:contract_ts_test`. |
+| `IR-018` | The shared fixtures are language-neutral JSON, and both SDKs read them. | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`; the fixtures under `tests/fixtures/documents/`. |
+| `API-004` | The constructors of both SDKs check the type, the enum literal, the range, and the emptiness of their arguments. | `//packages/python/tests:model_tests`; `//packages/typescript:model_test_run`; the constructor cases. |
+| `API-009` | Both SDKs write the canonical JSON form: two-space indentation, the field order of the contract, and a trailing newline. | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`; every shared fixture is written back byte for byte. |
+| `API-010` | Both SDKs reject an unknown field, a missing required field, and an unsupported version. | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`; the negative fixtures of the manifest. |
+| `API-011` | The round trip of both SDKs preserves the document. | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the round-trip cases. |
+| `API-015` | Every error of both SDKs inherits from `TypcastError` and exposes a diagnostic. | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the error cases. |
+| `API-016` | Both SDKs expose the same diagnostic fields, and the contract runners compare the code of every negative fixture. | `typcast.diagnostics`; `packages/typescript/src/diagnostics.ts`; `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`. |
+| `API-018` | Both package roots export the public API. | `//packages/python/tests:model_tests` imports every public type from `typcast`; `//packages/typescript:model_test_run` imports every public type from the package root. |
+| `DIAG-001` | Both SDKs expose the documented diagnostic shape. | `typcast.diagnostics`; `packages/typescript/src/diagnostics.ts`; the diagnostic cases of the model tests. |
+| `DIAG-004` | Both SDKs expose the same diagnostic fields, and the contract runners compare the code of every negative fixture. | `typcast.diagnostics`; `packages/typescript/src/diagnostics.ts`; `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`. |
+| `DIAG-005` | `ValidationError` and `SerializationError` of both SDKs inherit from `TypcastError`. | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the error cases. |
+| `DIAG-006` | The diagnostic of a rejected document carries the JSON Pointer of the failing node. | `//packages/python/tests:model_tests`; the diagnostic-path case. |
+| `DIAG-009` | Every diagnostic message of both SDKs is English. | `typcast.diagnostics`; `packages/typescript/src/diagnostics.ts`. |
+| `DIAG-010` | An application handles an error by its code, and the manifest names the expected code of every negative fixture. | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`; the manifest of the shared fixtures. |
+| `NODE-001` | The model of both SDKs holds the seven block types of the catalog and no other. | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the node-type case. |
+| `NODE-002` | The model of both SDKs holds the seven inline span types of the catalog and no other. | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the node-type case. |
+| `NODE-003` | The constructor of both SDKs rejects a heading level outside 1 to 6. | `//packages/python/tests:model_tests`; the heading-level case. |
+| `NODE-004` | The constructor of both SDKs rejects empty heading and paragraph content. | `//packages/python/tests:model_tests`; the empty-content case. |
+| `NODE-010` | The constructor of both SDKs requires a non-empty alternative text of an image. | `//packages/python/tests:model_tests`; the image cases. |
+| `NODE-011` | The model of both SDKs holds an optional caption, and the canonical JSON omits the field when it is absent. | `//packages/python/tests:model_tests`; the optional-field case. |
+| `REPO-004` | Both contract runners check the schema version of the fixtures against the version of their own SDK. | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`; the contract-version case. |
+| `REPO-005` | The fixtures under `tests/fixtures/documents/` are language-neutral JSON, and both contract runners read them. | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`. |
+| `TEST-002` | The fixtures under `tests/fixtures/documents/` are language-neutral JSON. | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`. |
+| `TEST-017` | Both contract runners read every valid fixture, write it back byte for byte, and read it again. | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`; the round-trip cases. |
+| `TEST-018` | The shared fixtures cover the seven block types and the seven inline span types, and the model tests serialize every type. | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the node-type case. |
 
 ## Traceability rules
 

@@ -1,0 +1,18 @@
+load("@rules_python//python:defs.bzl", "py_test")
+
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+# The unit tests of the immutable document model.
+py_test(
+    name = "model_tests",
+    size = "small",
+    srcs = [
+        "test_models.py",
+    ],
+    main = "test_models.py",
+    deps = [
+        "//packages/python:typcast",
+    ],
+)

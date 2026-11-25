@@ -2,7 +2,7 @@
 
 Status: CONFIRMED
 Scope: Normative
-Last updated: 2026-11-24
+Last updated: 2026-11-25
 
 ## Purpose
 
@@ -21,9 +21,10 @@ creating circular dependencies.
 | `tools/codegen/` | Python generator for template and CSV expansion. | Implemented with seven unit tests. |
 | `tools/publish/` | Python publisher for the released schema bundle. | Implemented with 23 unit tests. |
 | `bazel/` | Reusable Starlark rules. | Schema and publication rules implemented. |
-| `packages/python/` | Python SDK. | Placeholder package. |
-| `packages/typescript/` | TypeScript and JavaScript SDK. | Placeholder package; the manifest is named `typcast` and is still private. |
-| `tests/contract/` | Cross-language contract tests. | Placeholder directory. |
+| `packages/python/` | Python SDK. | Implemented: the immutable document model, the diagnostics, and the JSON serialization. |
+| `packages/typescript/` | TypeScript and JavaScript SDK. | Implemented: the immutable document model, the diagnostics, and the JSON serialization. The manifest is named `typcast` and is still private. |
+| `tests/contract/` | Cross-language contract tests. | Implemented: the Python and the TypeScript runners read the shared fixtures. |
+| `tests/fixtures/` | Shared language-neutral fixtures. | Implemented: the document IR fixtures and their manifest. |
 | `tests/integration/` | Compiler, filesystem, and install tests. | Placeholder directory. |
 | `examples/python/` | Python examples. | Placeholder directory. |
 | `examples/typescript/` | TypeScript examples. | Placeholder directory. |
@@ -89,47 +90,64 @@ before either SDK exists.
 
 ### `packages/python/`
 
-The Python distribution named `typcast`. Proposed internal modules:
+The Python distribution named `typcast`. The modules of the first release are:
 
 | Module | Responsibility |
 |---|---|
 | `typcast.models` | Immutable model types and public constructors. |
-| `typcast.builder` | Fluent builder. |
-| `typcast.validation` | Schema and semantic validation. |
-| `typcast.typst` | Typst emitter and escaping. |
-| `typcast.compiler` | Typst CLI adapter. |
 | `typcast.diagnostics` | Diagnostic types and code catalog. |
-| `typcast.config` | Compile and asset configuration. |
 | `typcast.serialization` | JSON IR serialization and deserialization. |
+| `typcast.version` | The schema version of the document IR and the version rules. |
+| `typcast.builder` | Fluent builder. Not implemented. |
+| `typcast.validation` | Schema and semantic validation. Not implemented. |
+| `typcast.typst` | Typst emitter and escaping. Not implemented. |
+| `typcast.compiler` | Typst CLI adapter. Not implemented. |
+| `typcast.config` | Compile and asset configuration. Not implemented. |
 
-The current `models/`, `typst/`, and `validations/` directories are placeholders.
-The final module names may differ, but the public import path MUST remain
-`typcast`.
+The public import path MUST remain `typcast`. The final module names may differ,
+but the public import path MUST NOT change.
 
 ### `packages/typescript/`
 
-The npm distribution named `typcast`. Proposed source modules mirror the Python
-responsibilities. The package MUST expose ESM entry points, type declarations,
-and compiled JavaScript. The current `package.json` name is `typcast`, and the
-repository checks reject a different name. The manifest is still `private`, and
-that must change before publication.
+The npm distribution named `typcast`. The source modules mirror the Python
+responsibilities: `src/models/` holds the immutable model types, `src/diagnostics.ts`
+holds the diagnostic types and the code catalog, `src/serialization.ts` holds the
+JSON IR serialization and deserialization, and `src/version.ts` holds the schema
+version and the version rules. The package MUST expose ESM entry points, type
+declarations, and compiled JavaScript. The current `package.json` name is
+`typcast`, and the repository checks reject a different name. The manifest is
+still `private`, and that must change before publication.
 
 ### `tests/`
 
-Shared conformance and integration tests. Proposed structure:
+Shared conformance and integration tests. The implemented structure is:
 
 ```text
 tests/
   fixtures/
+    BUILD.bazel
     documents/
-    expected/
+      manifest.json
+      minimal.json
+      full.json
+      nested.json
+      empty-collections.json
+      modules.json
+      unicode.json
+      patch-version.json
+      ...negative fixtures
   contract/
-  integration/
+    BUILD.bazel
+    contract.test.mts
+    node_shims.d.ts
+    test_contract.py
 ```
 
 Fixtures are language-neutral JSON documents. Expected `.typ` files are shared
 by both SDKs. Test code may be language-specific, but the inputs and expected
-outputs are not.
+outputs are not. The `manifest.json` of the fixture directory names every valid
+fixture and every negative fixture with the diagnostic code that the fixture
+must produce, so both SDKs check the same expectation.
 
 ### `bazel/`
 
@@ -157,14 +175,19 @@ Current targets include:
 | `//scripts/tests:link_tests` | Four external link check tests. |
 | `//scripts/tests:release_flow_tests` | Six release rehearsal tests. |
 | `//scripts/tests:release_tests` | Twenty release preparation tests. |
-| `//scripts/tests:repository_tests` | Forty-two repository structure check tests. |
+| `//scripts/tests:repository_tests` | Forty-three repository structure check tests. |
 | `//specs/schemas:schema_bundle` | Six staged or generated schema files. |
 | `//specs/schemas:schema_manifest` | The names of the bundle files. |
 | `//specs/schemas:archive` | The deterministic archive of the bundle. |
 | `//specs/schemas:schema_tests` | Validates the built bundle against the schema contract. |
 | `//specs/schemas:release_tag_tests` | Validates the release tag pattern of the schema contract. |
-| `//packages/python:typcast` | Python library placeholder. |
-| `//packages/typescript:typcast` | TypeScript project placeholder. |
+| `//packages/python:typcast` | Python SDK library with the immutable document model. |
+| `//packages/python/tests:model_tests` | Forty-five document model unit tests. |
+| `//packages/typescript:typcast` | TypeScript project with the immutable document model. |
+| `//packages/typescript:model_test_run` | Document model unit tests of the TypeScript SDK. |
+| `//tests/fixtures:documents` | The shared document IR fixtures. |
+| `//tests/contract:contract_py` | The Python contract runner. |
+| `//tests/contract:contract_ts_test` | The TypeScript contract runner. |
 
 The MVP must add packaging targets for the Python wheel and sdist and for the
 npm tarball. The schema archive target exists. Target names are specified in
@@ -189,8 +212,8 @@ npm tarball. The schema archive target exists. Target names are specified in
 | REPO-001 | The repository MUST remain a Bazel monorepo. | IMPLEMENTED | `bazel build //...` passes; `//scripts:repository_checks` rejects a source file that belongs to no Bazel package and a source file in the root package. |
 | REPO-002 | `specs/` MUST NOT depend on SDK code. | IMPLEMENTED | `//scripts:repository_checks` rejects a module of `specs/` that imports the SDK package. |
 | REPO-003 | Python and TypeScript SDKs MUST NOT depend on each other. | IMPLEMENTED | `//scripts:repository_checks` rejects an import that leaves the package of the SDK it belongs to. |
-| REPO-004 | Both SDKs MUST consume the same contract version. | CONFIRMED | Version check. |
-| REPO-005 | Shared fixtures MUST be language-neutral. | CONFIRMED | Fixture review. |
+| REPO-004 | Both SDKs MUST consume the same contract version. | IMPLEMENTED | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`; every runner checks the schema version of the fixtures against the version of its own SDK. |
+| REPO-005 | Shared fixtures MUST be language-neutral. | IMPLEMENTED | The fixtures under `tests/fixtures/documents/` are language-neutral JSON; `//tests/contract:contract_py` and `//tests/contract:contract_ts_test` read the same files. |
 | REPO-006 | Every template CSV MUST be declared in the Bazel rule. | IMPLEMENTED | The generator rejects a placeholder whose catalog is not declared as an input of the rule; `//tools/codegen/tests:unit_tests`. |
 | REPO-007 | Generated artifacts MUST NOT be committed to the development branch; the published schema bundle MUST be committed only in the tagged release commit (`REL-030`). | IMPLEMENTED | `//scripts:repository_checks` rejects committed generated schemas unless every manifest, every schema source, and the changelog agree on the release version. |
 | REPO-008 | The Python import path MUST be `typcast`. | IMPLEMENTED | `//scripts:repository_checks` reads the project name of `packages/python/pyproject.toml` and the package directory `packages/python/src/typcast`. |
@@ -203,13 +226,13 @@ npm tarball. The schema archive target exists. Target names are specified in
 
 | Gap | Impact | Owner |
 |---|---|---|
-| No shared fixtures | Parity cannot be tested. | Testing |
+| No builder API | The SDKs expose the model but no fluent construction surface. | SDK |
+| No emitter and no compiler adapter | A document cannot be turned into Typst or into a PDF. | SDK |
 | No packaging targets | Release cannot produce artifacts. | Release |
+| No golden `.typ` fixtures | The emitter output cannot be compared byte for byte. | Testing |
 
 ## Open questions
 
-- Should `tests/fixtures` be a Bazel package with exported files, or a source
-  directory consumed by test rules?
 - Should the Python and TypeScript SDKs share generated type definitions, or
   only the JSON Schema?
 - Should `packages/typescript` publish compiled JavaScript only, or source maps

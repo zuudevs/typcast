@@ -173,6 +173,25 @@ def source_files(root: Path, suffix: str) -> list[Path]:
     return sorted(files)
 
 
+def source_directories(root: Path, name: str) -> list[Path]:
+    """Returns the directories of the repository that carry a given name.
+
+    The walk skips the ignored directories and the Bazel output trees, so a
+    build directory never becomes the owner of a module.
+    """
+    found: list[Path] = []
+    for directory, subdirectories, _ in os.walk(root):
+        subdirectories[:] = [
+            entry
+            for entry in subdirectories
+            if entry not in IGNORED_DIRECTORIES and not entry.startswith("bazel-")
+        ]
+        candidate = Path(directory) / name
+        if candidate.is_dir():
+            found.append(candidate)
+    return sorted(found)
+
+
 def python_files(root: Path) -> list[Path]:
     """Returns the Python modules of the repository, in a stable order."""
     return source_files(root, ".py")
@@ -333,9 +352,7 @@ def repository_module_owner(root: Path, name: str) -> Path | None:
     for path in python_files(root):
         if module_name(path, root) == name:
             return import_root(path.parent, root)
-    for directory in sorted(
-        path for path in root.rglob("*") if path.is_dir() and path.name == "src"
-    ):
+    for directory in source_directories(root, "src"):
         candidate = directory.joinpath(*parts).with_suffix(".py")
         if candidate.is_file():
             return directory

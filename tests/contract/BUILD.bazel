@@ -1,0 +1,62 @@
+load("@aspect_rules_js//js:defs.bzl", "js_test")
+load("@aspect_rules_ts//ts:defs.bzl", "ts_project")
+load("@rules_python//python:defs.bzl", "py_test")
+
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+# The TypeScript contract runner. It reads the shared fixtures and the
+# manifest, so it depends on the fixture filegroup and on the TypeScript SDK.
+ts_project(
+    name = "contract_ts",
+    srcs = [
+        "contract.test.mts",
+        "node_shims.d.ts",
+    ],
+    tsconfig = {
+        "compilerOptions": {
+            "target": "ES2022",
+            "module": "NodeNext",
+            "moduleResolution": "NodeNext",
+            "strict": True,
+            "noImplicitOverride": True,
+            "noUncheckedIndexedAccess": True,
+            "exactOptionalPropertyTypes": True,
+            "forceConsistentCasingInFileNames": True,
+            "verbatimModuleSyntax": True,
+            "skipLibCheck": True,
+            "declaration": False,
+            "types": [],
+        },
+    },
+    transpiler = "tsc",
+    deps = [
+        "//packages/typescript:typcast",
+    ],
+)
+
+js_test(
+    name = "contract_ts_test",
+    entry_point = ":contract_ts",
+    data = [
+        "//tests/fixtures:document_fixtures",
+    ],
+)
+
+# The Python contract runner. It reads the same shared fixtures and the same
+# manifest as the TypeScript runner.
+py_test(
+    name = "contract_py",
+    size = "small",
+    srcs = [
+        "test_contract.py",
+    ],
+    main = "test_contract.py",
+    data = [
+        "//tests/fixtures:documents",
+    ],
+    deps = [
+        "//packages/python:typcast",
+    ],
+)

@@ -1,0 +1,70 @@
+{
+  "schemaVersion": "1.0.0",
+  "metadata": {
+    "title": "보고서 — 日本語 — Report",
+    "author": "Ökonomie GmbH",
+    "date": "2026-01-31"
+  },
+  "page": {
+    "paper": "a4",
+    "orientation": "portrait",
+    "margin": {
+      "top": {
+        "value": 2.54,
+        "unit": "cm"
+      },
+      "right": {
+        "value": 12.5,
+        "unit": "pt"
+      },
+      "bottom": {
+        "value": 0.5,
+        "unit": "in"
+      },
+      "left": {
+        "value": 25.4,
+        "unit": "mm"
+      }
+    }
+  },
+  "contents": [
+    {
+      "type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "type": "text",
+          "value": "Revenue 📈"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "value": "매출이 "
+        },
+        {
+          "type": "bold",
+          "content": [
+            {
+              "type": "text",
+              "value": "12% 증가"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "value": "했습니다."
+        }
+      ]
+    },
+    {
+      "type": "raw",
+      "format": "markup",
+      "value": "#emoji(\"🔥\")"
+    }
+  ],
+  "modules": []
+}

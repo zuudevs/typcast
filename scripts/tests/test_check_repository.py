@@ -352,6 +352,36 @@ class RepositoryCheckTests(unittest.TestCase):
 
         self.assertEqual(report.errors, [])
 
+    def test_a_bazel_output_tree_does_not_own_a_module(self) -> None:
+        write(
+            self.root / "packages" / "python" / "src" / "typcast" / "models" / "__init__.py",
+            "",
+        )
+        write(
+            self.root / "packages" / "python" / "src" / "typcast" / "__init__.py",
+            "from typcast.models import Document\n",
+        )
+        write(
+            self.root
+            / "bazel-bin"
+            / "packages"
+            / "python"
+            / "tests"
+            / "model_tests.exe.runfiles"
+            / "_main"
+            / "packages"
+            / "python"
+            / "src"
+            / "typcast"
+            / "models"
+            / "__init__.py",
+            "",
+        )
+
+        report = self.run_check(check_sdk_isolation)
+
+        self.assertEqual(report.errors, [])
+
     def test_a_gate_module_that_imports_the_sdk_is_reported(self) -> None:
         write(
             self.root / "scripts" / "validate_docs.py",

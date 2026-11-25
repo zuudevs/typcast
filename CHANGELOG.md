@@ -96,6 +96,30 @@ No release has been published yet. Every change so far is listed under
   the pull request lane and of the main lane.
 - Unit tests for the rules of the repository gate and of the external link
   check.
+- The immutable document model of the Python SDK and of the TypeScript SDK:
+  `Document`, `Metadata`, `Page`, `Margin`, `Length`, `Module`, the seven block
+  types, and the seven inline span types. The Python model uses frozen
+  dataclasses and tuples, and the TypeScript model uses readonly properties,
+  frozen arrays, and runtime checks, so a model instance cannot change after
+  its construction.
+- The JSON reader and the writer of the document IR in both SDKs. The canonical
+  form follows the field order of the contract, uses two-space indentation and
+  a trailing newline, preserves Unicode, and formats the numbers the same way
+  in both languages. The reader rejects an unknown field, a missing required
+  field, an unknown discriminator, and an unsupported schema version.
+- The error hierarchy of the SDKs: `TypcastError` with a diagnostic collection,
+  `ValidationError`, and `SerializationError`, with the diagnostic codes of
+  `docs/specifications/diagnostics.md`.
+- Shared document fixtures under `tests/fixtures/documents/`, with a manifest
+  that names every valid fixture and every negative fixture with the
+  diagnostic code that both SDKs must report.
+- Cross-language contract runners, `//tests/contract:contract_py` and
+  `//tests/contract:contract_ts_test`, which read the same fixtures, write
+  every valid fixture back byte for byte, and compare the diagnostic code of
+  every negative fixture.
+- Unit tests for the document model, `//packages/python/tests:model_tests` and
+  `//packages/typescript:model_test_run`, which cover the immutability, the
+  constructor checks, the canonical JSON form, the reader, and the round trip.
 
 ### Changed
 
@@ -111,6 +135,10 @@ No release has been published yet. Every change so far is listed under
   required fields.
 - The alignment catalog holds the three alignment values of the MVP. The
   remaining Typst alignment values are not part of the contract.
+- The requirements of the document IR, the SDK API, the node catalog, the
+  diagnostics, the repository layout, and the testing layers that the new
+  model, the new fixtures, and the new contract runners prove are marked
+  `IMPLEMENTED`.
 
 ### Fixed
 
@@ -122,11 +150,16 @@ No release has been published yet. Every change so far is listed under
   of an identity and of a raw URL reference, so a suffix such as
   `v1.0.0-invalid` is no longer accepted as a release tag. The patterns are
   identical to the pattern of the publisher.
+- The repository structure checks walked into the Bazel output trees, so a
+  build directory could own a Python module and the SDK isolation check could
+  report a false error. The walk now skips the output trees, and a unit test
+  covers the case.
 
 ### Known issues
 
 - The project does not validate a document against the schema yet. That needs
   a JSON Schema implementation that the repository does not depend on.
-- The Typcast SDK core, the packaging targets for the wheel, the source
-  distribution, and the npm tarball, and the publishing jobs of the release
-  workflow are not implemented.
+- The builder, the validation engine, the Typst emitter, the Typst compiler
+  adapter, the packaging targets for the wheel, the source distribution, and
+  the npm tarball, and the publishing jobs of the release workflow are not
+  implemented.

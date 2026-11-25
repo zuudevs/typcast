@@ -2,7 +2,7 @@
 
 Status: IMPLEMENTED / OPEN
 Scope: Normative for build behavior
-Last updated: 2026-11-24
+Last updated: 2026-11-25
 
 ## Purpose
 
@@ -70,8 +70,8 @@ root.
 
 | Check | Result |
 |---|---|
-| `bazel build //...` | Pass, 39 targets. |
-| `bazel test //...` | Pass, 11 test targets: 16 unittest cases, 45 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 42 repository structure cases, 4 release tag cases, 32 documentation gate cases, 4 link check cases, 1 documentation check, 1 schema bundle check. |
+| `bazel build //...` | Pass, 55 targets. |
+| `bazel test //...` | Pass, 19 test targets: 16 unittest cases, 45 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 43 repository structure cases, 4 release tag cases, 32 documentation gate cases, 4 link check cases, 1 documentation check, 1 schema bundle check, 45 document model cases, 6 contract fixture cases, and the TypeScript model, contract, and type-check targets. |
 | `bazel build //specs/schemas:schema_bundle` | Pass, 6 schema files. |
 | `bazel build //specs/schemas:schema_manifest` | Pass, 6 paths. |
 | `bazel build //specs/schemas:archive` | Pass, 6 members, deterministic gzip tarball. |
@@ -81,13 +81,17 @@ root.
 | `bazel test //scripts/tests:version_tests` | Pass, 15 cases. |
 | `bazel test //scripts/tests:release_tests` | Pass, 20 cases. |
 | `bazel test //scripts/tests:release_flow_tests` | Pass, 6 cases. |
-| `bazel run //scripts:repository_checks` | Pass, 2 spec files, 2 SDK files, 13 gate files, 37 Python modules, 9 test modules, 2 toolchain files, 3 TypeScript files, 23 decision records, 46 Bazel package files, 0 errors. |
-| `bazel test //scripts/tests:repository_tests` | Pass, 42 cases. |
+| `bazel run //scripts:repository_checks` | Pass, 2 spec files, 27 SDK files, 13 gate files, 50 Python modules, 11 test modules, 2 toolchain files, 3 TypeScript files, 23 decision records, 73 Bazel package files, 0 errors. |
+| `bazel test //scripts/tests:repository_tests` | Pass, 43 cases. |
 | `bazel test //scripts/tests:docs_tests` | Pass, 32 cases. |
 | `bazel test //scripts/tests:link_tests` | Pass, 4 cases. |
 | `bazel test //tools/publish/tests:publish_tests` | Pass, 45 publisher cases. |
+| `bazel test //packages/python/tests:model_tests` | Pass, 45 cases. |
+| `bazel test //packages/typescript:model_test_run` | Pass. |
+| `bazel test //tests/contract:contract_py` | Pass, 6 cases. |
+| `bazel test //tests/contract:contract_ts_test` | Pass. |
 | `bazel run //scripts:check_links` | Pass, 4 external links checked, 0 unreachable. |
-| `bazel query "kind(rule, //...)"` | 39 rules; 11 test targets. |
+| `bazel query "kind(rule, //...)"` | 59 rules; 19 test targets. |
 | `--test_filter` on the unittest target | Ignored; all 16 cases run. |
 
 The schema bundle contains:
@@ -104,7 +108,7 @@ bazel-bin/specs/schemas/
 
 ## Current targets
 
-`bazel query "kind(rule, //...)"` reports 39 rules. All of them:
+`bazel query "kind(rule, //...)"` reports 59 rules. All of them:
 
 | Target | Kind | Purpose |
 |---|---|---|
@@ -128,7 +132,7 @@ bazel-bin/specs/schemas/
 | `//scripts/tests:link_tests` | `py_test` | Four external link check tests. |
 | `//scripts/tests:release_flow_tests` | `py_test` | Six release rehearsal tests. |
 | `//scripts/tests:release_tests` | `py_test` | Twenty release preparation tests. |
-| `//scripts/tests:repository_tests` | `py_test` | Thirty repository structure check tests. |
+| `//scripts/tests:repository_tests` | `py_test` | Forty-three repository structure check tests. |
 | `//scripts/tests:version_tests` | `py_test` | Fifteen release version check tests. |
 | `//:docs_sources` | `filegroup` | The documents that the checks read. |
 | `//:release_manifests` | `filegroup` | The manifests and the schema sources that carry the release version. |
@@ -144,9 +148,17 @@ bazel-bin/specs/schemas/
 | `//specs/schemas:release_tag_tests` | `py_test` | Validate the release tag pattern of the contract. |
 | `//specs/schemas/definitions:bound_schema` | `typcast_schema_copy` | Stage the bound schema. |
 | `//specs/schemas/definitions:node_schema` | `typcast_schema_copy` | Stage the node schema. |
-| `//packages/python:typcast` | `py_library` | Python SDK placeholder. |
-| `//packages/typescript:typcast` | `ts_project` | TypeScript SDK placeholder. |
+| `//packages/python:typcast` | `py_library` | Python SDK with the immutable document model. |
+| `//packages/python/tests:model_tests` | `py_test` | Forty-five document model unit tests. |
+| `//packages/typescript:typcast` | `ts_project` | TypeScript SDK with the immutable document model. |
 | `//packages/typescript:typcast_types` | `filegroup` | TypeScript declaration outputs. |
+| `//packages/typescript:model_test` | `ts_project` | Compiles the document model unit tests. |
+| `//packages/typescript:model_test_run` | `js_test` | Runs the document model unit tests. |
+| `//tests/fixtures:documents` | `filegroup` | The shared document IR fixtures. |
+| `//tests/fixtures:document_fixtures` | `js_library` | The fixtures for the JavaScript toolchain. |
+| `//tests/contract:contract_ts` | `ts_project` | Compiles the TypeScript contract runner. |
+| `//tests/contract:contract_ts_test` | `js_test` | Runs the TypeScript contract runner. |
+| `//tests/contract:contract_py` | `py_test` | Runs the Python contract runner. |
 
 Two convenience filegroups, `//specs/schemas/templates/api/types:schema_templates`
 and `//specs/catalogs/enums:enum_catalogs`, were removed because no target
@@ -344,7 +356,7 @@ The MVP must add these targets. The names are final:
 | `//packages/python:wheel` | Python wheel. |
 | `//packages/python:sdist` | Python source distribution. |
 | `//packages/typescript:npm_package` | npm tarball. |
-| `//tests/contract:parity_tests` | Cross-language parity tests. |
+| `//tests/contract:parity_tests` | Cross-language parity tests of the `.typ` output. The parity of the document IR is already implemented by `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`. |
 | `//tests/integration:compiler_tests` | Compiler integration tests. |
 
 `//specs/schemas:archive` packages the bundle for the GitHub Release asset,

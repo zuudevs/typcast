@@ -2,7 +2,7 @@
 
 Status: CONFIRMED
 Scope: Normative
-Last updated: 2026-11-24
+Last updated: 2026-11-25
 
 ## Purpose
 
@@ -214,16 +214,16 @@ platform-specific formatting.
 
 | ID | Requirement | Status | Verification |
 |---|---|---|---|
-| DIAG-001 | Every diagnostic MUST have the documented shape. | CONFIRMED | Schema and unit tests. |
+| DIAG-001 | Every diagnostic MUST have the documented shape. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the `Diagnostic` type of `typcast.diagnostics` and of `packages/typescript/src/diagnostics.ts`. |
 | DIAG-002 | Codes MUST follow `TYPCAST-<FAMILY>-<NUMBER>`. | CONFIRMED | Lint. |
 | DIAG-003 | Existing codes MUST NOT be renumbered or reused. | CONFIRMED | Release review. |
-| DIAG-004 | Python and TypeScript MUST expose the same diagnostic fields. | CONFIRMED | Parity test. |
-| DIAG-005 | Errors MUST inherit from `TypcastError`. | CONFIRMED | Error test. |
-| DIAG-006 | Validation errors MUST include a JSON Pointer when known. | CONFIRMED | Validation test. |
+| DIAG-004 | Python and TypeScript MUST expose the same diagnostic fields. | IMPLEMENTED | The `Diagnostic` shape of both SDKs; `//tests/contract:contract_py` and `//tests/contract:contract_ts_test` compare the code of every negative fixture. |
+| DIAG-005 | Errors MUST inherit from `TypcastError`. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the error cases. |
+| DIAG-006 | Validation errors MUST include a JSON Pointer when known. | IMPLEMENTED | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`; the diagnostic path points at the failing node. |
 | DIAG-007 | Compiler diagnostics MUST preserve raw output in `details.raw`. | CONFIRMED | Compiler test. |
 | DIAG-008 | Compiler diagnostics MUST include location when parseable. | CONFIRMED | Compiler test. |
-| DIAG-009 | Messages MUST be English-only for `1.0.0`. | CONFIRMED | Review. |
-| DIAG-010 | Applications MUST be able to handle errors by code. | CONFIRMED | API test. |
+| DIAG-009 | Messages MUST be English-only for `1.0.0`. | IMPLEMENTED | Every diagnostic message of both SDKs is English. |
+| DIAG-010 | Applications MUST be able to handle errors by code. | IMPLEMENTED | The `TYPCAST-*` code constants of both SDKs; the manifest of the shared fixtures names the expected code of every negative fixture. |
 | DIAG-011 | Warnings MUST follow the policy in this document: only the listed conditions warn, warnings never raise, and warnings never fail a release gate. | CONFIRMED | Warning-policy tests and release review. |
 | DIAG-012 | Diagnostic codes MUST be documented in a catalog. | CONFIRMED | This document. |
 

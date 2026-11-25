@@ -2,7 +2,7 @@
 
 Status: PROPOSED
 Scope: Normative
-Last updated: 2026-11-24
+Last updated: 2026-11-25
 
 ## Purpose
 
@@ -15,8 +15,8 @@ compiler integration, and package installation.
 
 | Area | Current state |
 |---|---|
-| Test targets | Eleven `py_test` targets: `//tools/codegen/tests:unit_tests`, `//tools/publish/tests:publish_tests`, `//scripts/tests:version_tests`, `//scripts/tests:release_tests`, `//scripts/tests:release_flow_tests`, `//scripts/tests:repository_tests`, `//scripts/tests:docs_tests`, `//scripts/tests:link_tests`, `//scripts:docs_checks`, `//specs/schemas:schema_tests`, and `//specs/schemas:release_tag_tests`. |
-| Test cases | Sixteen generator cases, 45 publisher cases, 15 release version cases, 20 release preparation cases, 6 release rehearsal cases, 42 repository structure cases, 4 release tag cases, 32 documentation gate cases, 4 link check cases, one documentation check, one schema bundle check. |
+| Test targets | Fifteen hand-written test targets: `//tools/codegen/tests:unit_tests`, `//tools/publish/tests:publish_tests`, `//scripts/tests:version_tests`, `//scripts/tests:release_tests`, `//scripts/tests:release_flow_tests`, `//scripts/tests:repository_tests`, `//scripts/tests:docs_tests`, `//scripts/tests:link_tests`, `//scripts:docs_checks`, `//specs/schemas:schema_tests`, `//specs/schemas:release_tag_tests`, `//packages/python/tests:model_tests`, `//packages/typescript:model_test_run`, `//tests/contract:contract_py`, and `//tests/contract:contract_ts_test`. The TypeScript toolchain adds two generated type-check targets. |
+| Test cases | Sixteen generator cases, 45 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 43 repository structure cases, 4 release tag cases, 32 documentation gate cases, 4 link check cases, one documentation check, one schema bundle check, 45 document model cases, and 6 contract fixture cases. |
 | Schema tests | `//specs/schemas:schema_tests` validates the built bundle. Meta-schema and instance validation are missing. |
 | Release tag tests | `//specs/schemas:release_tag_tests` covers the release tag pattern of the contract, so that the contract and the publisher agree on what a release tag is. |
 | Publisher tests | `//tools/publish/tests:publish_tests` covers the publisher, the published identity of the built bundle, the resolution of the versioned raw URLs, and the deterministic archive. |
@@ -25,9 +25,10 @@ compiler integration, and package installation.
 | Release rehearsal | `//scripts/tests:release_flow_tests` rehearses the release commit with the manifests, the schema sources, and the bundle of the build, so that the path of the release lane runs in every test lane. |
 | Repository structure tests | `//scripts/tests:repository_tests` covers the rules of the repository structure checks against a synthetic repository, so that a rule cannot pass because of the state of the checkout. |
 | Gate tests | `//scripts/tests:docs_tests` and `//scripts/tests:link_tests` cover the rules of the repository gate and of the external link check, including the encoding and the text hygiene rules. |
-| Contract tests | None. |
+| Model tests | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run` cover the immutability, the constructor checks, the canonical JSON form, the reader, and the round trip of the document model. |
+| Contract tests | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test` read the same shared fixtures and the same manifest, so a drift in either SDK fails one of the two targets. |
 | Golden `.typ` tests | None. |
-| Parity tests | None. |
+| Parity tests | The serialization parity of the document IR is covered by the contract runners. The `.typ` parity is not implemented. |
 | Compiler integration | None. |
 | Install tests | None. |
 | CI | The pull request and main lanes run the build, the test lane, the clean checkout build, and the documentation gate on Windows and Linux. |
@@ -118,22 +119,54 @@ flowchart LR
 ```text
 tests/
   fixtures/
+    BUILD.bazel
     documents/
+      manifest.json
       minimal.json
-      report-small.json
-      report-medium.json
-      report-large.json
-      invoice.json
-      raw.json
-    expected/
-      minimal.typ
-      report-small.typ
-      report-medium.typ
-      report-large.typ
-      invoice.typ
-      raw.typ
+      full.json
+      nested.json
+      empty-collections.json
+      modules.json
+      unicode.json
+      patch-version.json
+      malformed.txt
+      root-array.json
+      missing-version.json
+      unsupported-version.json
+      malformed-version.json
+      unknown-root-field.json
+      missing-metadata.json
+      unknown-node-field.json
+      unknown-discriminator.json
+      invalid-orientation.json
+      invalid-length.json
+      invalid-heading-level.json
+      empty-content.json
+      empty-text.json
+      invalid-module-alias.json
+      module-alias-and-items.json
+      invalid-date.json
+      invalid-type.json
   contract/
-  integration/
+    BUILD.bazel
+    contract.test.mts
+    node_shims.d.ts
+    test_contract.py
+```
+
+The `expected/` directory and the `integration/` directory are reserved for
+the golden `.typ` files and for the compiler tests. They do not exist yet.
+
+The `manifest.json` of the fixture directory is the index of the fixtures. It
+names the valid fixtures and the negative fixtures, and every negative fixture
+carries the diagnostic code that both SDKs must report:
+
+```json
+{
+  "version": 1,
+  "valid": [{ "file": "minimal.json" }],
+  "invalid": [{ "file": "invalid-date.json", "code": "TYPCAST-VAL-0011" }]
+}
 ```
 
 Rules:
@@ -145,7 +178,13 @@ Rules:
 - Fixtures cover Unicode text.
 - Fixtures cover paths with `/` and Windows-normalized input.
 - Fixtures cover raw content and module imports.
+- The manifest and the fixture directory must list the same files, so a fixture
+  that no runner reads fails the contract tests.
 - A fixture change requires a review of expected output.
+
+The fixtures carry the paths of the document IR, such as `modules/report.typ`.
+The rules of the path normalization and of the Windows path input belong to the
+asset layer, which is not implemented yet.
 
 ## Golden files
 
@@ -172,6 +211,12 @@ For each shared fixture:
 7. Exclude raw compiler output from comparison.
 
 The parity test must not compare implementation-specific object representations.
+
+The document IR part of the rule is implemented. `//tests/contract:contract_py`
+and `//tests/contract:contract_ts_test` read the same fixtures and the same
+manifest, write every valid fixture back byte for byte, and compare the
+diagnostic code of every negative fixture. The `.typ` part waits for the
+emitter.
 
 ## Compiler integration
 
@@ -252,7 +297,7 @@ threshold may be added in a later minor version once the suite stabilizes.
 | ID | Requirement | Status | Verification |
 |---|---|---|---|
 | TEST-001 | The MVP MUST have unit, schema, contract, golden, parity, compiler, install, and negative tests. | CONFIRMED | Test inventory. |
-| TEST-002 | Shared fixtures MUST be language-neutral. | CONFIRMED | Fixture review. |
+| TEST-002 | Shared fixtures MUST be language-neutral. | IMPLEMENTED | The fixtures under `tests/fixtures/documents/`; both contract runners read the same files. |
 | TEST-003 | Golden tests MUST compare bytes. | CONFIRMED | Test implementation. |
 | TEST-004 | Golden files MUST use UTF-8 without BOM and LF. | CONFIRMED | Byte check. |
 | TEST-005 | Python and TypeScript MUST produce identical `.typ` output. | CONFIRMED | Parity test. |
@@ -267,8 +312,8 @@ threshold may be added in a later minor version once the suite stabilizes.
 | TEST-014 | The MVP MUST use critical-path coverage instead of a numeric threshold, covering every public method, node type, diagnostic code, and failure mode. | CONFIRMED | Coverage inventory. |
 | TEST-015 | CI MUST NOT retry failed tests automatically; quarantined tests MUST be reported separately and tracked by an issue. | CONFIRMED | CI review. |
 | TEST-016 | Schema tests MUST validate the bundle and every `$ref`. | IMPLEMENTED | `//specs/schemas:schema_tests`; 6 bundle files checked, 0 violations, and the file set is checked. The release tag pattern of the identity rule is covered by `//specs/schemas:release_tag_tests`. |
-| TEST-017 | Contract tests MUST cover round-trip serialization. | CONFIRMED | Contract test. |
-| TEST-018 | Tests MUST cover every block and span type. | CONFIRMED | Fixture review. |
+| TEST-017 | Contract tests MUST cover round-trip serialization. | IMPLEMENTED | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`; the round-trip cases of the model tests. |
+| TEST-018 | Tests MUST cover every block and span type. | IMPLEMENTED | The shared fixtures cover the seven block types and the seven inline span types; `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run` serialize every type. |
 | TEST-019 | Tests MUST cover Unicode and escaping. | CONFIRMED | Golden test. |
 | TEST-020 | Tests MUST cover path traversal and absolute paths. | CONFIRMED | Negative test. |
 | TEST-021 | Tests MUST cover compiler timeout and missing compiler. | CONFIRMED | Compiler test. |

@@ -2,7 +2,7 @@
 
 Status: CONFIRMED
 Scope: Normative
-Last updated: 2026-11-24
+Last updated: 2026-11-25
 
 ## Purpose
 
@@ -370,28 +370,37 @@ of the document, in declaration order. Remote modules are not supported.
 | Raw size | Must not exceed the configured raw size limit. |
 | Schema version | Major version must be supported; minor version must not exceed the supported minor. |
 
+The rules are enforced by three layers. The current release implements the
+first two layers only.
+
+| Layer | Rules | State |
+|---|---|---|
+| Model and reader | Required fields, closed objects, discriminator, table alignment, length, module alias, raw value, schema version. | Implemented. |
+| Validation engine | Table shape, module alias uniqueness, raw size. | Not implemented. |
+| Asset layer | Image path, module path. | Not implemented. |
+
 ## Requirements
 
 | ID | Requirement | Status | Verification |
 |---|---|---|---|
-| IR-001 | The root object MUST contain `schemaVersion`, `metadata`, `page`, and `contents`. | CONFIRMED | Schema test. |
-| IR-002 | `page` MUST contain `paper`, `orientation`, and `margin` without additional nesting. | CONFIRMED | Schema test. |
-| IR-003 | `contents` MUST be a non-empty array of typed blocks. | CONFIRMED | Schema test. |
-| IR-004 | Every block and span MUST have a supported `type` discriminator. | CONFIRMED | Schema test. |
-| IR-005 | Heading level MUST be an integer from 1 to 6. | CONFIRMED | Schema test. |
+| IR-001 | The root object MUST contain `schemaVersion`, `metadata`, `page`, and `contents`. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the reader rejects a missing required field. |
+| IR-002 | `page` MUST contain `paper`, `orientation`, and `margin` without additional nesting. | IMPLEMENTED | The reader of both SDKs rejects an unknown field of the page object. |
+| IR-003 | `contents` MUST be a non-empty array of typed blocks. | IMPLEMENTED | The constructor of both SDKs rejects empty contents, and the reader rejects a block without a supported discriminator. |
+| IR-004 | Every block and span MUST have a supported `type` discriminator. | IMPLEMENTED | The reader rejects an unknown discriminator with `TYPCAST-VAL-0003`; the negative fixture `unknown-discriminator.json`. |
+| IR-005 | Heading level MUST be an integer from 1 to 6. | IMPLEMENTED | The constructor of both SDKs rejects a level outside the range with `TYPCAST-VAL-0005`. |
 | IR-006 | Table rows MUST match the column count. | CONFIRMED | Semantic validation test. |
-| IR-007 | Table alignment MUST be `left`, `center`, or `right`. | CONFIRMED | Schema test. |
-| IR-008 | Length units MUST be `pt`, `mm`, `cm`, `in`, or `em`. | CONFIRMED | Schema test. |
+| IR-007 | Table alignment MUST be `left`, `center`, or `right`. | IMPLEMENTED | The constructor of both SDKs rejects another value with `TYPCAST-VAL-0003`. |
+| IR-008 | Length units MUST be `pt`, `mm`, `cm`, `in`, or `em`. | IMPLEMENTED | The constructor of both SDKs rejects another unit with `TYPCAST-VAL-0004`. |
 | IR-009 | Image and module paths MUST be relative and traversal-safe. | CONFIRMED | Asset tests. |
 | IR-010 | Module aliases MUST be unique identifiers. | CONFIRMED | Semantic validation test. |
-| IR-011 | Raw values MUST be non-empty and valid UTF-8. | CONFIRMED | Validation test. |
-| IR-012 | `schemaVersion` MUST be a semantic version. | CONFIRMED | Schema test. |
-| IR-013 | `to_json` MUST be deterministic across Python and TypeScript. | CONFIRMED | Serialization parity test. |
-| IR-014 | `from_json` MUST reject unknown fields and unsupported versions. | CONFIRMED | Negative tests. |
-| IR-015 | Round-trip serialization MUST preserve the document. | CONFIRMED | Contract test. |
+| IR-011 | Raw values MUST be non-empty and valid UTF-8. | IMPLEMENTED | The constructor of both SDKs rejects an empty raw value, and the raw value is a Unicode string in both SDKs. |
+| IR-012 | `schemaVersion` MUST be a semantic version. | IMPLEMENTED | The reader rejects a malformed or an unsupported version with `TYPCAST-IR-0002`; the negative fixtures `malformed-version.json` and `unsupported-version.json`. |
+| IR-013 | `to_json` MUST be deterministic across Python and TypeScript. | IMPLEMENTED | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`; every shared fixture is written back byte for byte. |
+| IR-014 | `from_json` MUST reject unknown fields and unsupported versions. | IMPLEMENTED | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`; the negative fixtures of the manifest. |
+| IR-015 | Round-trip serialization MUST preserve the document. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the round-trip cases. |
 | IR-016 | The IR MUST NOT contain absolute paths or remote asset URLs. | CONFIRMED | Schema and asset tests. |
-| IR-017 | The IR MUST NOT require a Typst compiler to be constructed or validated. | CONFIRMED | Offline test. |
-| IR-018 | The IR MUST remain language-neutral and contain no language-specific objects. | CONFIRMED | Fixture review. |
+| IR-017 | The IR MUST NOT require a Typst compiler to be constructed or validated. | IMPLEMENTED | The SDKs depend on no compiler; the model and the contract tests run without a Typst installation. |
+| IR-018 | The IR MUST remain language-neutral and contain no language-specific objects. | IMPLEMENTED | The shared fixtures under `tests/fixtures/documents/` are language-neutral JSON and are read by both SDKs. |
 | IR-019 | The raw size limit MUST default to 1 MiB, be configurable through `max_raw_bytes`, and be documented. | CONFIRMED | Validation test and configuration review. |
 | IR-020 | The IR MUST reserve `schemaVersion` major compatibility rules for future evolution. | CONFIRMED | Compatibility review. |
 
