@@ -3,6 +3,8 @@ load(
     "typcast_json_schema",
     "typcast_schema_copy",
 )
+load("//bazel:publish.bzl", "typcast_schema_archive", "typcast_schema_manifest")
+load("@rules_python//python:defs.bzl", "py_test")
 
 package(
     default_visibility = ["//visibility:public"],
@@ -56,5 +58,48 @@ filegroup(
         ":length_schema",
         ":paper_schema",
         "//specs/schemas/definitions:bound_schema",
+        "//specs/schemas/definitions:node_schema",
     ],
+)
+
+# The manifest names every file of the bundle. The publisher uses it instead
+# of a directory scan, because the build directory holds other outputs too.
+typcast_schema_manifest(
+    name = "schema_manifest",
+    srcs = [":schema_bundle"],
+)
+
+# The release archive of the bundle. The publisher writes a deterministic
+# gzip tarball, so the checksum of the asset is the same on every platform.
+typcast_schema_archive(
+    name = "archive",
+    srcs = [":schema_bundle"],
+)
+
+# The bundle is the authoritative artifact set. The test validates it against
+# the contract rules and reports the violations that an open defect explains.
+py_test(
+    name = "schema_tests",
+    size = "small",
+    srcs = [
+        "schema_tests.py",
+    ],
+    main = "schema_tests.py",
+    data = [
+        ":schema_bundle",
+    ],
+)
+
+# The release tag validation of the contract. The pattern must match the
+# whole tag, so the test pins the behavior of the contract and of the
+# publisher.
+py_test(
+    name = "release_tag_tests",
+    size = "small",
+    srcs = [
+        "schema_tests.py",
+        "test_release_tag.py",
+    ],
+    main = "test_release_tag.py",
+    imports = ["."],
 )

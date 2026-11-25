@@ -1,6 +1,7 @@
 import json
 import re
 from pathlib import Path
+from typing import Sequence
 
 from typcast_codegen.errors import CodegenError
 from typcast_codegen.readers.csv_reader import read_csv_column
@@ -11,13 +12,25 @@ PLACEHOLDER_PATTERN = re.compile(
 )
 
 
-def replace_placeholders(template_text: str, template_path: Path) -> str:
+def replace_placeholders(
+    template_text: str,
+    template_path: Path,
+    catalogs: Sequence[Path] | None = None,
+) -> str:
     """Replace CSV-column placeholders in a template.
 
     Paths in placeholders are resolved relative to the template's directory.
     Values are encoded as JSON arrays so they can be inserted into JSON text.
+
+    When the catalogs are given, every placeholder must resolve to one of
+    them. The build declares the catalogs of a template as the inputs of the
+    rule, so a catalog that is not declared would read a file outside the
+    sandbox and would not invalidate the output when it changes.
     """
     template_directory = template_path.resolve().parent
+    declared: set[Path] | None = None
+    if catalogs is not None:
+        declared = {Path(catalog).resolve() for catalog in catalogs}
     cache: dict[tuple[Path, str], list[str]] = {}
 
     def replace(match: re.Match[str]) -> str:
@@ -38,6 +51,14 @@ def replace_placeholders(template_text: str, template_path: Path) -> str:
             )
 
         csv_path = (template_directory / source_reference).resolve()
+
+        if declared is not None and csv_path not in declared:
+            raise CodegenError(
+                f"Placeholder catalog {raw_path!r} resolves to {csv_path}, which "
+                "is not declared as an input of the rule. Declare the catalog "
+                "in the catalogs attribute of the rule."
+            )
+
         cache_key = (csv_path, column_name)
 
         if cache_key not in cache:

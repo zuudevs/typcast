@@ -19,6 +19,8 @@ def _typcast_json_schema_impl(ctx):
     args = ctx.actions.args()
     args.add("--input", ctx.file.template.path)
     args.add("--output", output.path)
+    for catalog in ctx.files.catalogs:
+        args.add("--catalog", catalog.path)
 
     ctx.actions.run(
         executable = ctx.executable._generator,
@@ -57,7 +59,7 @@ typcast_json_schema = rule(
             cfg = "exec",
         ),
     },
-    doc = "Expands a JSON template and writes the generated schema at the requested package-relative path.",
+    doc = "Expands a JSON template and writes the generated schema at the requested package-relative path. The catalogs are the inputs of the rule, and every placeholder of the template must resolve to one of them.",
 )
 
 def _typcast_schema_copy_impl(ctx):

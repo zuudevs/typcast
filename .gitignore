@@ -19,3 +19,9 @@ coverage/
 # Tooling
 .aspect/
 .DS_Store
+
+# Environment
+.env
+.env.*
+
+AGENTS.md

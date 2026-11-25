@@ -1,0 +1,142 @@
+load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
+
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+# The version check of the release gate. The library is separate so that the
+# unit tests import it.
+py_library(
+    name = "check_version_lib",
+    srcs = [
+        "__init__.py",
+        "check_version.py",
+    ],
+    imports = ["."],
+)
+
+# The repository checks. The library is separate so that the unit tests
+# import it.
+py_library(
+    name = "docs_lib",
+    srcs = [
+        "__init__.py",
+        "validate_docs.py",
+    ],
+    imports = ["."],
+)
+
+py_binary(
+    name = "check_version",
+    srcs = [
+        "check_version.py",
+    ],
+    main = "check_version.py",
+    data = ["//:release_manifests"],
+)
+
+# The external link check. It uses the network, so it belongs to the
+# continuous integration lane and not to the repository gate.
+py_library(
+    name = "check_links_lib",
+    srcs = [
+        "__init__.py",
+        "check_links.py",
+    ],
+    imports = ["."],
+    deps = [
+        ":docs_lib",
+    ],
+)
+
+py_binary(
+    name = "check_links",
+    srcs = [
+        "__init__.py",
+        "check_links.py",
+    ],
+    main = "check_links.py",
+    data = ["//:docs_sources"],
+    deps = [
+        ":docs_lib",
+    ],
+)
+
+# The release preparation. It writes into the repository tree, so it runs
+# against the source root and not against the runfiles tree. The library is
+# separate so that the unit tests import it.
+py_library(
+    name = "prepare_release_lib",
+    srcs = [
+        "__init__.py",
+        "prepare_release.py",
+    ],
+    imports = ["."],
+    deps = [
+        ":check_version_lib",
+        "//tools/publish:publish_schemas_lib",
+    ],
+)
+
+# The repository checks. They read the source tree of the repository, so they
+# run against the source root and not against the runfiles tree. The library
+# is separate so that the unit tests import it.
+py_library(
+    name = "repository_checks_lib",
+    srcs = [
+        "__init__.py",
+        "check_repository.py",
+    ],
+    imports = ["."],
+    deps = [
+        ":check_version_lib",
+    ],
+)
+
+py_binary(
+    name = "repository_checks",
+    srcs = [
+        "__init__.py",
+        "check_repository.py",
+    ],
+    main = "check_repository.py",
+    deps = [
+        ":check_version_lib",
+    ],
+)
+
+py_binary(
+    name = "prepare_release",
+    srcs = [
+        "__init__.py",
+        "prepare_release.py",
+    ],
+    main = "prepare_release.py",
+    deps = [
+        ":check_version_lib",
+        "//tools/publish:publish_schemas_lib",
+    ],
+)
+
+# The documents that the checks read. The group lives in the root package so
+# that a new document is a deliberate addition to the gate.
+py_test(
+    name = "docs_checks",
+    size = "small",
+    srcs = [
+        "__init__.py",
+        "validate_docs.py",
+    ],
+    main = "validate_docs.py",
+    data = [
+        "//:docs_sources",
+        "//:workflow_sources",
+        "//specs/schemas:BUILD.bazel",
+        "//specs/schemas:validator.schema.json",
+        "//specs/schemas/definitions:bound.schema.json",
+        "//specs/schemas/definitions:node.schema.json",
+        "//specs/schemas/templates/api/types:alignment.schema.json.tmpl",
+        "//specs/schemas/templates/api/types:length.schema.json.tmpl",
+        "//specs/schemas/templates/api/types:paper.schema.json.tmpl",
+    ],
+)

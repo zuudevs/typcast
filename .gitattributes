@@ -1,0 +1,44 @@
+# Normalize line endings for every text file in the repository.
+#
+# Without this file, Git's core.autocrlf=true on Windows rewrites LF to CRLF
+# on checkout, which breaks the LF requirement in docs/development/documentation.md.
+# The first commit after adding this file may renormalize existing files; that
+# is expected and must be reviewed as a formatting-only change.
+* text=auto eol=lf
+
+# Documentation, schemas, and sources are UTF-8 text with LF endings.
+*.md text eol=lf
+*.json text eol=lf
+*.tmpl text eol=lf
+*.typ text eol=lf
+*.csv text eol=lf
+*.py text eol=lf
+*.ts text eol=lf
+*.js text eol=lf
+*.mjs text eol=lf
+*.cjs text eol=lf
+*.bazel text eol=lf
+*.bzl text eol=lf
+*.sh text eol=lf
+*.ps1 text eol=lf
+*.toml text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.txt text eol=lf
+*.svg text eol=lf
+
+# Binary assets are never line-ending converted.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.pdf binary
+*.zip binary
+*.gz binary
+*.whl binary
+*.tgz binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary

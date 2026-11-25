@@ -6,10 +6,17 @@ package(
 
 exports_files([
     "bound.schema.json",
+    "node.schema.json",
 ])
 
 typcast_schema_copy(
     name = "bound_schema",
     source = "bound.schema.json",
     output = "bound.schema.json",
+)
+
+typcast_schema_copy(
+    name = "node_schema",
+    source = "node.schema.json",
+    output = "node.schema.json",
 )

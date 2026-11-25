@@ -7,12 +7,3 @@ exports_files([
     "length.schema.json.tmpl",
     "paper.schema.json.tmpl",
 ])
-
-filegroup(
-    name = "schema_templates",
-    srcs = [
-        "alignment.schema.json.tmpl",
-        "length.schema.json.tmpl",
-        "paper.schema.json.tmpl",
-    ],
-)
