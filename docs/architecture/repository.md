@@ -145,7 +145,7 @@ Current targets include:
 | `//scripts:docs_checks` | Documentation, requirement, and decision checks. |
 | `//scripts:check_links` | External link check of the documents. |
 | `//scripts:prepare_release` | Prepares the release commit of a release. |
-| `//scripts/tests:docs_tests` | Eighteen documentation check tests. |
+| `//scripts/tests:docs_tests` | Twenty-nine documentation check tests. |
 | `//scripts/tests:link_tests` | Four external link check tests. |
 | `//scripts/tests:release_tests` | Twenty release preparation tests. |
 | `//specs/schemas:schema_bundle` | Six staged or generated schema files. |

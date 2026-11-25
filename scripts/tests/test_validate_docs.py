@@ -5,6 +5,7 @@ from pathlib import Path
 from validate_docs import (
     Report,
     check_codeowners,
+    check_encoding,
     check_markdown_lint,
     check_mermaid,
 )
@@ -23,7 +24,7 @@ class GateTestCase(unittest.TestCase):
     def write(self, name: str, text: str) -> Path:
         path = self.root / name
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(text, encoding="utf-8")
+        path.write_text(text, encoding="utf-8", newline="\n")
         return path
 
     def report_for(self, path: Path) -> Report:
@@ -321,6 +322,128 @@ class CodeOwnersTests(GateTestCase):
 
         self.assertTrue(
             any("covers every path" in error for error in report.errors),
+            report.errors,
+        )
+
+
+class EncodingTests(GateTestCase):
+    """Checks the encoding and the text hygiene rules of the gate."""
+
+    def write_bytes(self, name: str, data: bytes) -> Path:
+        path = self.root / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(data)
+        return path
+
+    def report_for(self, path: Path) -> Report:
+        report = Report()
+        check_encoding(self.root, [path], report)
+        return report
+
+    def test_a_clean_file_reports_no_error(self) -> None:
+        path = self.write("clean.txt", "Text with UTF-8: Ä.\n")
+
+        report = self.report_for(path)
+
+        self.assertEqual(report.errors, [])
+
+    def test_a_byte_order_mark_is_reported(self) -> None:
+        path = self.write_bytes("bom.txt", b"\xef\xbb\xbfText.\n")
+
+        report = self.report_for(path)
+
+        self.assertTrue(
+            any("byte order mark" in error for error in report.errors),
+            report.errors,
+        )
+
+    def test_invalid_utf8_is_reported(self) -> None:
+        path = self.write_bytes("invalid.txt", b"Text \xff.\n")
+
+        report = self.report_for(path)
+
+        self.assertTrue(
+            any("invalid UTF-8" in error for error in report.errors),
+            report.errors,
+        )
+
+    def test_crlf_line_endings_are_reported(self) -> None:
+        path = self.write_bytes("crlf.txt", b"First.\r\nSecond.\r\n")
+
+        report = self.report_for(path)
+
+        self.assertTrue(
+            any("CRLF" in error for error in report.errors),
+            report.errors,
+        )
+
+    def test_a_missing_final_newline_is_reported(self) -> None:
+        path = self.write("final.txt", "Text without a final newline.")
+
+        report = self.report_for(path)
+
+        self.assertTrue(
+            any("final newline" in error for error in report.errors),
+            report.errors,
+        )
+
+    def test_a_replacement_character_is_reported(self) -> None:
+        path = self.write("replacement.txt", "Text with \ufffd.\n")
+
+        report = self.report_for(path)
+
+        self.assertTrue(
+            any("replacement character" in error for error in report.errors),
+            report.errors,
+        )
+
+    def test_a_mojibake_sequence_is_reported(self) -> None:
+        path = self.write("mojibake.txt", "Text with \u00c3\u00a4.\n")
+
+        report = self.report_for(path)
+
+        self.assertTrue(
+            any("mojibake" in error for error in report.errors),
+            report.errors,
+        )
+
+    def test_an_emoji_is_reported(self) -> None:
+        path = self.write("emoji.txt", "Text with \U0001f600.\n")
+
+        report = self.report_for(path)
+
+        self.assertTrue(
+            any("emoji or dingbat" in error for error in report.errors),
+            report.errors,
+        )
+
+    def test_trailing_whitespace_is_reported(self) -> None:
+        path = self.write("trailing.txt", "Text with trailing space. \n")
+
+        report = self.report_for(path)
+
+        self.assertTrue(
+            any("trailing whitespace" in error for error in report.errors),
+            report.errors,
+        )
+
+    def test_a_tab_character_is_reported(self) -> None:
+        path = self.write("tab.txt", "Text with\ta tab.\n")
+
+        report = self.report_for(path)
+
+        self.assertTrue(
+            any("tab character" in error for error in report.errors),
+            report.errors,
+        )
+
+    def test_a_placeholder_marker_is_reported(self) -> None:
+        path = self.write("placeholder.md", "# Title\n\nTODO: write this.\n")
+
+        report = self.report_for(path)
+
+        self.assertTrue(
+            any("placeholder marker" in error for error in report.errors),
             report.errors,
         )
 

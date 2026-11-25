@@ -71,7 +71,7 @@ root.
 | Check | Result |
 |---|---|
 | `bazel build //...` | Pass, 34 targets. |
-| `bazel test //...` | Pass, 8 test targets: 7 unittest cases, 44 publisher cases, 15 version cases, 20 release preparation cases, 18 documentation gate cases, 4 link check cases, 1 documentation check, 1 schema bundle check. |
+| `bazel test //...` | Pass, 8 test targets: 7 unittest cases, 44 publisher cases, 15 version cases, 20 release preparation cases, 29 documentation gate cases, 4 link check cases, 1 documentation check, 1 schema bundle check. |
 | `bazel build //specs/schemas:schema_bundle` | Pass, 6 schema files. |
 | `bazel build //specs/schemas:schema_manifest` | Pass, 6 paths. |
 | `bazel build //specs/schemas:archive` | Pass, 6 members, deterministic gzip tarball. |
@@ -79,7 +79,7 @@ root.
 | `bazel test //scripts:docs_checks` | Pass, 57 files, 455 requirements, and 3 workflows checked, 0 errors. |
 | `bazel test //scripts/tests:version_tests` | Pass, 15 cases. |
 | `bazel test //scripts/tests:release_tests` | Pass, 20 cases. |
-| `bazel test //scripts/tests:docs_tests` | Pass, 18 cases. |
+| `bazel test //scripts/tests:docs_tests` | Pass, 29 cases. |
 | `bazel test //scripts/tests:link_tests` | Pass, 4 cases. |
 | `bazel test //tools/publish/tests:publish_tests` | Pass, 44 publisher cases. |
 | `bazel run //scripts:check_links` | Pass, 4 external links checked, 0 unreachable. |
@@ -118,7 +118,7 @@ bazel-bin/specs/schemas/
 | `//scripts:check_links_lib` | `py_library` | External link check library. |
 | `//scripts:docs_checks` | `py_test` | Documentation, requirement, decision, and workflow checks. |
 | `//scripts:docs_lib` | `py_library` | Documentation check library. |
-| `//scripts/tests:docs_tests` | `py_test` | Eighteen documentation check tests. |
+| `//scripts/tests:docs_tests` | `py_test` | Twenty-nine documentation check tests. |
 | `//scripts/tests:link_tests` | `py_test` | Four external link check tests. |
 | `//scripts/tests:release_tests` | `py_test` | Twenty release preparation tests. |
 | `//scripts/tests:version_tests` | `py_test` | Fifteen release version check tests. |

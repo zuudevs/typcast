@@ -149,19 +149,24 @@ a target for the MVP and is not yet verified in the repository.
 | `DOC-022` | The repository gate validates the workflow files: pinned actions, declared permissions, no write access or secret in a pull request workflow, and no `pull_request_target`. | `//scripts:docs_checks`; 3 workflows checked. |
 | `DOC-023` | The repository gate validates the CODEOWNERS file: it exists, every rule names an owner, and one rule covers every path. | `//scripts:docs_checks`; the CODEOWNERS file is checked. |
 | `DOC-006` | Every code fence of the documents declares a language. | `//scripts:docs_checks`; the code fence rule. |
+| `DOC-001` | Every document is UTF-8 without a byte order mark. | `//scripts:docs_checks`; the encoding rule. |
+| `DOC-002` | Every document uses LF line endings and ends with a final newline. | `//scripts:docs_checks`; the encoding rule. |
+| `DOC-003` | No document contains an emoji or a dingbat. | `//scripts:docs_checks`; the text hygiene rule. |
+| `DOC-004` | No document contains a replacement character. | `//scripts:docs_checks`; the text hygiene rule. |
+| `DOC-005` | No document contains a mojibake sequence. | `//scripts:docs_checks`; the text hygiene rule. |
 | `DOC-007` | Every document has exactly one level-1 heading, and it is the first line of the document. | `//scripts:docs_checks`; the heading rules. |
 | `DOC-008` | Every internal link of the documents resolves. | `//scripts:docs_checks`; the link rule. |
 | `DOC-009` | The Mermaid diagrams parse: the flowchart has a direction and readable statements, the sequence diagram declares every participant, and every block is closed. | `//scripts:docs_checks`; the diagram rule. |
 | `DOC-010` | The external links are checked with a timeout, and an unreachable link is a warning that does not block the merge. | `//scripts:check_links`; `//scripts/tests:link_tests`. |
 | `DOC-024` | The external link check runs in the pull request lane and in the main lane. | The `Link check` job of `.github/workflows/pr.yml` and `main.yml`. |
-| `DOC-025` | The rules of the repository gate and of the external link check are covered by unit tests. | `//scripts/tests:docs_tests`; `//scripts/tests:link_tests`. |
+| `DOC-025` | The rules of the repository gate and of the external link check are covered by unit tests, including the encoding and the text hygiene rules. | `//scripts/tests:docs_tests`; `//scripts/tests:link_tests`. |
 | `TEST-016` | `//specs/schemas:schema_tests` validates every bundle file and resolves every relative `$ref`. | `//specs/schemas:schema_tests`; 6 bundle files checked, 0 violations. |
 | `TEST-025` | The test lane runs on Windows and Linux. | The `Test` jobs of the workflows; the first run passed on `windows-latest` and `ubuntu-latest`. |
 | `TEST-026` | `//tools/publish/tests:publish_tests` covers the publisher with unit tests and with an integration test against the built bundle. | `//tools/publish/tests:publish_tests`; 44 cases. |
 | `TEST-027` | `//scripts/tests:version_tests` covers the release version check. | `//scripts/tests:version_tests`; 15 cases. |
 | `TEST-028` | The publisher tests serve the published files from a local server, so the test suite needs no network access. | `//tools/publish/tests:publish_tests`; the `PublishedUrlTests` cases. |
 | `TEST-029` | The publisher tests cover the content, the member metadata, and the byte-for-byte determinism of the schema archive. | `//tools/publish/tests:publish_tests`; the `ArchiveTests` cases. |
-| `TEST-030` | The unit tests cover the rules of the repository gate and of the external link check. | `//scripts/tests:docs_tests`; `//scripts/tests:link_tests`. |
+| `TEST-030` | The unit tests cover the rules of the repository gate and of the external link check, including the encoding and the text hygiene rules. | `//scripts/tests:docs_tests`; `//scripts/tests:link_tests`. |
 | `TEST-031` | The unit tests cover the version bump, the publication, the verification, and the cleanup of the release preparation. | `//scripts/tests:release_tests`; 20 cases. |
 | `REL-012` | `//scripts:check_version` compares the version of every manifest, the contract version of every schema source, and the changelog with the tag, and the release lane runs the check on the tagged commit. | `//scripts:check_version`; `//scripts/tests:version_tests`; 15 cases. |
 | `REL-032` | `//tools/publish:publish_schemas` publishes exactly the files of the bundle manifest, sets the `$id` of every file to the versioned raw URL of the release tag, and rejects a version that is not a release tag. | `//tools/publish:publish_schemas`; `publish` and `check` verified against the built bundle with an illustrative `v1.0.0` tag. |

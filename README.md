@@ -157,7 +157,8 @@ The product, architecture, contract, and engineering documentation is in
 [vision and scope](docs/product/vision-and-scope.md).
 
 The documents describe the approved MVP baseline. The SDK, emitter, compiler
-adapter, packaging, and CI workflows are not implemented yet.
+adapter, and packaging are not implemented yet. The continuous integration
+workflows and the release tooling are.
 
 ## Contributing
 

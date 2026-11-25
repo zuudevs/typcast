@@ -101,7 +101,7 @@ requirement ID and a status of `CONFIRMED` or `IMPLEMENTED`.
 | Area | Current state | Evidence |
 |---|---|---|
 | Bazel build | Implemented | `bazel build //...` succeeds with 34 targets. |
-| Bazel test | Implemented for codegen, the publisher, the release version check, the release preparation, the repository checks, the link check, and the schema bundle | `bazel test //...` runs eight test targets: seven unittest cases, 44 publisher cases, 15 version cases, 20 release preparation cases, 18 documentation gate cases, 4 link check cases, the documentation check, and the schema bundle check. |
+| Bazel test | Implemented for codegen, the publisher, the release version check, the release preparation, the repository checks, the link check, and the schema bundle | `bazel test //...` runs eight test targets: seven unittest cases, 44 publisher cases, 15 version cases, 20 release preparation cases, 29 documentation gate cases, 4 link check cases, the documentation check, and the schema bundle check. |
 | Documentation checks | Implemented | `//scripts:docs_checks` validates the documents, the Markdown structure, the Mermaid diagrams, the requirement index, the ADR index, the schema references, the workflow files, and the CODEOWNERS file. |
 | External link check | Implemented | `//scripts:check_links` checks the external links with a timeout and reports warnings only. |
 | JSON Schema generator | Implemented | `tools/codegen/` and `bazel/codegen.bzl`. |
@@ -116,7 +116,7 @@ requirement ID and a status of `CONFIRMED` or `IMPLEMENTED`.
 | Document model, builder, emitter | Not implemented | No source files exist. |
 | Typst compiler adapter | Not implemented | No source files or tests exist. |
 | Packaging and release | Not implemented | No wheel, npm tarball, or publishing job exists. |
-| Schema distribution | Decided, not implemented | Versioned raw URLs at the release tag; see ADR-0022 and ADR-0023. |
+| Schema distribution | Decided, tooling implemented | Versioned raw URLs at the release tag; see ADR-0022 and ADR-0023. The publisher, the release preparation, and the release lane carry the distribution. No release exists yet. |
 | CI workflows | Implemented for build, test, and verification | `.github/workflows/pr.yml`, `main.yml`, and `release.yml`; the first pull request run passed on Windows and Linux. |
 | Pull request template | Implemented | `.github/PULL_REQUEST_TEMPLATE.md`. |
 | License | Implemented | `LICENSE` at the repository root. |

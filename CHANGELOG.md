@@ -60,6 +60,9 @@ No release has been published yet. Every change so far is listed under
   of columns.
 - A Mermaid parser in the repository gate. It reads the flowchart and the
   sequence diagram, the diagram types that the repository uses.
+- Unit tests for the rules of the repository gate, including the encoding and
+  the text hygiene rules: UTF-8 without a byte order mark, LF line endings, a
+  final newline, no emoji, no replacement character, and no mojibake.
 - An external link check, `//scripts:check_links`, that checks the external
   links with a timeout. It reports warnings only, because an outage of an
   external site must not block an unrelated change. It runs in its own job of

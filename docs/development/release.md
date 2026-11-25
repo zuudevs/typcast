@@ -7,8 +7,9 @@ Last updated: 2026-11-24
 ## Purpose
 
 This document defines how Typcast packages, versions, verifies, and publishes
-the MVP. It is a specification only. No release workflow or publishing job is
-active in the repository today.
+the MVP. The verification lane is active in the repository, and the release
+preparation is a repository command. No publishing job is active yet, because
+the packaging targets do not exist.
 
 ## Release model
 

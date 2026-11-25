@@ -228,11 +228,11 @@ bazel test //scripts/tests:link_tests
 
 | ID | Requirement | Status | Verification |
 |---|---|---|---|
-| DOC-001 | Documents MUST be UTF-8 without BOM. | CONFIRMED | Encoding script. |
-| DOC-002 | Documents MUST use LF. | CONFIRMED | Line-ending script. |
-| DOC-003 | Documents MUST NOT contain emoji or dingbats. | CONFIRMED | Script. |
-| DOC-004 | Documents MUST NOT contain replacement characters. | CONFIRMED | Script. |
-| DOC-005 | Documents MUST NOT contain mojibake patterns. | CONFIRMED | Script. |
+| DOC-001 | Documents MUST be UTF-8 without BOM. | IMPLEMENTED | `//scripts:docs_checks`; the encoding rule. |
+| DOC-002 | Documents MUST use LF. | IMPLEMENTED | `//scripts:docs_checks`; the encoding rule. |
+| DOC-003 | Documents MUST NOT contain emoji or dingbats. | IMPLEMENTED | `//scripts:docs_checks`; the text hygiene rule. |
+| DOC-004 | Documents MUST NOT contain replacement characters. | IMPLEMENTED | `//scripts:docs_checks`; the text hygiene rule. |
+| DOC-005 | Documents MUST NOT contain mojibake patterns. | IMPLEMENTED | `//scripts:docs_checks`; the text hygiene rule. |
 | DOC-006 | Every code fence MUST declare a language. | IMPLEMENTED | `//scripts:docs_checks`; the code fence rule. |
 | DOC-007 | Every document MUST have one level-1 heading. | IMPLEMENTED | `//scripts:docs_checks`; the heading rule. |
 | DOC-008 | Internal links MUST resolve. | IMPLEMENTED | `//scripts:docs_checks`; the link rule. |
@@ -252,7 +252,7 @@ bazel test //scripts/tests:link_tests
 | DOC-022 | The repository gate MUST validate the workflow files: pinned actions, declared permissions, no write access or secret in a pull request workflow, and no `pull_request_target`. | IMPLEMENTED | `//scripts:docs_checks`; three workflow files are checked. |
 | DOC-023 | The repository gate MUST validate the CODEOWNERS file: it exists, every rule names an owner, and one rule covers every path. | IMPLEMENTED | `//scripts:docs_checks`; the CODEOWNERS file is checked. |
 | DOC-024 | The external link check MUST run in the pull request lane and in the main lane, MUST use a timeout, and MUST NOT block the merge. | IMPLEMENTED | The `Link check` job of `pr.yml` and `main.yml`; `//scripts:check_links`. |
-| DOC-025 | The rules of the repository gate and of the external link check MUST be covered by unit tests. | IMPLEMENTED | `//scripts/tests:docs_tests`; `//scripts/tests:link_tests`. |
+| DOC-025 | The rules of the repository gate and of the external link check MUST be covered by unit tests. | IMPLEMENTED | `//scripts/tests:docs_tests`; `//scripts/tests:link_tests`. The encoding rules are covered too. |
 
 ## Open questions
 
