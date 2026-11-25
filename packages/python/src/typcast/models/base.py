@@ -30,6 +30,7 @@ __all__ = [
     "require_instance",
     "require_int",
     "require_number",
+    "require_sequence",
     "require_string",
     "require_tuple",
     "to_binary64",
@@ -189,6 +190,33 @@ def require_number(value: Any, path: str) -> float:
             path,
         )
     return number
+
+
+def require_sequence(
+    value: Any,
+    path: str,
+    *,
+    allow_empty: bool = True,
+) -> tuple[Any, ...]:
+    """Returns a copied tuple after checking that the value is a sequence.
+
+    The elements are not checked. A caller that accepts more than one kind of
+    element checks every element itself.
+    """
+    if isinstance(value, (str, bytes)) or not isinstance(value, Sequence):
+        raise_validation(
+            CODE_REQUIRED_FIELD,
+            f"'{path}' must be a sequence.",
+            path,
+        )
+    items = tuple(value)
+    if not allow_empty and not items:
+        raise_validation(
+            CODE_EMPTY_CONTENT,
+            f"'{path}' must not be empty.",
+            path,
+        )
+    return items
 
 
 def require_tuple(

@@ -230,6 +230,10 @@ No release has been published yet. Every change so far is listed under
   JSON. The token is valid JSON, and the TypeScript reader reads it as an
   infinity. The Python SDK now reads every integer token in the number domain
   of the IR, so both SDKs report the same overflow.
+- The Python SDK checked the type of an item of a module before it checked the
+  item itself, so an item of another type reported the diagnostic of a wrong
+  element type, while the TypeScript SDK reports the diagnostic of the module
+  item. Both SDKs now report the diagnostic of the module item.
 
 ### Known issues
 

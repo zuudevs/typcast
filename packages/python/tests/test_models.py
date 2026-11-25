@@ -253,6 +253,14 @@ class ConstructorValidationTests(unittest.TestCase):
             lambda: Module(path="modules/report.typ", items=("summary\n",)),
         )
 
+    def test_a_module_item_of_another_type_is_rejected(self) -> None:
+        # The item is an identifier, so it reports the same diagnostic as the
+        # TypeScript SDK and not the diagnostic of a wrong element type.
+        self.assert_code(
+            "TYPCAST-VAL-0008",
+            lambda: Module(path="modules/report.typ", items=(1,)),  # type: ignore[arg-type]
+        )
+
     def test_the_details_of_a_diagnostic_are_json_serializable(self) -> None:
         with self.assertRaises(ValidationError) as caught:
             Module(path="modules/report.typ", alias=object())  # type: ignore[arg-type]

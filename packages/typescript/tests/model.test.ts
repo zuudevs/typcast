@@ -291,6 +291,11 @@ function constructorTests(): void {
   );
   expectCode(
     "TYPCAST-VAL-0008",
+    () => new Module("modules/report.typ", null, [1 as unknown as string]),
+    "a module item of another type must be rejected",
+  );
+  expectCode(
+    "TYPCAST-VAL-0008",
     () => new Module("modules/report.typ", null, ["summary\n"]),
     "a module item with a trailing newline must be rejected",
   );

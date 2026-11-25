@@ -12,7 +12,7 @@ from typcast.diagnostics import (
     raise_validation,
     safe_value,
 )
-from typcast.models.base import require_string, require_tuple
+from typcast.models.base import require_sequence, require_string
 
 __all__ = ["Module"]
 
@@ -39,7 +39,9 @@ class Module:
         if self.alias is not None:
             self._check_identifier(self.alias, "/alias")
         if self.items is not None:
-            items = require_tuple(self.items, str, "/items", allow_empty=False)
+            # The elements are checked as identifiers, so that an element of
+            # another type reports the same diagnostic as the TypeScript SDK.
+            items = require_sequence(self.items, "/items", allow_empty=False)
             for index, item in enumerate(items):
                 self._check_identifier(item, f"/items/{index}")
             object.__setattr__(self, "items", items)
