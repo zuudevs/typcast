@@ -89,7 +89,48 @@ class JsonTemplateGeneratorTests(unittest.TestCase):
         with self.assertRaisesRegex(CodegenError, "invalid JSON"):
             generate_json_text(template)
 
-    def test_output_parent_directory_is_created(self) -> None:
+    def test_a_declared_catalog_is_expanded(self) -> None:
+        catalog = self.root / "values.csv"
+        catalog.write_text("Value\nalpha\n", encoding="utf-8")
+        template = self.root / "schema.json.tmpl"
+        template.write_text('{"enum": <./values.csv:Value>}', encoding="utf-8")
+
+        generated = generate_json_text(template, [catalog])
+
+        self.assertEqual(json.loads(generated), {"enum": ["alpha"]})
+
+    def test_an_undeclared_catalog_reports_an_error(self) -> None:
+        catalog = self.root / "values.csv"
+        catalog.write_text("Value\nalpha\n", encoding="utf-8")
+        template = self.root / "schema.json.tmpl"
+        template.write_text('{"enum": <./values.csv:Value>}', encoding="utf-8")
+        other = self.root / "other.csv"
+        other.write_text("Value\nbeta\n", encoding="utf-8")
+
+        with self.assertRaisesRegex(CodegenError, "not declared"):
+            generate_json_text(template, [other])
+
+    def test_a_declared_catalog_of_another_rule_is_accepted(self) -> None:
+        catalog = self.root / "values.csv"
+        catalog.write_text("Value\nalpha\n", encoding="utf-8")
+        template = self.root / "schema.json.tmpl"
+        template.write_text('{"enum": <./values.csv:Value>}', encoding="utf-8")
+
+        generated = generate_json_text(template, [Path(catalog).resolve()])
+
+        self.assertEqual(json.loads(generated), {"enum": ["alpha"]})
+
+    def test_a_template_without_a_placeholder_accepts_any_catalog(self) -> None:
+        template = self.root / "plain.json.tmpl"
+        template.write_text('{"type": "string"}', encoding="utf-8")
+        catalog = self.root / "values.csv"
+        catalog.write_text("Value\nalpha\n", encoding="utf-8")
+
+        generated = generate_json_text(template, [catalog])
+
+        self.assertEqual(json.loads(generated), {"type": "string"})
+
+    def test_the_output_parent_directory_is_created(self) -> None:
         template = self.root / "schema.json.tmpl"
         template.write_text('{"type": "string"}', encoding="utf-8")
         output = self.root / "nested" / "out" / "schema.json"

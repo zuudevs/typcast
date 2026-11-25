@@ -18,7 +18,9 @@ No release has been published yet. Every change so far is listed under
   document set, with the requirement index and 23 architecture decision
   records.
 - A JSON Schema generator that expands CSV catalog placeholders in templates,
-  with unit tests.
+  with unit tests. The generator rejects a placeholder whose catalog is not
+  declared as an input of the rule, so a missing declaration fails the build
+  instead of leaving a stale output.
 - The schema bundle and its validation target, `//specs/schemas:schema_tests`,
   which checks the built bundle against the contract.
 - A schema publisher, `//tools/publish:publish_schemas`, which writes the

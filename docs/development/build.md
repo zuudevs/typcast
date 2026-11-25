@@ -71,7 +71,7 @@ root.
 | Check | Result |
 |---|---|
 | `bazel build //...` | Pass, 35 targets. |
-| `bazel test //...` | Pass, 9 test targets: 7 unittest cases, 44 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 29 documentation gate cases, 4 link check cases, 1 documentation check, 1 schema bundle check. |
+| `bazel test //...` | Pass, 9 test targets: 11 unittest cases, 44 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 29 documentation gate cases, 4 link check cases, 1 documentation check, 1 schema bundle check. |
 | `bazel build //specs/schemas:schema_bundle` | Pass, 6 schema files. |
 | `bazel build //specs/schemas:schema_manifest` | Pass, 6 paths. |
 | `bazel build //specs/schemas:archive` | Pass, 6 members, deterministic gzip tarball. |
@@ -107,7 +107,7 @@ bazel-bin/specs/schemas/
 |---|---|---|
 | `//tools/codegen:typcast_codegen` | `py_binary` | Generator CLI. |
 | `//tools/codegen:typcast_codegen_lib` | `py_library` | Generator library. |
-| `//tools/codegen/tests:unit_tests` | `py_test` | Seven generator tests. |
+| `//tools/codegen/tests:unit_tests` | `py_test` | Eleven generator tests. |
 | `//tools/publish:publish_schemas` | `py_binary` | Publisher CLI. |
 | `//tools/publish:publish_schemas_lib` | `py_library` | Publisher library. |
 | `//tools/publish/tests:publish_tests` | `py_test` | Publisher tests. |
@@ -170,6 +170,10 @@ The generator:
 - Creates output parent directories.
 - Re-serializes JSON with two-space indentation.
 - Validates JSON syntax only.
+- Rejects a placeholder whose catalog is not declared as an input of the
+  rule. The rule passes every declared catalog to the generator, so a
+  catalog that is missing from the `catalogs` attribute fails the build
+  instead of reading a file outside the sandbox and leaving a stale output.
 
 The generator does not validate JSON Schema semantics or resolve `$ref` values.
 Those checks belong to the schema test layer.
@@ -180,6 +184,7 @@ Those checks belong to the schema test layer.
 2. Export it in the template `BUILD.bazel`.
 3. Add a `typcast_json_schema` rule in `specs/schemas/BUILD.bazel`.
 4. List every CSV used by the template in the rule's `catalogs` attribute.
+   The generator rejects a placeholder whose catalog is not declared.
 5. Set the `output` path to match the relative `$ref` paths used by consumers.
 6. Add the target to `schema_bundle`.
 7. Run `bazel test //specs/schemas:schema_tests`; it validates every file in the
@@ -304,7 +309,7 @@ The artifact requirements for the packaging targets are defined in
 | BUILD-005 | New Python package directories MUST contain `__init__.py`. | CONFIRMED | Build. |
 | BUILD-006 | `bazel build //...` MUST pass before merge. | CONFIRMED | CI. |
 | BUILD-007 | `bazel test //...` MUST pass before merge. | CONFIRMED | CI. |
-| BUILD-008 | Every CSV used by a template MUST be declared in `catalogs`. | CONFIRMED | Sandbox build. |
+| BUILD-008 | Every CSV used by a template MUST be declared in `catalogs`. | IMPLEMENTED | The generator rejects a placeholder whose catalog is not declared as an input of the rule; `//tools/codegen/tests:unit_tests`. |
 | BUILD-009 | Generated artifacts MUST NOT be committed to the development branch; the published schema bundle MUST be committed only in the tagged release commit (`REL-030`). | CONFIRMED | Review. |
 | BUILD-010 | The generator MUST support absolute input and output paths. | IMPLEMENTED | Manual run. |
 | BUILD-011 | The build MUST NOT rely on `--test_filter` for this `py_test`. | CONFIRMED | Verified behavior. |

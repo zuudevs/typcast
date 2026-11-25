@@ -101,7 +101,7 @@ requirement ID and a status of `CONFIRMED` or `IMPLEMENTED`.
 | Area | Current state | Evidence |
 |---|---|---|
 | Bazel build | Implemented | `bazel build //...` succeeds with 35 targets. |
-| Bazel test | Implemented for codegen, the publisher, the release version check, the release preparation, the release rehearsal, the repository checks, the link check, and the schema bundle | `bazel test //...` runs nine test targets: seven unittest cases, 44 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 29 documentation gate cases, 4 link check cases, the documentation check, and the schema bundle check. |
+| Bazel test | Implemented for codegen, the publisher, the release version check, the release preparation, the release rehearsal, the repository checks, the link check, and the schema bundle | `bazel test //...` runs nine test targets: eleven unittest cases, 44 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 29 documentation gate cases, 4 link check cases, the documentation check, and the schema bundle check. |
 | Documentation checks | Implemented | `//scripts:docs_checks` validates the documents, the Markdown structure, the Mermaid diagrams, the requirement index, the ADR index, the schema references, the workflow files, and the CODEOWNERS file. |
 | External link check | Implemented | `//scripts:check_links` checks the external links with a timeout and reports warnings only. |
 | JSON Schema generator | Implemented | `tools/codegen/` and `bazel/codegen.bzl`. |

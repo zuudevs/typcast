@@ -149,6 +149,8 @@ a target for the MVP and is not yet verified in the repository.
 | `DOC-022` | The repository gate validates the workflow files: pinned actions, declared permissions, no write access or secret in a pull request workflow, and no `pull_request_target`. | `//scripts:docs_checks`; 3 workflows checked. |
 | `DOC-023` | The repository gate validates the CODEOWNERS file: it exists, every rule names an owner, and one rule covers every path. | `//scripts:docs_checks`; the CODEOWNERS file is checked. |
 | `DOC-006` | Every code fence of the documents declares a language. | `//scripts:docs_checks`; the code fence rule. |
+| `BUILD-008` | Every CSV used by a template is declared in the `catalogs` attribute of the rule, and the generator rejects a placeholder whose catalog is not declared. | `//tools/codegen:typcast_codegen`; `//tools/codegen/tests:unit_tests`. |
+| `REPO-006` | Every template CSV is declared in the Bazel rule, so the sandbox provides the file and the cache invalidates when it changes. | `//tools/codegen:typcast_codegen`; `//tools/codegen/tests:unit_tests`. |
 | `DOC-001` | Every document is UTF-8 without a byte order mark. | `//scripts:docs_checks`; the encoding rule. |
 | `DOC-002` | Every document uses LF line endings and ends with a final newline. | `//scripts:docs_checks`; the encoding rule. |
 | `DOC-003` | No document contains an emoji or a dingbat. | `//scripts:docs_checks`; the text hygiene rule. |

@@ -138,7 +138,7 @@ Current targets include:
 |---|---|
 | `//tools/codegen:typcast_codegen` | Generator binary. |
 | `//tools/codegen:typcast_codegen_lib` | Generator library. |
-| `//tools/codegen/tests:unit_tests` | Seven generator unit tests. |
+| `//tools/codegen/tests:unit_tests` | Eleven generator unit tests. |
 | `//tools/publish:publish_schemas` | Publisher binary. |
 | `//tools/publish:publish_schemas_lib` | Publisher library. |
 | `//tools/publish/tests:publish_tests` | Forty-four publisher unit tests. |
@@ -181,7 +181,7 @@ npm tarball. The schema archive target exists. Target names are specified in
 | REPO-003 | Python and TypeScript SDKs MUST NOT depend on each other. | CONFIRMED | Dependency review. |
 | REPO-004 | Both SDKs MUST consume the same contract version. | CONFIRMED | Version check. |
 | REPO-005 | Shared fixtures MUST be language-neutral. | CONFIRMED | Fixture review. |
-| REPO-006 | Every template CSV MUST be declared in the Bazel rule. | CONFIRMED | Build and sandbox test. |
+| REPO-006 | Every template CSV MUST be declared in the Bazel rule. | IMPLEMENTED | The generator rejects a placeholder whose catalog is not declared as an input of the rule; `//tools/codegen/tests:unit_tests`. |
 | REPO-007 | Generated artifacts MUST NOT be committed to the development branch; the published schema bundle MUST be committed only in the tagged release commit (`REL-030`). | CONFIRMED | `.gitignore` and review. |
 | REPO-008 | The Python import path MUST be `typcast`. | CONFIRMED | Import test. |
 | REPO-009 | The npm package name MUST be `typcast` before publication. | CONFIRMED | Manifest check. |
