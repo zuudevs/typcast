@@ -11,6 +11,7 @@ from typcast.diagnostics import (
     CODE_INVALID_ENUM,
     CODE_REQUIRED_FIELD,
     raise_validation,
+    safe_value,
 )
 from typcast.models.base import (
     require_enum,
@@ -60,21 +61,28 @@ class Length:
                 CODE_INVALID_LENGTH,
                 "'/value' must be a finite number.",
                 "/value",
-                {"value": repr(value)},
+                # The number is spelled in the form of ECMAScript, so that
+                # the details of both SDKs agree.
+                {
+                    "value": "NaN"
+                    if math.isnan(value)
+                    else ("Infinity" if value > 0 else "-Infinity")
+                },
             )
         if value < 0:
+            number = int(value) if value.is_integer() else value
             raise_validation(
                 CODE_INVALID_LENGTH,
-                f"'/value' must not be negative, got {value}.",
+                f"'/value' must not be negative, got {number}.",
                 "/value",
-                {"value": value},
+                {"value": number},
             )
         if self.unit not in LENGTH_UNITS:
             raise_validation(
                 CODE_INVALID_LENGTH,
                 f"'/unit' must be one of {', '.join(LENGTH_UNITS)}, got {self.unit!r}.",
                 "/unit",
-                {"allowed": list(LENGTH_UNITS), "value": self.unit},
+                {"allowed": list(LENGTH_UNITS), "value": safe_value(self.unit)},
             )
         object.__setattr__(self, "value", value)
 

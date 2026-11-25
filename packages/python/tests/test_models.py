@@ -253,6 +253,13 @@ class ConstructorValidationTests(unittest.TestCase):
             lambda: Module(path="modules/report.typ", items=("summary\n",)),
         )
 
+    def test_the_details_of_a_diagnostic_are_json_serializable(self) -> None:
+        with self.assertRaises(ValidationError) as caught:
+            Module(path="modules/report.typ", alias=object())  # type: ignore[arg-type]
+        diagnostic = caught.exception.diagnostics[0]
+        text = json.dumps(diagnostic.to_dict())
+        self.assertIn('"value": "object"', text)
+
     def test_module_alias_and_items_are_exclusive(self) -> None:
         self.assert_code(
             "TYPCAST-VAL-0009",
@@ -524,6 +531,47 @@ class DeserializationTests(unittest.TestCase):
         with self.assertRaises(ValidationError) as caught:
             Document.from_dict(value)
         self.assertEqual(caught.exception.diagnostics[0].path, "/contents/0/style")
+
+    def test_the_path_of_a_nested_value_is_not_prefixed_twice(self) -> None:
+        value = document().to_dict()
+        value["page"]["margin"]["top"]["value"] = -1
+        with self.assertRaises(ValidationError) as caught:
+            Document.from_dict(value)
+        self.assertEqual(
+            caught.exception.diagnostics[0].path,
+            "/page/margin/top/value",
+        )
+
+    def test_the_path_of_a_nested_optional_value_is_not_prefixed_twice(self) -> None:
+        value = document().to_dict()
+        value["contents"] = [
+            {
+                "type": "image",
+                "path": "figure.png",
+                "alt": "Figure",
+                "width": {"value": -2, "unit": "cm"},
+            }
+        ]
+        with self.assertRaises(ValidationError) as caught:
+            Document.from_dict(value)
+        self.assertEqual(
+            caught.exception.diagnostics[0].path,
+            "/contents/0/width/value",
+        )
+
+    def test_an_unknown_field_is_reported_with_an_escaped_pointer(self) -> None:
+        value = document().to_dict()
+        value["bad/name"] = 1
+        with self.assertRaises(ValidationError) as caught:
+            Document.from_dict(value)
+        self.assertEqual(caught.exception.diagnostics[0].path, "/bad~1name")
+
+    def test_an_unknown_field_with_a_tilde_is_escaped(self) -> None:
+        value = document().to_dict()
+        value["a~b"] = 1
+        with self.assertRaises(ValidationError) as caught:
+            Document.from_dict(value)
+        self.assertEqual(caught.exception.diagnostics[0].path, "/a~0b")
 
     def test_every_error_carries_a_diagnostic(self) -> None:
         with self.assertRaises(TypcastError) as caught:

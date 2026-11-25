@@ -204,6 +204,19 @@ No release has been published yet. Every change so far is listed under
   the level `1.0` of a heading, while the TypeScript SDK accepted it. A JSON
   integer is a number without a fractional part, so both SDKs now accept the
   same values.
+- The TypeScript SDK parsed the lengths of a margin and the optional fields of
+  an image inside the factory of the construction helper, so the path of a
+  failing child was prefixed a second time. An error of the length of the top
+  margin was reported at `/page/margin/page/margin/top/value` instead of
+  `/page/margin/top/value`, and the path differed from the path of the Python
+  SDK. Both SDKs now report the path of the failing field.
+- Both SDKs formed the path of an unknown field without escaping the name, so
+  a property named `bad/name` produced the pointer `/bad/name` instead of
+  `/bad~1name`. Both SDKs now escape the name as RFC 6901 defines it.
+- The Python SDK stored a runtime value of an unknown type in the details of a
+  diagnostic, so the details of that diagnostic could not be serialized to
+  JSON. Both SDKs now keep only a JSON-serializable representation of such a
+  value.
 
 ### Known issues
 

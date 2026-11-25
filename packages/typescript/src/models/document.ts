@@ -247,6 +247,16 @@ function asNumber(value: unknown, path: string): number {
   return value;
 }
 
+/**
+ * Returns a JSON Pointer token, as RFC 6901 defines it.
+ *
+ * A `~` becomes `~0` and a `/` becomes `~1`, so that a property name that
+ * holds one of those characters still points at the property.
+ */
+function escapePointerToken(token: string): string {
+  return token.replace(/~/g, "~0").replace(/\//g, "~1");
+}
+
 function checkFields(
   value: Record<string, unknown>,
   allowed: readonly string[],
@@ -254,7 +264,7 @@ function checkFields(
 ): void {
   for (const name of Object.keys(value)) {
     if (!allowed.includes(name)) {
-      const location = `${path}/${name}`;
+      const location = `${path}/${escapePointerToken(name)}`;
       throwValidation(
         CODE_UNKNOWN_FIELD,
         `'${location}' is not a known field.`,
@@ -312,13 +322,13 @@ function parseMetadata(value: unknown, path: string): Metadata {
   const title = asString(requireField(obj, "title", path), `${path}/title`);
   const author = optionalField(obj, "author");
   const date = optionalField(obj, "date");
+  // The optional fields are read before the construction, so that the path of
+  // a failing child is not prefixed a second time.
+  const parsedAuthor =
+    author === MISSING ? null : asString(author, `${path}/author`);
+  const parsedDate = date === MISSING ? null : asString(date, `${path}/date`);
   return construct(
-    () =>
-      new Metadata(
-        title,
-        author === MISSING ? null : asString(author, `${path}/author`),
-        date === MISSING ? null : asString(date, `${path}/date`),
-      ),
+    () => new Metadata(title, parsedAuthor, parsedDate),
     path,
   );
 }
@@ -337,16 +347,14 @@ function parseLength(value: unknown, path: string): Length {
 function parseMargin(value: unknown, path: string): Margin {
   const obj = asObject(value, path);
   checkFields(obj, ["top", "right", "bottom", "left"], path);
-  return construct(
-    () =>
-      new Margin(
-        parseLength(requireField(obj, "top", path), `${path}/top`),
-        parseLength(requireField(obj, "right", path), `${path}/right`),
-        parseLength(requireField(obj, "bottom", path), `${path}/bottom`),
-        parseLength(requireField(obj, "left", path), `${path}/left`),
-      ),
-    path,
-  );
+  // The lengths are parsed before the construction. A child that fails inside
+  // the factory of `construct` would have its path prefixed a second time,
+  // and the diagnostic would no longer point at the failing field.
+  const top = parseLength(requireField(obj, "top", path), `${path}/top`);
+  const right = parseLength(requireField(obj, "right", path), `${path}/right`);
+  const bottom = parseLength(requireField(obj, "bottom", path), `${path}/bottom`);
+  const left = parseLength(requireField(obj, "left", path), `${path}/left`);
+  return construct(() => new Margin(top, right, bottom, left), path);
 }
 
 function parsePage(value: unknown, path: string): Page {
@@ -377,13 +385,11 @@ function parseModule(value: unknown, path: string): Module {
       asString(item, `${path}/items/${index}`),
     );
   }
+  // The alias is read before the construction, so that the path of a failing
+  // child is not prefixed a second time.
+  const parsedAlias = alias === MISSING ? null : asString(alias, `${path}/alias`);
   return construct(
-    () =>
-      new Module(
-        modulePath,
-        alias === MISSING ? null : asString(alias, `${path}/alias`),
-        parsedItems,
-      ),
+    () => new Module(modulePath, parsedAlias, parsedItems),
     path,
   );
 }
@@ -547,16 +553,14 @@ function parseBlock(value: unknown, path: string): Block {
     const alt = asString(requireField(obj, "alt", path), `${path}/alt`);
     const caption = optionalField(obj, "caption");
     const width = optionalField(obj, "width");
+    // The caption and the width are parsed before the construction, so that
+    // the path of a failing child is not prefixed a second time.
+    const parsedCaption =
+      caption === MISSING ? null : parseSpans(caption, `${path}/caption`);
+    const parsedWidth =
+      width === MISSING ? null : parseLength(width, `${path}/width`);
     return construct(
-      () =>
-        new Image(
-          imagePath,
-          alt,
-          caption === MISSING
-            ? null
-            : parseSpans(caption, `${path}/caption`),
-          width === MISSING ? null : parseLength(width, `${path}/width`),
-        ),
+      () => new Image(imagePath, alt, parsedCaption, parsedWidth),
       path,
     );
   }

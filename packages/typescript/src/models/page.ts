@@ -3,6 +3,7 @@
 import {
   CODE_INVALID_LENGTH,
   CODE_REQUIRED_FIELD,
+  safeValue,
   throwValidation,
 } from "../diagnostics.js";
 import { requireEnum, requireInstance, requireString } from "./base.js";
@@ -53,7 +54,9 @@ export class Length {
         CODE_INVALID_LENGTH,
         `'/unit' must be one of ${LENGTH_UNITS.join(", ")}, got '${unit}'.`,
         "/unit",
-        { allowed: [...LENGTH_UNITS], value: unit },
+        // The details of a diagnostic must be JSON-serializable, so a value of
+        // an unknown type is represented by its type name.
+        { allowed: [...LENGTH_UNITS], value: safeValue(unit) },
       );
     }
     this.value = value;

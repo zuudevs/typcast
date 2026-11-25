@@ -235,10 +235,19 @@ def _as_number(value: Any, path: str) -> float:
     return number
 
 
+def _escape_pointer_token(token: str) -> str:
+    """Returns a JSON Pointer token, as RFC 6901 defines it.
+
+    A `~` becomes `~0` and a `/` becomes `~1`, so that a property name that
+    holds one of those characters still points at the property.
+    """
+    return token.replace("~", "~0").replace("/", "~1")
+
+
 def _check_fields(value: Mapping[str, Any], allowed: frozenset[str], path: str) -> None:
     for name in value:
         if name not in allowed:
-            location = f"{path}/{name}"
+            location = f"{path}/{_escape_pointer_token(name)}"
             raise_validation(
                 CODE_UNKNOWN_FIELD,
                 f"'{location}' is not a known field.",

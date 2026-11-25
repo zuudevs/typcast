@@ -10,6 +10,7 @@ from typcast.diagnostics import (
     CODE_INVALID_MODULE_ALIAS,
     CODE_MODULE_ALIAS_AND_ITEMS,
     raise_validation,
+    safe_value,
 )
 from typcast.models.base import require_string, require_tuple
 
@@ -59,7 +60,9 @@ class Module:
                 CODE_INVALID_MODULE_ALIAS,
                 f"'{path}' must match [A-Za-z_][A-Za-z0-9_]*, got {value!r}.",
                 path,
-                {"value": value},
+                # The details of a diagnostic must be JSON-serializable, so a
+                # value of an unknown type is represented by its type name.
+                {"value": safe_value(value)},
             )
 
     def to_dict(self) -> dict[str, Any]:

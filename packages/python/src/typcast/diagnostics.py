@@ -16,6 +16,7 @@ __all__ = [
     "TypcastError",
     "ValidationError",
     "SerializationError",
+    "safe_value",
     "SEVERITY_ERROR",
     "SEVERITY_WARNING",
     "SEVERITY_INFO",
@@ -79,6 +80,22 @@ def _freeze_mapping(value: Mapping[str, Any] | None) -> Mapping[str, Any] | None
     if value is None:
         return None
     return MappingProxyType(dict(value))
+
+
+def safe_value(value: Any) -> Any:
+    """Returns a JSON-serializable representation of a value.
+
+    The details of a diagnostic must be JSON-serializable, so a value of an
+    unknown type is represented by the name of its type. The TypeScript SDK
+    applies the same rule.
+    """
+    if value is None or isinstance(value, (bool, int, float, str)):
+        return value
+    if isinstance(value, Mapping):
+        return "object"
+    if isinstance(value, (list, tuple)):
+        return "array"
+    return type(value).__name__
 
 
 @dataclass(frozen=True)

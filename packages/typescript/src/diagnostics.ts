@@ -68,6 +68,30 @@ export const CODE_UNSUPPORTED_VERSION = "TYPCAST-IR-0002";
 export const CODE_NOT_SERIALIZABLE = "TYPCAST-IR-0003";
 export const CODE_ROOT_SHAPE = "TYPCAST-IR-0004";
 
+/**
+ * Returns a JSON-serializable representation of a value.
+ *
+ * The details of a diagnostic must be JSON-serializable, so a value of an
+ * unknown type is represented by the name of its type. The Python SDK applies
+ * the same rule.
+ */
+export function safeValue(value: unknown): unknown {
+  if (value === null) {
+    return null;
+  }
+  const kind = typeof value;
+  if (kind === "string" || kind === "number" || kind === "boolean") {
+    return value;
+  }
+  if (Array.isArray(value)) {
+    return "array";
+  }
+  if (kind === "object") {
+    return "object";
+  }
+  return kind;
+}
+
 /** The base class of every error raised by Typcast. */
 export class TypcastError extends Error {
   /** The diagnostics that describe the failure. */

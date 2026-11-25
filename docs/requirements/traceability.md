@@ -24,7 +24,7 @@ change impact analysis.
 | SDK API | `specifications/sdk-api.md` | `API-001` to `API-025` | API and parity tests. |
 | Emitter | `specifications/emitter.md` | `EMIT-001` to `EMIT-022` | Byte-level golden tests. |
 | Compiler | `specifications/compiler.md` | `COMP-001` to `COMP-022` | Compiler integration tests. |
-| Diagnostics | `specifications/diagnostics.md` | `DIAG-001` to `DIAG-012` | Negative and parity tests. |
+| Diagnostics | `specifications/diagnostics.md` | `DIAG-001` to `DIAG-014` | Negative and parity tests. |
 | Assets | `specifications/assets.md` | `ASSET-001` to `ASSET-020` | Path and workspace tests. |
 | Compatibility | `specifications/compatibility.md` | `COMPAT-001` to `COMPAT-019` | CI matrix. |
 | Build | `development/build.md` | `BUILD-001` to `BUILD-021` | Bazel commands. |
@@ -256,6 +256,8 @@ a target for the MVP and is not yet verified in the repository.
 | `DIAG-004` | Both SDKs expose the same diagnostic fields, and the contract runners compare the code of every negative fixture. | `typcast.diagnostics`; `packages/typescript/src/diagnostics.ts`; `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`. |
 | `DIAG-005` | `ValidationError` and `SerializationError` of both SDKs inherit from `TypcastError`. | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the error cases. |
 | `DIAG-006` | The diagnostic of a rejected document carries the JSON Pointer of the failing node. | `//packages/python/tests:model_tests`; the diagnostic-path case. |
+| `DIAG-013` | Both SDKs escape the tokens of a JSON Pointer, so a property named `bad/name` is reported as `/bad~1name`. | `//packages/python/tests:model_tests`; `//packages/typescript:model_test_run`; the escaped-pointer cases. |
+| `DIAG-014` | The details of a diagnostic of both SDKs stay JSON-serializable, even when the rejected value has a type that JSON cannot represent. | `//packages/python/tests:model_tests`; `//packages/typescript:model_test_run`; the details cases. |
 | `DIAG-009` | Every diagnostic message of both SDKs is English. | `typcast.diagnostics`; `packages/typescript/src/diagnostics.ts`. |
 | `DIAG-010` | An application handles an error by its code, and the manifest names the expected code of every negative fixture. | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`; the manifest of the shared fixtures. |
 | `NODE-001` | The model of both SDKs holds the seven block types of the catalog and no other. | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the node-type case. |

@@ -32,7 +32,7 @@ failures programmatically.
 | `severity` | string | Yes | `error`, `warning`, or `info`. |
 | `phase` | string | Yes | `api`, `validation`, `serialization`, `emit`, `compiler`, `io`, or `config`. |
 | `message` | string | Yes | Human-readable English message. |
-| `path` | string or null | Yes | JSON Pointer to the affected document location, when known. |
+| `path` | string or null | Yes | JSON Pointer to the affected document location, when known. The tokens of the pointer are escaped as RFC 6901 defines them, so a property named `bad/name` is reported as `/bad~1name`. |
 | `location` | object or null | Yes | Compiler source location, when known. |
 | `details` | object | Yes | Machine-readable context. |
 | `cause` | string or null | Yes | Stable cause identifier, not a stack trace. |
@@ -44,7 +44,8 @@ failures programmatically.
 ```
 
 `details` must be JSON-serializable. It may contain raw compiler output, exit
-codes, field names, or supported version ranges.
+codes, field names, or supported version ranges. A value of a type that JSON
+cannot represent is replaced by the name of its type.
 
 ## Code families
 
@@ -221,6 +222,8 @@ platform-specific formatting.
 | DIAG-004 | Python and TypeScript MUST expose the same diagnostic fields. | IMPLEMENTED | The `Diagnostic` shape of both SDKs; `//tests/contract:contract_py` and `//tests/contract:contract_ts_test` compare the code of every negative fixture. |
 | DIAG-005 | Errors MUST inherit from `TypcastError`. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the error cases. |
 | DIAG-006 | Validation errors MUST include a JSON Pointer when known. | IMPLEMENTED | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`; the diagnostic path points at the failing node. |
+| DIAG-013 | The tokens of a JSON Pointer MUST be escaped as RFC 6901 defines them. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the escaped-pointer cases. |
+| DIAG-014 | The details of a diagnostic MUST stay JSON-serializable. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the details cases. |
 | DIAG-007 | Compiler diagnostics MUST preserve raw output in `details.raw`. | CONFIRMED | Compiler test. |
 | DIAG-008 | Compiler diagnostics MUST include location when parseable. | CONFIRMED | Compiler test. |
 | DIAG-009 | Messages MUST be English-only for `1.0.0`. | IMPLEMENTED | Every diagnostic message of both SDKs is English. |

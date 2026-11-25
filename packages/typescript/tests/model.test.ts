@@ -82,6 +82,27 @@ function expectCode(code: string, factory: () => unknown, message: string): void
   failures.push(`${message}: the call must fail`);
 }
 
+function expectPath(
+  path: string,
+  factory: () => unknown,
+  message: string,
+): void {
+  try {
+    factory();
+  } catch (error) {
+    if (!(error instanceof ValidationError)) {
+      failures.push(`${message}: the failure must be a ValidationError`);
+      return;
+    }
+    const actual = error.diagnostics[0]?.path;
+    if (actual !== path) {
+      failures.push(`${message}: expected ${path}, got ${String(actual)}`);
+    }
+    return;
+  }
+  failures.push(`${message}: the call must fail`);
+}
+
 // ---------------------------------------------------------------------------
 // Immutability
 // ---------------------------------------------------------------------------
@@ -273,6 +294,22 @@ function constructorTests(): void {
     () => new Module("modules/report.typ", null, ["summary\n"]),
     "a module item with a trailing newline must be rejected",
   );
+  expectCode(
+    "TYPCAST-VAL-0008",
+    () => new Module("modules/report.typ", { not: "a string" } as unknown as string),
+    "a module alias of an unknown type must be rejected",
+  );
+  try {
+    new Module("modules/report.typ", { not: "a string" } as unknown as string);
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      const text = JSON.stringify(error.diagnostics[0]?.details);
+      check(
+        text.includes('"value":"object"'),
+        "the details of a diagnostic must be JSON-serializable",
+      );
+    }
+  }
   expectCode(
     "TYPCAST-VAL-0009",
     () => new Module("modules/report.typ", "report", ["currency"]),
@@ -568,6 +605,47 @@ function deserializationTests(): void {
     "TYPCAST-IR-0004",
     () => Document.fromJSON(overflow),
     "a number that overflows the number domain must be rejected",
+  );
+
+  const nested = buildDocument().toJSON() as Record<string, unknown>;
+  const nestedPage = nested["page"] as Record<string, unknown>;
+  const nestedMargins = nestedPage["margin"] as Record<string, unknown>;
+  (nestedMargins["top"] as Record<string, unknown>)["value"] = -1;
+  expectPath(
+    "/page/margin/top/value",
+    () => Document.fromJSON(nested),
+    "the path of a nested value must not be prefixed twice",
+  );
+
+  const nestedOptional = buildDocument().toJSON() as Record<string, unknown>;
+  nestedOptional["contents"] = [
+    {
+      type: "image",
+      path: "figure.png",
+      alt: "Figure",
+      width: { value: -2, unit: "cm" },
+    },
+  ];
+  expectPath(
+    "/contents/0/width/value",
+    () => Document.fromJSON(nestedOptional),
+    "the path of a nested optional value must not be prefixed twice",
+  );
+
+  const escaped = buildDocument().toJSON() as Record<string, unknown>;
+  escaped["bad/name"] = 1;
+  expectPath(
+    "/bad~1name",
+    () => Document.fromJSON(escaped),
+    "an unknown field must be reported with an escaped pointer",
+  );
+
+  const escapedTilde = buildDocument().toJSON() as Record<string, unknown>;
+  escapedTilde["a~b"] = 1;
+  expectPath(
+    "/a~0b",
+    () => Document.fromJSON(escapedTilde),
+    "an unknown field with a tilde must be escaped",
   );
 
   const withoutModules = buildDocument().toJSON() as Record<string, unknown>;
