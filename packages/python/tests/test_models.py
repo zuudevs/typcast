@@ -199,6 +199,36 @@ class ConstructorValidationTests(unittest.TestCase):
     def test_non_finite_length_is_rejected(self) -> None:
         self.assert_code("TYPCAST-VAL-0004", lambda: Length(float("nan"), "cm"))
 
+    def test_an_image_width_of_zero_is_rejected(self) -> None:
+        # The IR requires the width of an image to be a positive length,
+        # while a length of a margin may be zero.
+        self.assert_code(
+            "TYPCAST-VAL-0004",
+            lambda: Image(
+                path="figures/logo.png",
+                alt="Logo",
+                width=Length(0, "cm"),
+            ),
+        )
+
+    def test_an_image_width_of_zero_is_rejected_by_the_reader(self) -> None:
+        value = document().to_dict()
+        value["contents"] = [
+            {
+                "type": "image",
+                "path": "figures/logo.png",
+                "alt": "Logo",
+                "width": {"value": 0, "unit": "cm"},
+            }
+        ]
+        with self.assertRaises(ValidationError) as caught:
+            Document.from_dict(value)
+        self.assertEqual(caught.exception.diagnostics[0].code, "TYPCAST-VAL-0004")
+        self.assertEqual(caught.exception.diagnostics[0].path, "/contents/0/width/value")
+
+    def test_a_zero_length_of_a_margin_is_accepted(self) -> None:
+        self.assertEqual(Length(0, "cm").value, 0)
+
     def test_invalid_heading_level_is_rejected(self) -> None:
         self.assert_code(
             "TYPCAST-VAL-0005",
@@ -512,6 +542,25 @@ class DeserializationTests(unittest.TestCase):
         with self.assertRaises(SerializationError) as caught:
             Document.from_dict(value)
         self.assertEqual(caught.exception.diagnostics[0].code, "TYPCAST-IR-0002")
+
+    def test_a_version_component_of_more_than_4300_digits_is_rejected(self) -> None:
+        # The interpreter limits the conversion of a long digit string to an
+        # integer, while the number domain of the IR is the binary64 domain.
+        # The component is an infinity in that domain, so the version is not
+        # supported, exactly as in the TypeScript SDK.
+        value = document().to_dict()
+        value["schemaVersion"] = f'{"1" * 5000}.0.0'
+        with self.assertRaises(SerializationError) as caught:
+            Document.from_dict(value)
+        self.assertEqual(caught.exception.diagnostics[0].code, "TYPCAST-IR-0002")
+
+    def test_a_patch_component_of_more_than_4300_digits_is_accepted(self) -> None:
+        # The patch number is not compared, so a patch number that the domain
+        # cannot hold exactly is accepted, exactly as in the TypeScript SDK.
+        value = document().to_dict()
+        value["schemaVersion"] = f'1.0.{"1" * 5000}'
+        parsed = Document.from_dict(value)
+        self.assertEqual(parsed.schema_version, value["schemaVersion"])
 
     def test_an_integer_valued_float_level_is_accepted(self) -> None:
         value = document().to_dict()

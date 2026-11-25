@@ -292,6 +292,23 @@ function requireField(
   return value[name];
 }
 
+/**
+ * Returns the value of an own property of the object.
+ *
+ * A property that the prototype of the object supplies is not part of the
+ * JSON value. The Python SDK reads only the own keys of a mapping, so the
+ * reader must reject such a value the same way.
+ */
+function ownField(
+  value: Record<string, unknown>,
+  name: string,
+): unknown {
+  if (!Object.prototype.hasOwnProperty.call(value, name)) {
+    return MISSING;
+  }
+  return value[name];
+}
+
 function optionalField(
   value: Record<string, unknown>,
   name: string,
@@ -401,7 +418,7 @@ function parseModules(value: unknown, path: string): readonly Module[] {
 
 function parseSpan(value: unknown, path: string): Span {
   const obj = asObject(value, path);
-  const discriminator = obj["type"];
+  const discriminator = ownField(obj, "type");
   // The lookup checks the own keys of the table. An inherited key such as
   // `constructor` is not a discriminator, and it must be rejected with the
   // documented diagnostic instead of reaching the field check.
@@ -485,7 +502,7 @@ function parseRow(value: unknown, path: string): readonly (readonly Span[])[] {
 
 function parseBlock(value: unknown, path: string): Block {
   const obj = asObject(value, path);
-  const discriminator = obj["type"];
+  const discriminator = ownField(obj, "type");
   // The lookup checks the own keys of the table. An inherited key such as
   // `constructor` is not a discriminator, and it must be rejected with the
   // documented diagnostic instead of reaching the field check.

@@ -18,7 +18,7 @@ change impact analysis.
 | Use cases | `product/use-cases.md` | Journey IDs `UC-001` to `UC-004`; acceptance criteria `AC-001` to `AC-018`; requirements `UCR-001` to `UCR-007` | Example and integration tests. |
 | Architecture | `architecture/overview.md` | `ARC-001` to `ARC-015` | Design review, parity tests. |
 | Repository | `architecture/repository.md` | `REPO-001` to `REPO-012` | Bazel build, dependency review. |
-| Document IR | `specifications/document-ir.md` | `IR-001` to `IR-021` | Schema and contract tests. |
+| Document IR | `specifications/document-ir.md` | `IR-001` to `IR-022` | Schema and contract tests. |
 | Nodes | `specifications/nodes.md` | `NODE-001` to `NODE-025` | Golden and emitter tests. |
 | Schema | `specifications/schema.md` | `SCH-001` to `SCH-021` | Schema lint and bundle tests. |
 | SDK API | `specifications/sdk-api.md` | `API-001` to `API-025` | API and parity tests. |
@@ -245,6 +245,7 @@ a target for the MVP and is not yet verified in the repository.
 | `IR-017` | The SDKs depend on no Typst compiler, and the model and the contract tests run without a Typst installation. | `//packages/python/tests:model_tests`; `//tests/contract:contract_py`; `//tests/contract:contract_ts_test`. |
 | `IR-018` | The shared fixtures are language-neutral JSON, and both SDKs read them. | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`; the fixtures under `tests/fixtures/documents/`. |
 | `IR-021` | Both SDKs hold the numbers of a document in the binary64 number domain of ECMAScript, so a value that the domain cannot hold is narrowed the same way and a value that overflows the domain is rejected. | `//packages/python/tests:model_tests`; `//packages/typescript:model_test_run`; the number-domain cases, and the fixture `large-number.json`. |
+| `IR-022` | Both SDKs reject an image whose width is zero, because the IR requires a positive width. | `//packages/python/tests:model_tests`; `//packages/typescript:model_test_run`; the image-width cases, and the fixture `invalid-image-width.json`. |
 | `API-004` | The constructors of both SDKs check the type, the enum literal, the range, and the emptiness of their arguments. | `//packages/python/tests:model_tests`; `//packages/typescript:model_test_run`; the constructor cases, including the text-length cases of the title and the author, and the negative fixture `invalid-title-length.json`. |
 | `API-009` | Both SDKs write the canonical JSON form: two-space indentation, the field order of the contract, and a trailing newline. | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`; every shared fixture is written back byte for byte. |
 | `API-010` | Both SDKs reject an unknown field, a missing required field, and an unsupported version. | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`; the negative fixtures of the manifest. |

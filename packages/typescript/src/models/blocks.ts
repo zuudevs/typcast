@@ -6,7 +6,11 @@
  * block.
  */
 
-import { CODE_INVALID_HEADING_LEVEL, throwValidation } from "../diagnostics.js";
+import {
+  CODE_INVALID_HEADING_LEVEL,
+  CODE_INVALID_LENGTH,
+  throwValidation,
+} from "../diagnostics.js";
 import {
   freezeArray,
   requireArray,
@@ -187,6 +191,16 @@ export class Image extends BlockBase {
     this.alt = requireString(alt, "/alt");
     this.caption = caption === null ? null : requireSpans(caption, "/caption", false);
     this.width = width === null ? null : requireInstance(width, Length, "/width");
+    // The IR requires the width of an image to be a positive length, while a
+    // length of a margin may be zero.
+    if (this.width !== null && !(this.width.value > 0)) {
+      throwValidation(
+        CODE_INVALID_LENGTH,
+        `'/width/value' must be greater than zero, got ${this.width.value}.`,
+        "/width/value",
+        { value: this.width.value },
+      );
+    }
     Object.freeze(this);
   }
 

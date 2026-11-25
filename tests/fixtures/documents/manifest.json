@@ -24,6 +24,7 @@
     { "file": "inherited-discriminator.json", "code": "TYPCAST-VAL-0003" },
     { "file": "invalid-orientation.json", "code": "TYPCAST-VAL-0003" },
     { "file": "invalid-length.json", "code": "TYPCAST-VAL-0004" },
+    { "file": "invalid-image-width.json", "code": "TYPCAST-VAL-0004" },
     { "file": "invalid-heading-level.json", "code": "TYPCAST-VAL-0005" },
     { "file": "empty-content.json", "code": "TYPCAST-VAL-0006" },
     { "file": "empty-text.json", "code": "TYPCAST-VAL-0006" },

@@ -7,6 +7,7 @@ any patch version of the supported minor.
 
 from __future__ import annotations
 
+import math
 import re
 
 from typcast.diagnostics import (
@@ -33,7 +34,22 @@ SUPPORTED_SCHEMA_MINOR = 0
 _VERSION_PATTERN = re.compile(r"([0-9]+)\.([0-9]+)\.([0-9]+)")
 
 
-def parse_schema_version(value: str) -> tuple[int, int, int]:
+def _version_component(digits: str) -> float:
+    """Returns a version component in the number domain of the IR.
+
+    A component is a number of the IR, so it lives in the binary64 domain of
+    ECMAScript. The conversion of a long digit string to an integer is
+    limited by the interpreter, while the conversion to a float is not, and
+    such a number is an infinity in that domain. The TypeScript SDK reads the
+    same value, so both SDKs accept and reject the same versions.
+    """
+    try:
+        return float(digits)
+    except OverflowError:
+        return math.inf
+
+
+def parse_schema_version(value: str) -> tuple[float, float, float]:
     """Returns the major, minor, and patch numbers of a version string."""
     match = _VERSION_PATTERN.fullmatch(value)
     if match is None:
@@ -44,10 +60,14 @@ def parse_schema_version(value: str) -> tuple[int, int, int]:
             {"value": value},
         )
     major, minor, patch = match.groups()
-    return int(major), int(minor), int(patch)
+    return (
+        _version_component(major),
+        _version_component(minor),
+        _version_component(patch),
+    )
 
 
-def check_schema_version(value: str) -> tuple[int, int, int]:
+def check_schema_version(value: str) -> tuple[float, float, float]:
     """Returns the version numbers of a supported version string."""
     if not isinstance(value, str):
         raise_serialization(

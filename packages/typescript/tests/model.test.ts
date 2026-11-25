@@ -270,6 +270,16 @@ function constructorTests(): void {
     "a length that overflows the number domain must be rejected",
   );
   expectCode(
+    "TYPCAST-VAL-0004",
+    () => new Image("figures/logo.png", "Logo", null, new Length(0, "cm")),
+    "an image width of zero must be rejected",
+  );
+  checkEqual(
+    new Length(0, "cm").value,
+    0,
+    "a zero length of a margin must be accepted",
+  );
+  expectCode(
     "TYPCAST-VAL-0006",
     () => new Paragraph([]),
     "empty content must be rejected",
@@ -577,6 +587,33 @@ function deserializationTests(): void {
     "an unsupported version must be rejected",
   );
 
+  const prototypeType = buildDocument().toJSON() as Record<string, unknown>;
+  const prototypeBlock = Object.create({
+    type: "pageBreak",
+  }) as Record<string, unknown>;
+  (prototypeType["contents"] as unknown[])[0] = prototypeBlock;
+  expectCode(
+    "TYPCAST-VAL-0003",
+    () => Document.fromJSON(prototypeType),
+    "a discriminator of the prototype must not be a block discriminator",
+  );
+
+  const longComponent = buildDocument().toJSON() as Record<string, unknown>;
+  longComponent["schemaVersion"] = `${"1".repeat(5000)}.0.0`;
+  expectCode(
+    "TYPCAST-IR-0002",
+    () => Document.fromJSON(longComponent),
+    "a version component of more than 4300 digits must be rejected",
+  );
+
+  const longPatch = buildDocument().toJSON() as Record<string, unknown>;
+  longPatch["schemaVersion"] = `1.0.${"1".repeat(5000)}`;
+  checkEqual(
+    Document.fromJSON(longPatch).schemaVersion,
+    longPatch["schemaVersion"],
+    "a patch component of more than 4300 digits must be accepted",
+  );
+
   const patch = buildDocument().toJSON() as Record<string, unknown>;
   patch["schemaVersion"] = "1.0.7";
   checkEqual(
@@ -655,6 +692,21 @@ function deserializationTests(): void {
     "/contents/0/width/value",
     () => Document.fromJSON(nestedOptional),
     "the path of a nested optional value must not be prefixed twice",
+  );
+
+  const zeroWidth = buildDocument().toJSON() as Record<string, unknown>;
+  zeroWidth["contents"] = [
+    {
+      type: "image",
+      path: "figure.png",
+      alt: "Figure",
+      width: { value: 0, unit: "cm" },
+    },
+  ];
+  expectPath(
+    "/contents/0/width/value",
+    () => Document.fromJSON(zeroWidth),
+    "an image width of zero must be rejected at the width",
   );
 
   const escaped = buildDocument().toJSON() as Record<string, unknown>;

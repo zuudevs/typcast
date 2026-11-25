@@ -368,6 +368,7 @@ of the document, in declaration order. Remote modules are not supported.
 | Table shape | Every row must have the same number of cells as `columns`. |
 | Table alignment | `align` must be `left`, `center`, or `right`. |
 | Length | Value must be finite and non-negative; unit must be supported. |
+| Image width | The width of an image must be a positive length. |
 | Number domain | Every number must be finite and must live in the binary64 domain of ECMAScript. |
 | Text length | `title` and `author` hold at most 512 Unicode code points. |
 | Image path | Must be relative, normalized, and inside `assetRoot`. |
@@ -381,7 +382,7 @@ first two layers only.
 
 | Layer | Rules | State |
 |---|---|---|
-| Model and reader | Required fields, closed objects, discriminator, table alignment, length, number domain, text length, module alias, raw value, schema version. | Implemented. |
+| Model and reader | Required fields, closed objects, discriminator, table alignment, length, image width, number domain, text length, module alias, raw value, schema version. | Implemented. |
 | Validation engine | Table shape, module alias uniqueness, raw size. | Not implemented. |
 | Asset layer | Image path, module path. | Not implemented. |
 
@@ -410,6 +411,7 @@ first two layers only.
 | IR-019 | The raw size limit MUST default to 1 MiB, be configurable through `max_raw_bytes`, and be documented. | CONFIRMED | Validation test and configuration review. |
 | IR-020 | The IR MUST reserve `schemaVersion` major compatibility rules for future evolution. | CONFIRMED | Compatibility review. |
 | IR-021 | Every number of the IR MUST live in the binary64 number domain of ECMAScript. | IMPLEMENTED | Both SDKs narrow a value to that domain and reject a value that overflows it; the number-domain cases of both SDKs and the fixture `large-number.json`. |
+| IR-022 | The width of an image MUST be a positive length. | IMPLEMENTED | The constructor of both SDKs rejects a width of zero with `TYPCAST-VAL-0004`; the negative fixture `invalid-image-width.json`. |
 
 ## Open questions
 

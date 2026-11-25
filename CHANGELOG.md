@@ -234,6 +234,20 @@ No release has been published yet. Every change so far is listed under
   item itself, so an item of another type reported the diagnostic of a wrong
   element type, while the TypeScript SDK reports the diagnostic of the module
   item. Both SDKs now report the diagnostic of the module item.
+- Both SDKs accepted an image whose width is zero, while the IR requires a
+  positive width. Both SDKs now reject a width of zero with the documented
+  diagnostic, and the requirement `IR-022` and the negative fixture
+  `invalid-image-width.json` record the rule.
+- The Python SDK converted a component of the schema version with the integer
+  parser of the interpreter, which reports a component of more than 4300
+  digits as a raw error. The component is a number of the IR, so it lives in
+  the binary64 domain of ECMAScript, in which such a number is an infinity.
+  Both SDKs now read the same components and accept and reject the same
+  versions.
+- The TypeScript SDK read the discriminator of a block or a span from the
+  value itself, so a property that the prototype of the value supplies was
+  accepted as a discriminator. The Python SDK reads only the own keys of a
+  mapping, so both SDKs now require an own discriminator.
 
 ### Known issues
 

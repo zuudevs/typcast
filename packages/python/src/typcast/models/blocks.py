@@ -12,6 +12,7 @@ from typing import Any, ClassVar, Sequence
 
 from typcast.diagnostics import (
     CODE_INVALID_HEADING_LEVEL,
+    CODE_INVALID_LENGTH,
     raise_validation,
 )
 from typcast.models.base import (
@@ -221,11 +222,18 @@ class Image(Block):
                 require_tuple(self.caption, Span, "/caption", allow_empty=False),
             )
         if self.width is not None:
-            object.__setattr__(
-                self,
-                "width",
-                require_instance(self.width, Length, "/width"),
-            )
+            width = require_instance(self.width, Length, "/width")
+            # The IR requires the width of an image to be a positive length,
+            # while a length of a margin may be zero.
+            if width.value <= 0:
+                number = int(width.value) if width.value.is_integer() else width.value
+                raise_validation(
+                    CODE_INVALID_LENGTH,
+                    f"'/width/value' must be greater than zero, got {number}.",
+                    "/width/value",
+                    {"value": number},
+                )
+            object.__setattr__(self, "width", width)
 
     def to_dict(self) -> dict[str, Any]:
         value: dict[str, Any] = {
