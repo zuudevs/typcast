@@ -39,11 +39,22 @@ ts_project(
     ],
 )
 
+# The runner needs the compiled SDK and the manifest of the package in its
+# runfiles. The runner imports the SDK with a relative path, so it can only
+# find it when the tree of the runfiles holds it. The manifest makes Node
+# classify the compiled files as ECMAScript modules, the same way the
+# compilation of TypeScript does. The manifest is a source file of another
+# package, so it cannot be copied to the output tree by the test rule.
 js_test(
     name = "contract_ts_test",
     entry_point = ":contract_ts",
     data = [
+        "//packages/typescript:package.json",
+        "//packages/typescript:typcast",
         "//tests/fixtures:document_fixtures",
+    ],
+    no_copy_to_bin = [
+        "//packages/typescript:package.json",
     ],
 )
 

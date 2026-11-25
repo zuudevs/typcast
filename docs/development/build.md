@@ -318,6 +318,12 @@ check verifies that the commit is a release commit.
   an ECMAScript module only when the nearest `package.json` declares
   `"type": "module"`. Without the manifest as an input, the compilation
   fails with TS1295 on Linux while it passes on Windows.
+- A test of Node reads only the tree of its runfiles on Linux, while Windows
+  resolves a relative import against the output tree of the workspace. A
+  `js_test` therefore needs the compiled files of the SDK in its `data`, and
+  the runner has to import the SDK with a path that exists in the runfiles
+  tree. Without them the run fails with ERR_MODULE_NOT_FOUND on Linux while
+  it passes on Windows.
 
 ## Schema archive
 

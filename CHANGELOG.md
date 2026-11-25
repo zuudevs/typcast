@@ -159,6 +159,11 @@ No release has been published yet. Every change so far is listed under
   file as a CommonJS file, and the compilation failed with TS1295 while the
   build on Windows passed. The manifest is now an input of the project, as it
   already was for the project of the SDK.
+- The test runners of Node did not carry the compiled SDK in their runfiles.
+  The sandbox of Linux therefore could not resolve the import of the SDK and
+  the run failed with ERR_MODULE_NOT_FOUND while the test on Windows passed.
+  Both runners now declare the compiled SDK and the manifest of the package
+  in their data.
 
 ### Known issues
 

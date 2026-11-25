@@ -60,7 +60,16 @@ ts_project(
     ],
 )
 
+# The runner needs the compiled SDK and the manifest of the package in its
+# runfiles. The test imports the SDK with a relative path, so the runner can
+# only find it when the tree of the runfiles holds it. The manifest makes Node
+# classify the compiled files as ECMAScript modules, the same way the
+# compilation of TypeScript does.
 js_test(
     name = "model_test_run",
     entry_point = ":model_test",
+    data = [
+        ":package.json",
+        ":typcast",
+    ],
 )
