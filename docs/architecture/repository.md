@@ -27,7 +27,7 @@ creating circular dependencies.
 | `tests/integration/` | Compiler, filesystem, and install tests. | Placeholder directory. |
 | `examples/python/` | Python examples. | Placeholder directory. |
 | `examples/typescript/` | TypeScript examples. | Placeholder directory. |
-| `scripts/` | Repository automation. | Documentation and workflow checks, and the release version check. |
+| `scripts/` | Repository automation. | Documentation and workflow checks, the release version check, and the release preparation. |
 | `docs/` | Product, architecture, contract, and engineering docs. | This document set. |
 | `.github/PULL_REQUEST_TEMPLATE.md` | The single pull request template. | Present. |
 | `.github/workflows/` | CI and release workflows. | Three workflows: pull request validation, main integration, and release verification. |
@@ -141,11 +141,13 @@ Current targets include:
 | `//tools/codegen/tests:unit_tests` | Seven generator unit tests. |
 | `//tools/publish:publish_schemas` | Publisher binary. |
 | `//tools/publish:publish_schemas_lib` | Publisher library. |
-| `//tools/publish/tests:publish_tests` | Forty-one publisher unit tests. |
+| `//tools/publish/tests:publish_tests` | Forty-four publisher unit tests. |
 | `//scripts:docs_checks` | Documentation, requirement, and decision checks. |
 | `//scripts:check_links` | External link check of the documents. |
+| `//scripts:prepare_release` | Prepares the release commit of a release. |
 | `//scripts/tests:docs_tests` | Eighteen documentation check tests. |
 | `//scripts/tests:link_tests` | Four external link check tests. |
+| `//scripts/tests:release_tests` | Twenty release preparation tests. |
 | `//specs/schemas:schema_bundle` | Six staged or generated schema files. |
 | `//specs/schemas:schema_manifest` | The names of the bundle files. |
 | `//specs/schemas:archive` | The deterministic archive of the bundle. |
@@ -162,7 +164,8 @@ npm tarball. The schema archive target exists. Target names are specified in
 - Generated schemas are written under `bazel-bin/specs/schemas/`.
 - Generated artifacts MUST NOT be committed to the development branch.
 - The published schema bundle is the only exception. The release commit
-  publishes it under `specs/schemas/` so that the versioned raw URLs resolve.
+  publishes it under `specs/schemas/` so that the versioned raw URLs resolve,
+  and the preparation command removes the generated files again afterwards.
 - Source schemas and templates remain under `specs/schemas/`.
 - Static schemas are staged with `typcast_schema_copy`, which uses a symlink
   action. Builds that require portable archives must dereference or package the

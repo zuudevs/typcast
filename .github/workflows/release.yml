@@ -3,8 +3,9 @@
 # The lane runs when a release tag is pushed. It verifies the version
 # consistency of the manifests and the tag, it builds and tests the tagged
 # commit on Windows and Linux, it checks that the tagged commit carries the
-# complete published schema bundle, and it checks that every published schema
-# resolves at its versioned raw URL.
+# complete published schema bundle, that the archive of the published bundle
+# is the archive of the build, and that every published schema resolves at
+# its versioned raw URL.
 #
 # The lane has read-only permissions and creates no release. The publishing
 # jobs arrive with the packaging targets (`BUILD-014`).
@@ -88,6 +89,12 @@ jobs:
         run: |
           bazel-bin/tools/publish/publish_schemas check \
             --version "${{ env.RELEASE_TAG }}" \
+            --input "$GITHUB_WORKSPACE/bazel-bin/specs/schemas" \
+            --manifest "$GITHUB_WORKSPACE/bazel-bin/specs/schemas/schema_manifest.txt" \
+            --published "$GITHUB_WORKSPACE/specs/schemas"
+      - name: Compare the archive of the published bundle with the archive of the build
+        run: |
+          bazel-bin/tools/publish/publish_schemas compare-archives \
             --input "$GITHUB_WORKSPACE/bazel-bin/specs/schemas" \
             --manifest "$GITHUB_WORKSPACE/bazel-bin/specs/schemas/schema_manifest.txt" \
             --published "$GITHUB_WORKSPACE/specs/schemas"

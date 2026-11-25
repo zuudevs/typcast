@@ -18,6 +18,7 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
+from typcast_publish.archive import bundle_archive_bytes
 from typcast_publish.errors import PublishError
 
 REPOSITORY = "zuudevs/typcast"
@@ -189,8 +190,34 @@ def check_published_bundle(
     return problems
 
 
+def compare_archives(
+    bundle_dir: Path,
+    manifest: list[str],
+    published_dir: Path,
+) -> list[str]:
+    """Compares the archive of the published bundle with the archive of the build.
+
+    The release asset is built from the published bundle of the tagged commit.
+    The archive of that bundle and the archive of the build must be identical,
+    so that the asset carries exactly the files that the build produced and
+    that the identity of every file names the release tag.
+
+    Returns one message per difference. An empty list means that the archives
+    are identical.
+    """
+    problems: list[str] = []
+
+    built = bundle_archive_bytes(bundle_dir, manifest)
+    published = bundle_archive_bytes(published_dir, manifest)
+    if built != published:
+        problems.append(
+            "the archive of the published bundle differs from the archive of the build"
+        )
+
+    return problems
+
+
 def fetch_published_file(url: str, timeout: float = DEFAULT_TIMEOUT) -> bytes:
-    """Returns the bytes that a published URL serves."""
     request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     with urllib.request.urlopen(request, timeout=timeout) as response:
         return response.read()

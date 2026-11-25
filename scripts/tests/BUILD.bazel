@@ -44,3 +44,16 @@ py_test(
         "//scripts:check_links_lib",
     ],
 )
+
+py_test(
+    name = "release_tests",
+    size = "small",
+    srcs = [
+        "__init__.py",
+        "test_prepare_release.py",
+    ],
+    main = "test_prepare_release.py",
+    deps = [
+        "//scripts:prepare_release_lib",
+    ],
+)

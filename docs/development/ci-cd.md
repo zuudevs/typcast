@@ -266,11 +266,11 @@ cache or on untracked files.
 | Cache | Bazel cache per operating system, keyed by version, lockfile, and build files. |
 | Matrix | The operating system dimension. The runtime dimensions wait for the SDK. |
 | Action pinning | Every action is pinned to a commit SHA. The repository gate enforces it. |
-| Release lane | Verifies the version, the tagged build, the published bundle, and the raw URLs. It does not publish. |
+| Release lane | Verifies the version, the tagged build, the published bundle, the archive of the published bundle, and the raw URLs. It does not publish. |
 | Release environment | None. |
 | Trusted publishing | None. |
 | Required checks | The six checks of the pull request lane. The branch protection of `main` requires them. The link check runs as well, but it reports warnings only and is not required. |
-| Published schema bundle | None; the release commit step is not implemented. |
+| Published schema bundle | None; the preparation command exists, but no release commit exists yet. |
 
 The first pull request run of the workflows passed on 2026-11-24: the build,
 the test lane, the clean checkout build, and the documentation gate passed on
@@ -307,7 +307,7 @@ starts with the current `.bazelrc`.
 | CI-024 | The CI matrix MUST cover Windows and Linux, Python 3.11 to 3.14, Node.js 22 and 24, and Typst 0.15.1, with the pull request lane limited to the minimum and newest Python versions. | CONFIRMED | Matrix review. |
 | CI-025 | The workflow files MUST be added in a separate implementation change. | IMPLEMENTED | The three workflow files are in their own commits. |
 | CI-026 | The release lane MUST verify that the tagged commit contains the complete published schema bundle and that every published schema resolves at its versioned raw URL. | CONFIRMED | The release lane runs `publish_schemas check` and `publish_schemas verify`. The check has not run against a tag, because no release exists yet. |
-| CI-027 | The pull request and main lanes MUST run the Bazel build and the test lane on Windows and Linux, MUST run the documentation gate and the external link check, and the release lane MUST verify the version consistency, the tagged build, the published bundle, and the versioned raw URLs. | IMPLEMENTED | The three workflow files; the first pull request run passed on 2026-11-24. |
+| CI-027 | The pull request and main lanes MUST run the Bazel build and the test lane on Windows and Linux, MUST run the documentation gate and the external link check, and the release lane MUST verify the version consistency, the tagged build, the published bundle, the archive of the published bundle, and the versioned raw URLs. | IMPLEMENTED | The three workflow files; the first pull request run passed on 2026-11-24. |
 | CI-028 | The repository gate MUST reject an action that is not pinned to a commit SHA, a workflow without a permissions block, a pull request workflow with write access, a pull request workflow that reads a secret, and a workflow that uses `pull_request_target`. | IMPLEMENTED | `scripts/validate_docs.py`; `//scripts:docs_checks` checks three workflow files. |
 
 ## Open questions

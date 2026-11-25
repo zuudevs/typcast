@@ -125,3 +125,13 @@ def write_bundle_archive(
 ) -> list[str]:
     """Writes the archive of a bundle directory."""
     return write_archive(bundle_sources(bundle_dir, manifest), output, prefix)
+
+
+def bundle_archive_bytes(bundle_dir: Path, manifest: list[str]) -> bytes:
+    """Returns the deterministic archive of a bundle directory.
+
+    The bytes are the archive that the release asset carries. Two bundle
+    directories with the same content produce the same bytes.
+    """
+    members = archive_members(bundle_sources(bundle_dir, manifest))
+    return gzip_stream(tar_stream(members))

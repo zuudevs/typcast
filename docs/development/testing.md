@@ -15,11 +15,12 @@ compiler integration, and package installation.
 
 | Area | Current state |
 |---|---|
-| Test targets | Seven `py_test` targets: `//tools/codegen/tests:unit_tests`, `//tools/publish/tests:publish_tests`, `//scripts/tests:version_tests`, `//scripts/tests:docs_tests`, `//scripts/tests:link_tests`, `//scripts:docs_checks`, and `//specs/schemas:schema_tests`. |
-| Test cases | Seven generator cases, 41 publisher cases, 15 release version cases, 18 documentation gate cases, 4 link check cases, one documentation check, one schema bundle check. |
+| Test targets | Eight `py_test` targets: `//tools/codegen/tests:unit_tests`, `//tools/publish/tests:publish_tests`, `//scripts/tests:version_tests`, `//scripts/tests:release_tests`, `//scripts/tests:docs_tests`, `//scripts/tests:link_tests`, `//scripts:docs_checks`, and `//specs/schemas:schema_tests`. |
+| Test cases | Seven generator cases, 44 publisher cases, 15 release version cases, 20 release preparation cases, 18 documentation gate cases, 4 link check cases, one documentation check, one schema bundle check. |
 | Schema tests | `//specs/schemas:schema_tests` validates the built bundle. Meta-schema and instance validation are missing. |
 | Publisher tests | `//tools/publish/tests:publish_tests` covers the publisher, the published identity of the built bundle, the resolution of the versioned raw URLs, and the deterministic archive. |
 | Version tests | `//scripts/tests:version_tests` covers the release version check, including the contract version of every schema source. |
+| Release preparation tests | `//scripts/tests:release_tests` covers the release preparation, the publication, the verification, and the cleanup. |
 | Gate tests | `//scripts/tests:docs_tests` and `//scripts/tests:link_tests` cover the rules of the repository gate and of the external link check. |
 | Contract tests | None. |
 | Golden `.typ` tests | None. |
@@ -256,6 +257,7 @@ threshold may be added in a later minor version once the suite stabilizes.
 | TEST-028 | The resolution of the versioned raw URLs MUST be covered by a test that serves the published files from a local server. | IMPLEMENTED | `//tools/publish/tests:publish_tests`; the publisher tests use a local server, so the test suite needs no network access. |
 | TEST-029 | The schema archive MUST be covered by tests for its content, its member metadata, and its byte-for-byte determinism. | IMPLEMENTED | `//tools/publish/tests:publish_tests`; the archive cases compare two archives and the metadata of every member. |
 | TEST-030 | The rules of the repository gate and of the external link check MUST be covered by unit tests. | IMPLEMENTED | `//scripts/tests:docs_tests`; `//scripts/tests:link_tests`. |
+| TEST-031 | The release preparation MUST be covered by unit tests for the version bump, the publication, the verification, and the cleanup. | IMPLEMENTED | `//scripts/tests:release_tests`; 20 cases. |
 
 ## Open questions
 

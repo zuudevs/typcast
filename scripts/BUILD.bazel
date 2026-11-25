@@ -62,6 +62,35 @@ py_binary(
     ],
 )
 
+# The release preparation. It writes into the repository tree, so it runs
+# against the source root and not against the runfiles tree. The library is
+# separate so that the unit tests import it.
+py_library(
+    name = "prepare_release_lib",
+    srcs = [
+        "__init__.py",
+        "prepare_release.py",
+    ],
+    imports = ["."],
+    deps = [
+        ":check_version_lib",
+        "//tools/publish:publish_schemas_lib",
+    ],
+)
+
+py_binary(
+    name = "prepare_release",
+    srcs = [
+        "__init__.py",
+        "prepare_release.py",
+    ],
+    main = "prepare_release.py",
+    deps = [
+        ":check_version_lib",
+        "//tools/publish:publish_schemas_lib",
+    ],
+)
+
 # The documents that the checks read. The group lives in the root package so
 # that a new document is a deliberate addition to the gate.
 py_test(

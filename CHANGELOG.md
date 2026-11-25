@@ -28,6 +28,11 @@ No release has been published yet. Every change so far is listed under
 - A release version check, `//scripts:check_version`, which compares the
   version of every manifest, the contract version of every schema source, and
   the changelog with the tag.
+- A release preparation command, `//scripts:prepare_release`, which sets the
+  release version in every manifest and in every schema source, publishes the
+  built bundle under `specs/schemas/`, verifies the version consistency, the
+  published bundle, and the archive, and removes the generated published files
+  from the development branch again.
 - Repository checks, `//scripts:docs_checks`, for the documents, the
   requirement index, the decision index, the schema references, and the
   workflow files.
@@ -44,6 +49,9 @@ No release has been published yet. Every change so far is listed under
   bundle as a deterministic gzip tarball. The member order, the member
   metadata, and the gzip header are fixed, so the bytes and the checksum of
   the release asset are the same on every platform.
+- An archive comparison in the release lane: the archive of the published
+  bundle must be the archive of the build, so that the release asset carries
+  the files of the build and the identity of the release tag.
 - A CODEOWNERS file at `.github/CODEOWNERS`, which routes every path to the
   maintainer and is checked by the repository gate.
 - A Markdown lint in the repository gate: the document starts with its title,

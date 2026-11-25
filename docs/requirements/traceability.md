@@ -28,10 +28,10 @@ change impact analysis.
 | Assets | `specifications/assets.md` | `ASSET-001` to `ASSET-020` | Path and workspace tests. |
 | Compatibility | `specifications/compatibility.md` | `COMPAT-001` to `COMPAT-019` | CI matrix. |
 | Build | `development/build.md` | `BUILD-001` to `BUILD-021` | Bazel commands. |
-| Testing | `development/testing.md` | `TEST-001` to `TEST-030` | Test inventory. |
+| Testing | `development/testing.md` | `TEST-001` to `TEST-031` | Test inventory. |
 | Benchmarking | `development/benchmarking.md` | `PERF-001` to `PERF-015` | Benchmark job. |
 | CI/CD | `development/ci-cd.md` | `CI-001` to `CI-028` | Workflow review. |
-| Release | `development/release.md` | `REL-001` to `REL-035` | Release checklist. |
+| Release | `development/release.md` | `REL-001` to `REL-036` | Release checklist. |
 | Security | `development/security.md` | `SEC-001` to `SEC-025` | Security review. |
 | Documentation | `development/documentation.md` | `DOC-001` to `DOC-025` | Docs gate. |
 | Governance | `governance/contributing.md` | `GOV-001` to `GOV-021` | Repository settings. |
@@ -157,14 +157,17 @@ a target for the MVP and is not yet verified in the repository.
 | `DOC-025` | The rules of the repository gate and of the external link check are covered by unit tests. | `//scripts/tests:docs_tests`; `//scripts/tests:link_tests`. |
 | `TEST-016` | `//specs/schemas:schema_tests` validates every bundle file and resolves every relative `$ref`. | `//specs/schemas:schema_tests`; 6 bundle files checked, 0 violations. |
 | `TEST-025` | The test lane runs on Windows and Linux. | The `Test` jobs of the workflows; the first run passed on `windows-latest` and `ubuntu-latest`. |
-| `TEST-026` | `//tools/publish/tests:publish_tests` covers the publisher with unit tests and with an integration test against the built bundle. | `//tools/publish/tests:publish_tests`; 41 cases. |
+| `TEST-026` | `//tools/publish/tests:publish_tests` covers the publisher with unit tests and with an integration test against the built bundle. | `//tools/publish/tests:publish_tests`; 44 cases. |
 | `TEST-027` | `//scripts/tests:version_tests` covers the release version check. | `//scripts/tests:version_tests`; 15 cases. |
 | `TEST-028` | The publisher tests serve the published files from a local server, so the test suite needs no network access. | `//tools/publish/tests:publish_tests`; the `PublishedUrlTests` cases. |
 | `TEST-029` | The publisher tests cover the content, the member metadata, and the byte-for-byte determinism of the schema archive. | `//tools/publish/tests:publish_tests`; the `ArchiveTests` cases. |
 | `TEST-030` | The unit tests cover the rules of the repository gate and of the external link check. | `//scripts/tests:docs_tests`; `//scripts/tests:link_tests`. |
+| `TEST-031` | The unit tests cover the version bump, the publication, the verification, and the cleanup of the release preparation. | `//scripts/tests:release_tests`; 20 cases. |
+| `REL-012` | `//scripts:check_version` compares the version of every manifest, the contract version of every schema source, and the changelog with the tag, and the release lane runs the check on the tagged commit. | `//scripts:check_version`; `//scripts/tests:version_tests`; 15 cases. |
 | `REL-032` | `//tools/publish:publish_schemas` publishes exactly the files of the bundle manifest, sets the `$id` of every file to the versioned raw URL of the release tag, and rejects a version that is not a release tag. | `//tools/publish:publish_schemas`; `publish` and `check` verified against the built bundle with an illustrative `v1.0.0` tag. |
 | `REL-033` | `//scripts:check_version` compares the version of every manifest, the contract version of every schema source, and the changelog with the tag, and reports every mismatch. | `//scripts:check_version`; `//scripts/tests:version_tests`; 15 cases. |
 | `REL-034` | `publish_schemas verify` fetches every published schema from its versioned raw URL and compares the served bytes with the file of the tagged commit. | `//tools/publish:publish_tests`; the `PublishedUrlTests` cases. |
+| `REL-036` | `//scripts:prepare_release` sets the release version in every manifest and in every schema source, publishes the built bundle under `specs/schemas/`, verifies the version consistency, the published bundle, and the archive, and removes the generated published files from the development branch. | `//scripts:prepare_release`; `//scripts/tests:release_tests`; 20 cases. |
 | `CI-001` | The repository has the pull request validation, the main integration, and the release workflows. | `.github/workflows/pr.yml`, `.github/workflows/main.yml`, and `.github/workflows/release.yml`. |
 | `CI-002` | The pull request workflows have read-only permissions. | `permissions: contents: read` in `pr.yml` and `main.yml`; the repository gate rejects write access in a pull request workflow. |
 | `CI-003` | No pull request workflow reads a secret. | No workflow reads a secret; the repository gate rejects a secret in a pull request workflow. |

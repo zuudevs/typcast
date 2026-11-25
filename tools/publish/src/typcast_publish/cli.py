@@ -15,6 +15,7 @@ from typcast_publish.publisher import (
     DEFAULT_TIMEOUT,
     PUBLISHED_BASE,
     check_published_bundle,
+    compare_archives,
     publish_bundle,
     published_url,
     read_manifest,
@@ -144,6 +145,32 @@ def build_parser() -> argparse.ArgumentParser:
         help="Timeout of one request, in seconds.",
     )
 
+    compare = commands.add_parser(
+        "compare-archives",
+        help="Compare the archive of the published bundle with the archive of the build.",
+    )
+    compare.add_argument(
+        "--input",
+        "-i",
+        type=Path,
+        required=True,
+        help="Built schema bundle directory.",
+    )
+    compare.add_argument(
+        "--manifest",
+        "-m",
+        type=Path,
+        required=True,
+        help="Manifest of the bundle files.",
+    )
+    compare.add_argument(
+        "--published",
+        "-p",
+        type=Path,
+        required=True,
+        help="Directory that holds the published bundle.",
+    )
+
     archive = commands.add_parser(
         "archive",
         help="Write the deterministic archive of the schema bundle.",
@@ -234,6 +261,17 @@ def _verify(args: argparse.Namespace) -> int:
     return 0
 
 
+def _compare_archives(args: argparse.Namespace) -> int:
+    manifest = read_manifest(args.manifest)
+    problems = compare_archives(args.input, manifest, args.published)
+    for problem in problems:
+        print(f"typcast-publish: error: {problem}", file=sys.stderr)
+    if problems:
+        return 1
+    print("the archive of the published bundle matches the archive of the build")
+    return 0
+
+
 def _archive(args: argparse.Namespace) -> int:
     if args.files:
         sources = []
@@ -268,6 +306,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _publish(args)
         if args.command == "verify":
             return _verify(args)
+        if args.command == "compare-archives":
+            return _compare_archives(args)
         if args.command == "archive":
             return _archive(args)
         return _check(args)

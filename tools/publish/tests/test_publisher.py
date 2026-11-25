@@ -16,6 +16,7 @@ from typcast_publish.archive import (
 from typcast_publish.errors import PublishError
 from typcast_publish.publisher import (
     check_published_bundle,
+    compare_archives,
     publish_bundle,
     published_url,
     read_manifest,
@@ -427,6 +428,32 @@ class PublishedBundleTests(unittest.TestCase):
         write_archive(bundle_sources(self.bundle, self.manifest), second)
 
         self.assertEqual(first.read_bytes(), second.read_bytes())
+
+    def test_the_archive_of_the_published_bundle_matches_the_build(self) -> None:
+        self.publish()
+
+        problems = compare_archives(self.bundle, self.manifest, self.published)
+
+        self.assertEqual(problems, [])
+
+    def test_the_archive_comparison_reports_a_different_identity(self) -> None:
+        self.publish()
+        target = self.published / "validator.schema.json"
+        document = json.loads(target.read_text(encoding="utf-8"))
+        document["$id"] = document["$id"].replace("v1.0.0", "v0.9.0")
+        target.write_text(json.dumps(document, indent=2) + "\n", encoding="utf-8")
+
+        problems = compare_archives(self.bundle, self.manifest, self.published)
+
+        self.assertEqual(len(problems), 1)
+        self.assertIn("archive", problems[0])
+
+    def test_the_archive_comparison_reports_a_missing_file(self) -> None:
+        self.publish()
+        (self.published / "validator.schema.json").unlink()
+
+        with self.assertRaises(PublishError):
+            compare_archives(self.bundle, self.manifest, self.published)
 
 
 class ArchiveTests(unittest.TestCase):

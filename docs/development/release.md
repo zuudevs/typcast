@@ -112,6 +112,85 @@ bazel run //scripts:check_version -- --version v1.0.0
 The check runs with the hermetic Python toolchain and needs no network access.
 The release lane runs it before it builds the tagged commit.
 
+## Preparing the release commit
+
+The release commit is the commit that the release tag points at. It carries
+the published schema bundle under `specs/schemas/`, so that every versioned
+raw URL resolves at the tag.
+
+`//scripts:prepare_release` prepares that commit. It sets the release version
+in every manifest and in every schema source, publishes the built bundle
+under `specs/schemas/`, and verifies the result. The command creates neither
+a commit nor a tag.
+
+The procedure has six steps.
+
+1. Write the changelog entry of the release. The command refuses to run
+   without it, because a release without an entry has no notes.
+
+2. Set the version and build the bundle. The build carries the identity of
+   the sources, so it must run after the version is set.
+
+   ```shell
+   bazel run //scripts:prepare_release -- --version v1.0.0 --root "$PWD"
+   bazel build //specs/schemas:schema_bundle //specs/schemas:schema_manifest
+   ```
+
+3. Publish the bundle and verify the result. The command reports a mismatch
+   between the published bundle and the build, and a mismatch between the
+   archive of the published bundle and the archive of the build.
+
+   ```shell
+   bazel run //scripts:prepare_release -- --version v1.0.0 --root "$PWD" \
+     --bundle "$PWD/bazel-bin/specs/schemas" \
+     --manifest "$PWD/bazel-bin/specs/schemas/schema_manifest.txt"
+   ```
+
+4. Commit the result and tag it.
+
+   ```shell
+   git add -A
+   git commit -m "release: v1.0.0"
+   git tag v1.0.0
+   git push origin v1.0.0
+   ```
+
+5. Remove the generated published files and commit the removal. The published
+   bundle is a release artifact, and the development branch must not carry the
+   files that the build generates (`BUILD-009`, `REPO-007`). The cleanup
+   changes no version and no source, so it is safe to run on the development
+   branch.
+
+   ```shell
+   bazel run //scripts:prepare_release -- --version v1.0.0 --root "$PWD" \
+     --manifest "$PWD/bazel-bin/specs/schemas/schema_manifest.txt" --clean
+   git add -A
+   git commit -m "chore(release): remove the generated published bundle"
+   git push origin main
+   ```
+
+6. Watch the release lane. It checks out the tag and verifies the release.
+
+The tag points at the release commit, so the published bundle stays reachable
+at the versioned raw URLs, whatever happens to the development branch
+afterwards.
+
+The command is idempotent: a second run reports no change. The `--dry-run`
+flag reports the changes without writing them.
+
+### What the release commit carries
+
+| File | Change |
+|---|---|
+| `MODULE.bazel`, `package.json`, `packages/python/pyproject.toml`, `packages/typescript/package.json` | The release version. |
+| `specs/schemas/validator.schema.json`, `specs/schemas/definitions/bound.schema.json`, `specs/schemas/definitions/node.schema.json` | The identity of the release tag. The published file has the same content, so the file does not change when the version is already set. |
+| `specs/schemas/templates/api/types/alignment.schema.json.tmpl`, `length.schema.json.tmpl`, `paper.schema.json.tmpl` | The identity of the release tag, which is the contract version. The versions are lockstep (`REL-001`). |
+| `specs/schemas/api/types/alignment.schema.json`, `length.schema.json`, `paper.schema.json` | The published files of the generated schemas. They are new files in the release commit. |
+
+The three generated files are the only files that the published bundle adds
+to the repository. The cleanup of step five removes them again, so the
+development branch carries the sources and the templates only.
+
 ## Schema distribution
 
 The canonical URL of a published schema file is:
@@ -213,6 +292,18 @@ The command keeps the content of every file as it is, including the identity
 of the release tag that the publisher wrote. The release attaches the archive
 and its SHA-256 checksum to the GitHub Release.
 
+The release lane compares the archive of the published bundle with the archive
+of the build. The two archives must be identical, so that the asset carries
+exactly the files that the build produced and that the identity of every file
+names the release tag.
+
+```shell
+bazel-bin/tools/publish/publish_schemas.exe compare-archives \
+  --input bazel-bin/specs/schemas \
+  --manifest bazel-bin/specs/schemas/schema_manifest.txt \
+  --published specs/schemas
+```
+
 ## Release gates
 
 | Gate | Requirement |
@@ -228,7 +319,8 @@ and its SHA-256 checksum to the GitHub Release.
 | Security | Secret scanning and dependency review pass. |
 | License | `LICENSE` present in repository and packages. |
 | Changelog | Entry exists and is reviewed. |
-| Version | All manifests and tag agree. |
+| Version | All manifests, all schema sources, and the tag agree. |
+| Preparation | `//scripts:prepare_release` publishes the bundle and verifies the result. |
 | Approval | Release environment approved by a maintainer. |
 
 ## Release process
@@ -238,19 +330,22 @@ and its SHA-256 checksum to the GitHub Release.
 3. Build wheel, sdist, npm tarball, schema archive, SBOM, and checksums.
 4. Run install tests against the built artifacts.
 5. Verify the supported Typst version.
-6. Prepare the release commit: publish the built bundle under `specs/schemas/`
-   and set the schema `$id` values to the versioned raw URLs.
+6. Prepare the release commit: run `//scripts:prepare_release`, which sets the
+   release version and publishes the built bundle under `specs/schemas/` with
+   the versioned raw URLs as the schema `$id` values.
 7. Create a signed or annotated tag `vX.Y.Z` on that commit.
 8. Push the tag.
-9. Approve the protected release environment.
-10. Publish Python to PyPI.
-11. Publish the npm package.
-12. Create the GitHub Release.
-13. Attach artifacts, checksums, SBOM, and license.
-14. Verify the published artifacts by installing them again, and fetch every
+9. Remove the generated published files from the development branch with
+   `//scripts:prepare_release --clean`.
+10. Approve the protected release environment.
+11. Publish Python to PyPI.
+12. Publish the npm package.
+13. Create the GitHub Release.
+14. Attach artifacts, checksums, SBOM, and license.
+15. Verify the published artifacts by installing them again, and fetch every
     published schema from its versioned raw URL and compare it with the release
     bundle.
-15. Announce the release and record known issues.
+16. Announce the release and record known issues.
 
 ## Publishing security
 
@@ -315,12 +410,13 @@ Stable `1.0.0`:
 | Packaging targets | None. |
 | Release workflow | `.github/workflows/release.yml` verifies the release. It does not publish yet. |
 | Version check | `//scripts:check_version` compares the manifests, the contract version of every schema source, and the changelog with the tag. |
+| Release preparation | `//scripts:prepare_release` sets the release version, publishes the bundle, and verifies the result. The command is ready; no release has run. |
 | Changelog | `CHANGELOG.md` present at the repository root. It has no released entry yet. |
 | License | `LICENSE` present at the repository root. |
 | Security policy | `SECURITY.md` present at the repository root. |
 | Tag | None. |
 | Schema archive | `//specs/schemas:archive` builds a deterministic gzip tarball of the bundle. The release asset is produced by the same code from the published bundle. |
-| Published schema bundle | None. The publisher exists, but the release commit step is not implemented. |
+| Published schema bundle | None. The publisher and the preparation command exist, but no release commit exists yet. |
 | Schema domain | None. The MVP does not require a dedicated schema domain. |
 | SBOM | None. |
 
@@ -339,7 +435,7 @@ Stable `1.0.0`:
 | REL-009 | The release MUST publish an SBOM. | CONFIRMED | Artifact check. |
 | REL-010 | The release MUST include `LICENSE`. | CONFIRMED | Package check. |
 | REL-011 | The release MUST include a changelog entry. | CONFIRMED | Release check. |
-| REL-012 | The release MUST verify all package versions and the tag. | CONFIRMED | Release check. |
+| REL-012 | The release MUST verify all package versions and the tag. | IMPLEMENTED | `//scripts:check_version`; the release lane checks out the tag and runs the check. |
 | REL-013 | The release MUST run install tests before publishing. | CONFIRMED | Release check. |
 | REL-014 | The release MUST use OIDC or environment secrets. | CONFIRMED | Workflow review. |
 | REL-015 | The release MUST use a protected environment. | CONFIRMED | Environment settings. |
@@ -357,12 +453,13 @@ Stable `1.0.0`:
 | REL-027 | The artifact target names MUST be `//packages/python:wheel`, `//packages/python:sdist`, `//packages/typescript:npm_package`, and `//specs/schemas:archive`. | CONFIRMED | Build review. |
 | REL-028 | The SBOM MUST be generated in CycloneDX 1.6 JSON and attached to the release. | CONFIRMED | Release check. |
 | REL-029 | The canonical schema reference MUST be the versioned raw URL `https://raw.githubusercontent.com/zuudevs/typcast/<VERSION>/specs/schemas/<SCHEMA_FILE>`, where `<VERSION>` is the release tag; the MVP MUST NOT require a dedicated schema domain or hosting infrastructure. | CONFIRMED | Release check. |
-| REL-030 | The tagged release commit MUST contain the complete published schema bundle under `specs/schemas/`, so that every schema file is retrievable at its versioned raw URL. | CONFIRMED | Release check. |
+| REL-030 | The tagged release commit MUST contain the complete published schema bundle under `specs/schemas/`, so that every schema file is retrievable at its versioned raw URL. | CONFIRMED | The preparation command publishes the bundle; the release lane checks the tagged commit. |
 | REL-031 | A published release tag MUST NOT be moved, reused, or deleted; a schema correction MUST ship in a new release tag. | CONFIRMED | Release check. |
 | REL-032 | The publisher MUST set the `$id` of every published schema to the versioned raw URL of the release tag, MUST publish exactly the files of the bundle, and MUST reject a version that is not a release tag. | IMPLEMENTED | `//tools/publish:publish_schemas`; `//tools/publish/tests:publish_tests`. |
 | REL-033 | The release MUST compare the version of every manifest, the contract version of every schema source, and the changelog with the tag, and MUST fail when one of them differs. | IMPLEMENTED | `//scripts:check_version`; `//scripts/tests:version_tests`; 15 cases. |
 | REL-034 | The release MUST verify that every published schema resolves at its versioned raw URL and serves the content of the tagged commit. | IMPLEMENTED | `publish_schemas verify`; `//tools/publish/tests:publish_tests`. |
-| REL-035 | The release MUST attach the schema archive of the published bundle as a GitHub Release asset, and the archive MUST be byte-identical on every platform. | CONFIRMED | Release check. |
+| REL-035 | The release MUST attach the schema archive of the published bundle as a GitHub Release asset, and the archive MUST be byte-identical on every platform. | CONFIRMED | The archive is deterministic and the release lane compares the archives; the asset is attached with the publishing jobs. |
+| REL-036 | The release preparation MUST be a repository command that sets the release version in every manifest and in every schema source, publishes the built bundle under `specs/schemas/`, verifies the version consistency, the published bundle, and the archive, and removes the generated published files from the development branch. | IMPLEMENTED | `//scripts:prepare_release`; `//scripts/tests:release_tests`; 20 cases. |
 
 ## Open questions
 
