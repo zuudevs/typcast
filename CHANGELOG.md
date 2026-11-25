@@ -216,7 +216,15 @@ No release has been published yet. Every change so far is listed under
 - The Python SDK stored a runtime value of an unknown type in the details of a
   diagnostic, so the details of that diagnostic could not be serialized to
   JSON. Both SDKs now keep only a JSON-serializable representation of such a
-  value.
+  value, and the representation of the two SDKs agrees.
+- The Python SDK built the path of an unknown field without checking the type
+  of the key, so a mapping with a key that is not a string raised a raw
+  `AttributeError` instead of a diagnostic. The reader now rejects such a
+  mapping with the documented diagnostic.
+- The Python SDK kept a number that is not finite in the details of a
+  diagnostic, and such a number has no token in JSON. Both SDKs now spell a
+  number that is not finite in the form of ECMAScript, so the details of both
+  SDKs stay JSON-serializable.
 
 ### Known issues
 

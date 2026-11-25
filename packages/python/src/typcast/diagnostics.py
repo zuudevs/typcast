@@ -7,6 +7,7 @@ collection. The first diagnostic is the primary cause.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Any, Iterable, Mapping, Sequence
@@ -86,11 +87,18 @@ def safe_value(value: Any) -> Any:
     """Returns a JSON-serializable representation of a value.
 
     The details of a diagnostic must be JSON-serializable, so a value of an
-    unknown type is represented by the name of its type. The TypeScript SDK
-    applies the same rule.
+    unknown type is represented by the name of its type, and a number that is
+    not finite is represented by its spelling in the form of ECMAScript. The
+    TypeScript SDK applies the same rule.
     """
-    if value is None or isinstance(value, (bool, int, float, str)):
+    if value is None or isinstance(value, (bool, int, str)):
         return value
+    if isinstance(value, float):
+        if math.isfinite(value):
+            return value
+        if math.isnan(value):
+            return "NaN"
+        return "Infinity" if value > 0 else "-Infinity"
     if isinstance(value, Mapping):
         return "object"
     if isinstance(value, (list, tuple)):

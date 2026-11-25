@@ -310,6 +310,17 @@ function constructorTests(): void {
       );
     }
   }
+  try {
+    new Module("modules/report.typ", Number.NaN as unknown as string);
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      const text = JSON.stringify(error.diagnostics[0]?.details);
+      check(
+        text.includes('"value":"NaN"'),
+        "the details of a diagnostic must hold no non-finite number",
+      );
+    }
+  }
   expectCode(
     "TYPCAST-VAL-0009",
     () => new Module("modules/report.typ", "report", ["currency"]),

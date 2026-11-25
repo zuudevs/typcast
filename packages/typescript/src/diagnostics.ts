@@ -72,16 +72,20 @@ export const CODE_ROOT_SHAPE = "TYPCAST-IR-0004";
  * Returns a JSON-serializable representation of a value.
  *
  * The details of a diagnostic must be JSON-serializable, so a value of an
- * unknown type is represented by the name of its type. The Python SDK applies
- * the same rule.
+ * unknown type is represented by the name of its type, and a number that is
+ * not finite is represented by its spelling in the form of ECMAScript. The
+ * Python SDK applies the same rule.
  */
 export function safeValue(value: unknown): unknown {
   if (value === null) {
     return null;
   }
   const kind = typeof value;
-  if (kind === "string" || kind === "number" || kind === "boolean") {
+  if (kind === "string" || kind === "boolean") {
     return value;
+  }
+  if (kind === "number") {
+    return Number.isFinite(value) ? value : String(value);
   }
   if (Array.isArray(value)) {
     return "array";

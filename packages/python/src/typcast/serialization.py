@@ -161,6 +161,16 @@ def _as_object(value: Any, path: str) -> dict[str, Any]:
             f"'{path or '/'}' must be a JSON object.",
             path or None,
         )
+    # A JSON object has string keys only. A mapping of another key type is
+    # not a JSON object, and the key cannot become a token of a JSON Pointer.
+    for name in value:
+        if not isinstance(name, str):
+            raise_serialization(
+                CODE_ROOT_SHAPE,
+                f"'{path or '/'}' must be a JSON object whose keys are strings.",
+                path or None,
+                {"keyType": type(name).__name__},
+            )
     return value
 
 

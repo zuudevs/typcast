@@ -260,6 +260,13 @@ class ConstructorValidationTests(unittest.TestCase):
         text = json.dumps(diagnostic.to_dict())
         self.assertIn('"value": "object"', text)
 
+    def test_the_details_of_a_diagnostic_hold_no_non_finite_number(self) -> None:
+        with self.assertRaises(ValidationError) as caught:
+            Module(path="modules/report.typ", alias=float("nan"))  # type: ignore[arg-type]
+        diagnostic = caught.exception.diagnostics[0]
+        text = json.dumps(diagnostic.to_dict(), allow_nan=False)
+        self.assertIn('"value": "NaN"', text)
+
     def test_module_alias_and_items_are_exclusive(self) -> None:
         self.assert_code(
             "TYPCAST-VAL-0009",
@@ -572,6 +579,13 @@ class DeserializationTests(unittest.TestCase):
         with self.assertRaises(ValidationError) as caught:
             Document.from_dict(value)
         self.assertEqual(caught.exception.diagnostics[0].path, "/a~0b")
+
+    def test_an_object_with_a_key_that_is_not_a_string_is_rejected(self) -> None:
+        value = document().to_dict()
+        value[1] = "not a field"
+        with self.assertRaises(SerializationError) as caught:
+            Document.from_dict(value)
+        self.assertEqual(caught.exception.diagnostics[0].code, "TYPCAST-IR-0004")
 
     def test_every_error_carries_a_diagnostic(self) -> None:
         with self.assertRaises(TypcastError) as caught:

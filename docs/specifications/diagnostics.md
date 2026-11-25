@@ -45,7 +45,8 @@ failures programmatically.
 
 `details` must be JSON-serializable. It may contain raw compiler output, exit
 codes, field names, or supported version ranges. A value of a type that JSON
-cannot represent is replaced by the name of its type.
+cannot represent is replaced by the name of its type, and a number that is not
+finite is spelled in the form of ECMAScript.
 
 ## Code families
 
