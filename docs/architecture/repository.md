@@ -147,6 +147,7 @@ Current targets include:
 | `//scripts:prepare_release` | Prepares the release commit of a release. |
 | `//scripts/tests:docs_tests` | Twenty-nine documentation check tests. |
 | `//scripts/tests:link_tests` | Four external link check tests. |
+| `//scripts/tests:release_flow_tests` | Six release rehearsal tests. |
 | `//scripts/tests:release_tests` | Twenty release preparation tests. |
 | `//specs/schemas:schema_bundle` | Six staged or generated schema files. |
 | `//specs/schemas:schema_manifest` | The names of the bundle files. |

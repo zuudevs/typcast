@@ -28,7 +28,7 @@ change impact analysis.
 | Assets | `specifications/assets.md` | `ASSET-001` to `ASSET-020` | Path and workspace tests. |
 | Compatibility | `specifications/compatibility.md` | `COMPAT-001` to `COMPAT-019` | CI matrix. |
 | Build | `development/build.md` | `BUILD-001` to `BUILD-021` | Bazel commands. |
-| Testing | `development/testing.md` | `TEST-001` to `TEST-031` | Test inventory. |
+| Testing | `development/testing.md` | `TEST-001` to `TEST-032` | Test inventory. |
 | Benchmarking | `development/benchmarking.md` | `PERF-001` to `PERF-015` | Benchmark job. |
 | CI/CD | `development/ci-cd.md` | `CI-001` to `CI-028` | Workflow review. |
 | Release | `development/release.md` | `REL-001` to `REL-036` | Release checklist. |
@@ -102,7 +102,7 @@ recorded below and in the linked ADRs.
 | `PERF-012` | Benchmark artifacts are retained for 90 days. | ADR-0019 |
 | `PERF-013` | A median wall-time regression above 10 percent warns and does not fail the build. | ADR-0019 |
 | `CI-024` | The matrix covers Windows and Linux, Python 3.11 to 3.14, Node.js 22 and 24, and Typst 0.15.1. | ADR-0018 |
-| `CI-026` | The release lane verifies the published schema bundle and the versioned raw URLs. | ADR-0022 |
+| `CI-026` | The release lane verifies the published schema bundle, the archive of the published bundle, and the versioned raw URLs. | ADR-0022; `//scripts/tests:release_flow_tests`. |
 | `REL-027` | Artifact target names are fixed as listed in `BUILD-014`. | ADR-0022 |
 | `REL-028` | The SBOM is CycloneDX 1.6 JSON attached to the release. | ADR-0022 |
 | `REL-029` | The canonical schema reference is the versioned raw URL under the release tag; the MVP requires no dedicated schema domain. | ADR-0022 |
@@ -168,11 +168,12 @@ a target for the MVP and is not yet verified in the repository.
 | `TEST-029` | The publisher tests cover the content, the member metadata, and the byte-for-byte determinism of the schema archive. | `//tools/publish/tests:publish_tests`; the `ArchiveTests` cases. |
 | `TEST-030` | The unit tests cover the rules of the repository gate and of the external link check, including the encoding and the text hygiene rules. | `//scripts/tests:docs_tests`; `//scripts/tests:link_tests`. |
 | `TEST-031` | The unit tests cover the version bump, the publication, the verification, and the cleanup of the release preparation. | `//scripts/tests:release_tests`; 20 cases. |
+| `TEST-032` | The rehearsal covers the release preparation end to end with the manifests, the schema sources, and the bundle of the build, so that the path of the release lane runs in the test lane. | `//scripts/tests:release_flow_tests`; 6 cases. |
 | `REL-012` | `//scripts:check_version` compares the version of every manifest, the contract version of every schema source, and the changelog with the tag, and the release lane runs the check on the tagged commit. | `//scripts:check_version`; `//scripts/tests:version_tests`; 15 cases. |
 | `REL-032` | `//tools/publish:publish_schemas` publishes exactly the files of the bundle manifest, sets the `$id` of every file to the versioned raw URL of the release tag, and rejects a version that is not a release tag. | `//tools/publish:publish_schemas`; `publish` and `check` verified against the built bundle with an illustrative `v1.0.0` tag. |
 | `REL-033` | `//scripts:check_version` compares the version of every manifest, the contract version of every schema source, and the changelog with the tag, and reports every mismatch. | `//scripts:check_version`; `//scripts/tests:version_tests`; 15 cases. |
 | `REL-034` | `publish_schemas verify` fetches every published schema from its versioned raw URL and compares the served bytes with the file of the tagged commit. | `//tools/publish:publish_tests`; the `PublishedUrlTests` cases. |
-| `REL-036` | `//scripts:prepare_release` sets the release version in every manifest and in every schema source, publishes the built bundle under `specs/schemas/`, verifies the version consistency, the published bundle, and the archive, and removes the generated published files from the development branch. | `//scripts:prepare_release`; `//scripts/tests:release_tests`; 20 cases. |
+| `REL-036` | `//scripts:prepare_release` sets the release version in every manifest and in every schema source, publishes the built bundle under `specs/schemas/`, verifies the version consistency, the published bundle, and the archive, and removes the generated published files from the development branch. The rehearsal runs the path with the files of the repository and the bundle of the build. | `//scripts:prepare_release`; `//scripts/tests:release_tests`; 20 cases; `//scripts/tests:release_flow_tests`; 6 cases. |
 | `CI-001` | The repository has the pull request validation, the main integration, and the release workflows. | `.github/workflows/pr.yml`, `.github/workflows/main.yml`, and `.github/workflows/release.yml`. |
 | `CI-002` | The pull request workflows have read-only permissions. | `permissions: contents: read` in `pr.yml` and `main.yml`; the repository gate rejects write access in a pull request workflow. |
 | `CI-003` | No pull request workflow reads a secret. | No workflow reads a secret; the repository gate rejects a secret in a pull request workflow. |
@@ -186,7 +187,8 @@ a target for the MVP and is not yet verified in the repository.
 | `CI-020` | No workflow publishes. | The three workflow files; the pull request workflow has read-only permissions. |
 | `CI-021` | The test lane prints the output of every failing test. | `test --test_output=errors` in `.bazelrc`. |
 | `CI-025` | The workflow files are in their own commits. | The commits `ci: add the pull request validation workflow`, `ci: add the main integration workflow`, and `ci: add the release verification workflow`. |
-| `CI-027` | The pull request and main lanes run the build, the test lane, the clean checkout build, the documentation gate, and the external link check, and the release lane verifies the version, the tagged build, the published bundle, and the raw URLs. | The three workflow files; the first pull request run passed on 2026-11-24. |
+| `CI-027` | The pull request and main lanes run the build, the test lane, the clean checkout build, the documentation gate, and the external link check, and the release lane verifies the version, the tagged build, the published bundle, the archive of the published bundle, and the raw URLs. | The three workflow files; the first pull request run passed on 2026-11-24. |
+| `CI-026` | The release lane verifies the published schema bundle, the archive of the published bundle, and the versioned raw URLs. | `//scripts/tests:release_flow_tests`; the rehearsal of the release path. |
 | `CI-028` | The repository gate rejects an unpinned action, a workflow without permissions, write access or a secret in a pull request workflow, and `pull_request_target`. | `scripts/validate_docs.py`; `//scripts:docs_checks`; 3 workflows checked. |
 | `SEC-002` | The Apache-2.0 license text is present at the repository root. | `LICENSE`, compared byte for byte with the canonical Apache-2.0 text. |
 | `SEC-003` | The vulnerability reporting policy is present at the repository root. | `SECURITY.md`. |

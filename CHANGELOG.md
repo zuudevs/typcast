@@ -33,6 +33,10 @@ No release has been published yet. Every change so far is listed under
   built bundle under `specs/schemas/`, verifies the version consistency, the
   published bundle, and the archive, and removes the generated published files
   from the development branch again.
+- A rehearsal of the release commit, `//scripts/tests:release_flow_tests`,
+  which prepares the release in a temporary tree with the manifests, the schema
+  sources, and the bundle of the build, so that the path of the release lane
+  runs in every test lane.
 - Repository checks, `//scripts:docs_checks`, for the documents, the
   requirement index, the decision index, the schema references, and the
   workflow files.

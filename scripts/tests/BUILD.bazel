@@ -57,3 +57,24 @@ py_test(
         "//scripts:prepare_release_lib",
     ],
 )
+
+# The rehearsal of the release commit. It uses the manifests, the schema
+# sources, and the bundle of the build, so that the path of the release lane
+# runs in every test lane.
+py_test(
+    name = "release_flow_tests",
+    size = "small",
+    srcs = [
+        "__init__.py",
+        "test_release_flow.py",
+    ],
+    main = "test_release_flow.py",
+    data = [
+        "//:release_manifests",
+        "//specs/schemas:schema_bundle",
+        "//specs/schemas:schema_manifest",
+    ],
+    deps = [
+        "//scripts:prepare_release_lib",
+    ],
+)

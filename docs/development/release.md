@@ -179,6 +179,17 @@ afterwards.
 The command is idempotent: a second run reports no change. The `--dry-run`
 flag reports the changes without writing them.
 
+### The rehearsal of the release commit
+
+`//scripts/tests:release_flow_tests` rehearses the procedure. It copies the
+real manifests, the real schema sources, and the bundle of the build into a
+temporary tree, prepares the release there, and checks the published bundle,
+the identities, the archive, and the cleanup. The test never writes into the
+checkout, and it publishes nothing.
+
+The rehearsal runs in `bazel test //...`, so the path of the release lane runs
+on Windows and Linux in every test lane, before the first tag exists.
+
 ### What the release commit carries
 
 | File | Change |
@@ -460,7 +471,7 @@ Stable `1.0.0`:
 | REL-033 | The release MUST compare the version of every manifest, the contract version of every schema source, and the changelog with the tag, and MUST fail when one of them differs. | IMPLEMENTED | `//scripts:check_version`; `//scripts/tests:version_tests`; 15 cases. |
 | REL-034 | The release MUST verify that every published schema resolves at its versioned raw URL and serves the content of the tagged commit. | IMPLEMENTED | `publish_schemas verify`; `//tools/publish/tests:publish_tests`. |
 | REL-035 | The release MUST attach the schema archive of the published bundle as a GitHub Release asset, and the archive MUST be byte-identical on every platform. | CONFIRMED | The archive is deterministic and the release lane compares the archives; the asset is attached with the publishing jobs. |
-| REL-036 | The release preparation MUST be a repository command that sets the release version in every manifest and in every schema source, publishes the built bundle under `specs/schemas/`, verifies the version consistency, the published bundle, and the archive, and removes the generated published files from the development branch. | IMPLEMENTED | `//scripts:prepare_release`; `//scripts/tests:release_tests`; 20 cases. |
+| REL-036 | The release preparation MUST be a repository command that sets the release version in every manifest and in every schema source, publishes the built bundle under `specs/schemas/`, verifies the version consistency, the published bundle, and the archive, and removes the generated published files from the development branch. | IMPLEMENTED | `//scripts:prepare_release`; `//scripts/tests:release_tests`; 20 cases. The rehearsal `//scripts/tests:release_flow_tests` runs the path with the files of the repository and the bundle of the build. |
 
 ## Open questions
 
