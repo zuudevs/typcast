@@ -11,11 +11,18 @@ from tempfile import TemporaryDirectory
 
 from check_repository import (
     Report,
+    check_bazel_packages,
+    check_bazel_version,
     check_decision_template,
+    check_dependabot,
     check_gate_independence,
     check_generated_artifacts,
+    check_gitignore,
+    check_npm_package_name,
     check_python_import_path,
     check_python_packages,
+    check_scope_document,
+    check_security_policy,
     check_sdk_isolation,
     check_specs_dependencies,
     check_test_modules,
@@ -65,7 +72,7 @@ WORKSPACE_MANIFEST = {
 }
 
 SDK_MANIFEST = {
-    "name": "@zuudevs/typcast",
+    "name": "typcast",
     "version": "0.1.0",
     "private": True,
     "type": "module",
@@ -129,36 +136,74 @@ def write_json(path: Path, document: object) -> None:
     write(path, json.dumps(document, indent=2) + "\n")
 
 
+def write_build(path: Path) -> None:
+    """Writes a minimal Bazel package file."""
+    write(path, "package(default_visibility = [\"//visibility:public\"])\n")
+
+
 def make_repository(root: Path) -> Path:
     """Builds a repository that satisfies every rule of the checks."""
     write(root / "MODULE.bazel", MODULE_BAZEL)
     write(root / "MODULE.bazel.lock", "{}\n")
+    write(root / "BUILD.bazel", "package(default_visibility = [\"//visibility:public\"])\n")
+    write(root / ".bazelversion", "9.3.3\n")
     write_json(root / "package.json", WORKSPACE_MANIFEST)
     write(root / "CHANGELOG.md", CHANGELOG)
+    write(root / ".gitignore", "/bazel-*\n\n.env\n.env.*\n")
+    write(root / "README.md", "# Typcast\n\n[scope](docs/product/vision-and-scope.md)\n")
+    write(
+        root / "SECURITY.md",
+        "# Security policy\n\n## Reporting a vulnerability\n\n"
+        "Report privately through the private advisory form.\n",
+    )
+    write(
+        root / "docs" / "product" / "vision-and-scope.md",
+        "# Vision and scope\n\nThe scope of the project.\n",
+    )
+    write(root / ".github" / "workflows" / "pr.yml", "name: PR\n")
+    write(
+        root / ".github" / "dependabot.yml",
+        "version: 2\n\n"
+        "updates:\n"
+        "  - package-ecosystem: bazel\n"
+        "    directory: \"/\"\n"
+        "  - package-ecosystem: npm\n"
+        "    directory: \"/\"\n"
+        "  - package-ecosystem: npm\n"
+        "    directory: \"/packages/typescript\"\n"
+        "  - package-ecosystem: pip\n"
+        "    directory: \"/packages/python\"\n",
+    )
 
     write(root / "packages" / "python" / "pyproject.toml", PYPROJECT)
     write(root / "packages" / "python" / "src" / "typcast" / "__init__.py", "")
+    write_build(root / "packages" / "python" / "BUILD.bazel")
     write_json(root / "packages" / "typescript" / "package.json", SDK_MANIFEST)
     write(
         root / "packages" / "typescript" / "src" / "index.ts",
         "export const version = '0.1.0';\n",
     )
+    write_build(root / "packages" / "typescript" / "BUILD.bazel")
 
     write(root / "scripts" / "__init__.py", "")
     write(root / "scripts" / "validate_docs.py", '"""The gate."""\n')
+    write_build(root / "scripts" / "BUILD.bazel")
     write(root / "scripts" / "tests" / "__init__.py", "")
     write(
         root / "scripts" / "tests" / "test_gate.py",
         '"""The tests."""\n\n\nif __name__ == "__main__":\n    pass\n',
     )
+    write_build(root / "scripts" / "tests" / "BUILD.bazel")
 
     write(root / "tools" / "publish" / "src" / "typcast_publish" / "__init__.py", "")
     write(
         root / "tools" / "publish" / "src" / "typcast_publish" / "publisher.py",
         '"""The publisher."""\n',
     )
+    write_build(root / "tools" / "publish" / "BUILD.bazel")
 
     write(root / "specs" / "schemas" / "schema_tests.py", '"""The tests."""\n')
+    write_build(root / "specs" / "schemas" / "BUILD.bazel")
     write_json(
         root / "specs" / "schemas" / "validator.schema.json",
         {"$id": SCHEMA_ID + "validator.schema.json"},
@@ -171,6 +216,7 @@ def make_repository(root: Path) -> Path:
         root / "specs" / "schemas" / "definitions" / "node.schema.json",
         {"$id": SCHEMA_ID + "definitions/node.schema.json"},
     )
+    write_build(root / "specs" / "schemas" / "definitions" / "BUILD.bazel")
     for name in ("alignment", "length", "paper"):
         write(
             root
@@ -182,6 +228,9 @@ def make_repository(root: Path) -> Path:
             / f"{name}.schema.json.tmpl",
             json.dumps({"$id": SCHEMA_ID + f"api/types/{name}.schema.json"}) + "\n",
         )
+    write_build(
+        root / "specs" / "schemas" / "templates" / "api" / "types" / "BUILD.bazel"
+    )
 
     write(root / "docs" / "decisions" / "ADR-0001-a-decision.md", ADR)
     return root
@@ -215,6 +264,13 @@ class RepositoryCheckTests(unittest.TestCase):
         check_python_import_path(self.root, report)
         check_decision_template(self.root, report)
         check_generated_artifacts(self.root, report)
+        check_bazel_packages(self.root, report)
+        check_bazel_version(self.root, report)
+        check_gitignore(self.root, report)
+        check_npm_package_name(self.root, report)
+        check_dependabot(self.root, report)
+        check_security_policy(self.root, report)
+        check_scope_document(self.root, report)
 
         self.assertEqual(report.errors, [])
 
@@ -553,6 +609,126 @@ class RepositoryCheckTests(unittest.TestCase):
         report = self.run_check(check_generated_artifacts)
 
         self.assertEqual(report.errors, [])
+
+    def test_a_source_file_in_the_root_package_is_reported(self) -> None:
+        write(self.root / "loose.py", '"""A loose file."""\n')
+
+        report = self.run_check(check_bazel_packages)
+
+        self.assertEqual(len(report.errors), 1)
+        self.assertIn("is in the root package", report.errors[0])
+
+    def test_a_missing_module_file_is_reported(self) -> None:
+        (self.root / "MODULE.bazel").unlink()
+
+        report = self.run_check(check_bazel_packages)
+
+        self.assertTrue(
+            any("MODULE.bazel is missing" in error for error in report.errors)
+        )
+
+    def test_a_missing_bazel_version_is_reported(self) -> None:
+        (self.root / ".bazelversion").unlink()
+
+        report = self.run_check(check_bazel_version)
+
+        self.assertTrue(
+            any(".bazelversion is missing" in error for error in report.errors)
+        )
+
+    def test_a_wrong_bazel_version_is_reported(self) -> None:
+        write(self.root / ".bazelversion", "latest\n")
+
+        report = self.run_check(check_bazel_version)
+
+        self.assertTrue(
+            any("is not a Bazel version" in error for error in report.errors)
+        )
+
+    def test_a_workflow_that_overrides_the_bazel_version_is_reported(self) -> None:
+        write(
+            self.root / ".github" / "workflows" / "pr.yml",
+            "name: PR\nenv:\n  USE_BAZEL_VERSION: 9.0.0\n",
+        )
+
+        report = self.run_check(check_bazel_version)
+
+        self.assertTrue(
+            any("sets USE_BAZEL_VERSION" in error for error in report.errors)
+        )
+
+    def test_an_ignore_file_without_the_environment_patterns_is_reported(self) -> None:
+        write(self.root / ".gitignore", "/bazel-*\n")
+
+        report = self.run_check(check_gitignore)
+
+        self.assertTrue(
+            any("missing the patterns" in error for error in report.errors)
+        )
+
+    def test_a_wrong_npm_package_name_is_reported(self) -> None:
+        document = dict(SDK_MANIFEST)
+        document["name"] = "@zuudevs/typcast"
+        write_json(self.root / "packages" / "typescript" / "package.json", document)
+
+        report = self.run_check(check_npm_package_name)
+
+        self.assertTrue(
+            any("the package name must be" in error for error in report.errors)
+        )
+
+    def test_a_security_policy_without_a_private_channel_is_reported(self) -> None:
+        write(
+            self.root / "SECURITY.md",
+            "# Security policy\n\n## Reporting a vulnerability\n\n"
+            "Open a new issue on the tracker.\n",
+        )
+
+        report = self.run_check(check_security_policy)
+
+        self.assertEqual(len(report.errors), 2)
+
+    def test_a_missing_dependency_configuration_is_reported(self) -> None:
+        (self.root / ".github" / "dependabot.yml").unlink()
+
+        report = self.run_check(check_dependabot)
+
+        self.assertTrue(
+            any(".github/dependabot.yml: is missing" in error for error in report.errors)
+        )
+
+    def test_an_uncovered_dependency_manifest_is_reported(self) -> None:
+        write(
+            self.root / ".github" / "dependabot.yml",
+            "version: 2\n\n"
+            "updates:\n"
+            "  - package-ecosystem: bazel\n"
+            "    directory: \"/\"\n",
+        )
+
+        report = self.run_check(check_dependabot)
+
+        self.assertTrue(
+            any("no update for:" in error for error in report.errors)
+        )
+
+    def test_a_missing_scope_document_is_reported(self) -> None:
+        (self.root / "docs" / "product" / "vision-and-scope.md").unlink()
+
+        report = self.run_check(check_scope_document)
+
+        self.assertTrue(
+            any("must publish a scope document" in error for error in report.errors)
+        )
+
+    def test_a_readme_without_the_scope_link_is_reported(self) -> None:
+        write(self.root / "README.md", "# Typcast\n")
+
+        report = self.run_check(check_scope_document)
+
+        self.assertTrue(
+            any("must link the scope document" in error for error in report.errors)
+        )
 
 
 if __name__ == "__main__":

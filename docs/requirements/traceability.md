@@ -30,10 +30,10 @@ change impact analysis.
 | Build | `development/build.md` | `BUILD-001` to `BUILD-021` | Bazel commands. |
 | Testing | `development/testing.md` | `TEST-001` to `TEST-032` | Test inventory. |
 | Benchmarking | `development/benchmarking.md` | `PERF-001` to `PERF-015` | Benchmark job. |
-| CI/CD | `development/ci-cd.md` | `CI-001` to `CI-028` | Workflow review. |
+| CI/CD | `development/ci-cd.md` | `CI-001` to `CI-029` | Workflow review. |
 | Release | `development/release.md` | `REL-001` to `REL-036` | Release checklist. |
 | Security | `development/security.md` | `SEC-001` to `SEC-025` | Security review. |
-| Documentation | `development/documentation.md` | `DOC-001` to `DOC-026` | Docs gate. |
+| Documentation | `development/documentation.md` | `DOC-001` to `DOC-027` | Docs gate. |
 | Governance | `governance/contributing.md` | `GOV-001` to `GOV-021` | Repository settings. |
 | Traceability | This document | `TRACE-001` to `TRACE-005` | Review. |
 
@@ -143,7 +143,7 @@ a target for the MVP and is not yet verified in the repository.
 | `SCH-020` | The ten prototype defects `SCH-D01` to `SCH-D10` are closed. | `specifications/schema.md`; the bundle test reports no violation. |
 | `DOC-015` | The root `README.md` uses standard code fences and LF line endings. | Documentation validation script run on 2026-11-24. |
 | `DOC-016` | `.gitattributes` pins LF for text files and `.editorconfig` pins UTF-8, LF, final newline, and indentation. | Files present at the repository root. |
-| `DOC-021` | `scripts/validate_docs.py` validates the documents, the requirement index, the ADR index, and the schema references with the standard library only. | `//scripts:docs_checks`; 57 files, 455 requirements, and 3 workflows checked with 0 errors. |
+| `DOC-021` | `scripts/validate_docs.py` validates the documents, the requirement index, the ADR index, and the schema references with the standard library only. | `//scripts:docs_checks`; 57 files, 461 requirements, and 3 workflows checked with 0 errors. |
 | `DOC-012` | The documentation gate runs on pull requests. | The `Documentation gate` job of `.github/workflows/pr.yml`. |
 | `DOC-013` | The documentation gate runs on `main`. | The `Documentation gate` job of `.github/workflows/main.yml`. |
 | `DOC-022` | The repository gate validates the workflow files: pinned actions, declared permissions, no write access or secret in a pull request workflow, and no `pull_request_target`. | `//scripts:docs_checks`; 3 workflows checked. |
@@ -158,15 +158,22 @@ a target for the MVP and is not yet verified in the repository.
 | `REPO-010` | No module of `scripts/` imports the SDK package, so the repository checks need no SDK installation. | `//scripts:repository_checks`; `//scripts/tests:repository_tests`. |
 | `REPO-011` | Every package directory that holds Python modules holds an `__init__.py`. | `//scripts:repository_checks`; `//scripts/tests:repository_tests`. |
 | `REPO-012` | The root manifest holds the exact version of the TypeScript compiler, the SDK manifest holds none, and `MODULE.bazel` reads the version from the root manifest. | `//scripts:repository_checks`; `//scripts/tests:repository_tests`. |
+| `REPO-001` | Every source file belongs to a Bazel package, and no source file sits in the root package, so the build sees every file of the repository. | `//scripts:repository_checks`; `//scripts/tests:repository_tests`; `bazel build //...`. |
+| `REPO-009` | The npm manifest of the TypeScript SDK is named `typcast`, so the publication uses the reserved name. | `//scripts:repository_checks`; `//scripts/tests:repository_tests`. |
 | `BUILD-003` | The lock file of the Bazel module is present, is not empty, and is tracked by git. | `//scripts:repository_checks`; `//scripts/tests:repository_tests`. |
 | `BUILD-004` | The Python toolchain is pinned to one version in `python.defaults()` and `python.toolchain()`, and the module file names no system Python. | `//scripts:repository_checks`; `//scripts/tests:repository_tests`. |
 | `BUILD-005` | Every package directory that holds Python modules holds an `__init__.py`. | `//scripts:repository_checks`; `//scripts/tests:repository_tests`. |
 | `BUILD-009` | The generated published schemas are committed only when every manifest, every schema source, and the changelog agree on the release version. | `//scripts:repository_checks`; `//scripts/tests:repository_tests`. |
 | `BUILD-011` | Every test module is a complete program with an `if __name__ == "__main__":` guard, so the build needs no `--test_filter`. | `//scripts:repository_checks`; `//scripts/tests:repository_tests`. |
 | `BUILD-013` | The root manifest holds the exact version of the TypeScript compiler, the SDK manifest holds none, and `MODULE.bazel` reads the version from the root manifest. | `//scripts:repository_checks`; `//scripts/tests:repository_tests`. |
+| `BUILD-001` | Every source file belongs to a Bazel package, and no source file sits in the root package, so Bazel remains the build system of every file. | `//scripts:repository_checks`; `//scripts/tests:repository_tests`; `bazel build //...`. |
+| `BUILD-002` | `.bazelversion` holds a Bazel version, and no workflow overrides it, so every lane uses the same Bazel. | `//scripts:repository_checks`; `//scripts/tests:repository_tests`. |
+| `BUILD-006` | The branch protection of `main` requires the `Build` checks of the pull request lane, and every job of that lane runs `bazel build //...`. | The branch protection settings of the repository; the checks passed on 2026-11-24. |
+| `BUILD-007` | The branch protection of `main` requires the `Test` checks of the pull request lane, and every job of that lane runs `bazel test //...`. | The branch protection settings of the repository; the checks passed on 2026-11-24. |
 | `DOC-014` | No module of `scripts/` imports the SDK package, so the documentation tooling adds no SDK runtime dependency. | `//scripts:repository_checks`; `//scripts/tests:repository_tests`. |
 | `DOC-017` | Every ADR holds the title, the fields, and the sections of the template of `docs/decisions/README.md`, in the documented order. | `//scripts:repository_checks`; `//scripts/tests:repository_tests`. |
 | `DOC-026` | The rules of the repository structure checks are covered by unit tests, and the checks run in the pull request lane, in the main lane, and in the release lane. | `//scripts/tests:repository_tests`; 30 cases; the `Repository checks` job of `pr.yml` and `main.yml`; the `verify` job of `release.yml`. |
+| `DOC-027` | The repository publishes the scope document, and the root README links it. | `//scripts:repository_checks`; `//scripts/tests:repository_tests`. |
 | `DOC-001` | Every document is UTF-8 without a byte order mark. | `//scripts:docs_checks`; the encoding rule. |
 | `DOC-002` | Every document uses LF line endings and ends with a final newline. | `//scripts:docs_checks`; the encoding rule. |
 | `DOC-003` | No document contains an emoji or a dingbat. | `//scripts:docs_checks`; the text hygiene rule. |
@@ -206,16 +213,21 @@ a target for the MVP and is not yet verified in the repository.
 | `CI-021` | The test lane prints the output of every failing test. | `test --test_output=errors` in `.bazelrc`. |
 | `CI-025` | The workflow files are in their own commits. | The commits `ci: add the pull request validation workflow`, `ci: add the main integration workflow`, and `ci: add the release verification workflow`. |
 | `CI-027` | The pull request and main lanes run the build, the test lane, the clean checkout build, the documentation gate, the repository structure checks, and the external link check, and the release lane verifies the version, the tagged build, the published bundle, the archive of the published bundle, and the raw URLs. | The three workflow files; the first pull request run passed on 2026-11-24. |
+| `CI-015` | The pull request lane reviews the dependencies of the pull request, and the secret scanning and the push protection are enabled in the settings of the repository. | The `Dependency review` job of `pr.yml`; `security_and_analysis` of the repository API. |
+| `CI-029` | The pull request lane reviews the dependencies of the pull request with an action that is pinned to a commit SHA. | The `Dependency review` job of `pr.yml`; `actions/dependency-review-action` is pinned to a commit SHA. |
 | `CI-026` | The release lane verifies the published schema bundle, the archive of the published bundle, and the versioned raw URLs. | `//scripts/tests:release_flow_tests`; the rehearsal of the release path. |
 | `CI-028` | The repository gate rejects an unpinned action, a workflow without permissions, write access or a secret in a pull request workflow, and `pull_request_target`. | `scripts/validate_docs.py`; `//scripts:docs_checks`; 3 workflows checked. |
 | `SEC-002` | The Apache-2.0 license text is present at the repository root. | `LICENSE`, compared byte for byte with the canonical Apache-2.0 text. |
-| `SEC-003` | The vulnerability reporting policy is present at the repository root. | `SECURITY.md`. |
+| `SEC-003` | The vulnerability reporting policy is present at the repository root and names a private channel, and it sends no reporter to a public issue. | `//scripts:repository_checks`; `//scripts/tests:repository_tests`. |
+| `SEC-004` | The settings of the repository report secret scanning and push protection as enabled. | The settings of the repository; `security_and_analysis` of the repository API. |
+| `SEC-005` | The ignore file holds the `.env` and `.env.*` patterns, so an environment file is never committed. | `//scripts:repository_checks`; `//scripts/tests:repository_tests`. |
+| `SEC-007` | The settings of the repository enable the security updates of Dependabot, and `.github/dependabot.yml` covers the module file of Bazel, the root npm manifest, the npm manifest of the TypeScript SDK, and the Python manifest of the Python SDK. | The settings of the repository; `.github/dependabot.yml`; `//scripts:repository_checks`. |
 | `GOV-019` | Contributions are accepted under Apache-2.0. | `LICENSE`. |
 | `GOV-006` | The repository has exactly one pull request template at `.github/PULL_REQUEST_TEMPLATE.md`, with the summary, classification, scope, requirement traceability, architecture and API impact, testing and verification, documentation, compatibility and release impact, security, final checklist, and reviewer notes sections. | `.github/PULL_REQUEST_TEMPLATE.md`. |
 | `GOV-021` | The template records the commands that were run and their results, and states that an inapplicable section or checkbox is removed or marked "Not applicable". | `.github/PULL_REQUEST_TEMPLATE.md`. |
 | `GOV-018` | `CODE_OF_CONDUCT.md` carries the Contributor Covenant 2.1 text and names the maintainer contact for reports. | `CODE_OF_CONDUCT.md` at the repository root. |
 | `GOV-003` | The branch protection of `main` requires one approving review. | The branch protection settings of the repository. |
-| `GOV-004` | The branch protection of `main` requires the seven checks of the pull request lane. | The branch protection settings of the repository; the checks passed on 2026-11-24. |
+| `GOV-004` | The branch protection of `main` requires the eight checks of the pull request lane. | The branch protection settings of the repository; the checks passed on 2026-11-24. |
 | `GOV-013` | Direct pushes to `main` are blocked; an administrator may merge a pull request without a second reviewer while the project has one maintainer. | The branch protection settings of the repository. |
 
 ## Traceability rules

@@ -22,7 +22,7 @@ creating circular dependencies.
 | `tools/publish/` | Python publisher for the released schema bundle. | Implemented with 23 unit tests. |
 | `bazel/` | Reusable Starlark rules. | Schema and publication rules implemented. |
 | `packages/python/` | Python SDK. | Placeholder package. |
-| `packages/typescript/` | TypeScript and JavaScript SDK. | Placeholder package; manifest is private. |
+| `packages/typescript/` | TypeScript and JavaScript SDK. | Placeholder package; the manifest is named `typcast` and is still private. |
 | `tests/contract/` | Cross-language contract tests. | Placeholder directory. |
 | `tests/integration/` | Compiler, filesystem, and install tests. | Placeholder directory. |
 | `examples/python/` | Python examples. | Placeholder directory. |
@@ -65,7 +65,9 @@ following rules are normative:
 - The code generator MUST NOT import SDK code.
 
 The rules are checked by `//scripts:repository_checks`, which reads the source
-tree of the repository.
+tree of the repository. The check also covers the build structure, the
+toolchain pins, the security configuration, the npm package name, and the
+scope document of the repository.
 
 ## Package responsibilities
 
@@ -107,8 +109,9 @@ The final module names may differ, but the public import path MUST remain
 
 The npm distribution named `typcast`. Proposed source modules mirror the Python
 responsibilities. The package MUST expose ESM entry points, type declarations,
-and compiled JavaScript. The current `package.json` name is
-`@zuudevs/typcast`; this must be changed to `typcast` before publication.
+and compiled JavaScript. The current `package.json` name is `typcast`, and the
+repository checks reject a different name. The manifest is still `private`, and
+that must change before publication.
 
 ### `tests/`
 
@@ -153,7 +156,7 @@ Current targets include:
 | `//scripts/tests:link_tests` | Four external link check tests. |
 | `//scripts/tests:release_flow_tests` | Six release rehearsal tests. |
 | `//scripts/tests:release_tests` | Twenty release preparation tests. |
-| `//scripts/tests:repository_tests` | Thirty repository structure check tests. |
+| `//scripts/tests:repository_tests` | Forty-two repository structure check tests. |
 | `//specs/schemas:schema_bundle` | Six staged or generated schema files. |
 | `//specs/schemas:schema_manifest` | The names of the bundle files. |
 | `//specs/schemas:archive` | The deterministic archive of the bundle. |
@@ -181,7 +184,7 @@ npm tarball. The schema archive target exists. Target names are specified in
 
 | ID | Requirement | Status | Verification |
 |---|---|---|---|
-| REPO-001 | The repository MUST remain a Bazel monorepo. | CONFIRMED | `bazel build //...`. |
+| REPO-001 | The repository MUST remain a Bazel monorepo. | IMPLEMENTED | `bazel build //...` passes; `//scripts:repository_checks` rejects a source file that belongs to no Bazel package and a source file in the root package. |
 | REPO-002 | `specs/` MUST NOT depend on SDK code. | IMPLEMENTED | `//scripts:repository_checks` rejects a module of `specs/` that imports the SDK package. |
 | REPO-003 | Python and TypeScript SDKs MUST NOT depend on each other. | IMPLEMENTED | `//scripts:repository_checks` rejects an import that leaves the package of the SDK it belongs to. |
 | REPO-004 | Both SDKs MUST consume the same contract version. | CONFIRMED | Version check. |
@@ -189,7 +192,7 @@ npm tarball. The schema archive target exists. Target names are specified in
 | REPO-006 | Every template CSV MUST be declared in the Bazel rule. | IMPLEMENTED | The generator rejects a placeholder whose catalog is not declared as an input of the rule; `//tools/codegen/tests:unit_tests`. |
 | REPO-007 | Generated artifacts MUST NOT be committed to the development branch; the published schema bundle MUST be committed only in the tagged release commit (`REL-030`). | IMPLEMENTED | `//scripts:repository_checks` rejects committed generated schemas unless every manifest, every schema source, and the changelog agree on the release version. |
 | REPO-008 | The Python import path MUST be `typcast`. | IMPLEMENTED | `//scripts:repository_checks` reads the project name of `packages/python/pyproject.toml` and the package directory `packages/python/src/typcast`. |
-| REPO-009 | The npm package name MUST be `typcast` before publication. | CONFIRMED | Manifest check. |
+| REPO-009 | The npm package name MUST be `typcast` before publication. | IMPLEMENTED | `//scripts:repository_checks` reads `packages/typescript/package.json` and rejects a name other than `typcast`. |
 | REPO-010 | Documentation checks MUST NOT require SDK installation. | IMPLEMENTED | `//scripts:repository_checks` rejects a module of `scripts/` that imports the SDK package. |
 | REPO-011 | New Python package directories MUST contain `__init__.py`. | IMPLEMENTED | `//scripts:repository_checks` rejects a package directory that holds Python modules but no `__init__.py`. |
 | REPO-012 | TypeScript compiler version MUST come from the root `package.json`. | IMPLEMENTED | `//scripts:repository_checks` reads the root manifest, the SDK manifest, and the module file of Bazel. |
@@ -198,7 +201,6 @@ npm tarball. The schema archive target exists. Target names are specified in
 
 | Gap | Impact | Owner |
 |---|---|---|
-| TS package name mismatch | Publication would use the wrong name. | TypeScript SDK |
 | No shared fixtures | Parity cannot be tested. | Testing |
 | No packaging targets | Release cannot produce artifacts. | Release |
 

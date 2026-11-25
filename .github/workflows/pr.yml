@@ -1,8 +1,9 @@
 # Pull request validation.
 #
 # The lane builds every target and runs the test suite on Windows and Linux,
-# and it runs the documentation gate. It has read-only permissions, it uses no
-# secret, and it never publishes anything.
+# and it runs the documentation gate, the repository checks, the link check,
+# and the dependency review. It has read-only permissions, it uses no secret,
+# and it never publishes anything.
 #
 # Every action is pinned to a commit SHA. The repository gate in
 # `scripts/validate_docs.py` rejects a workflow that uses a tag or a branch.
@@ -149,3 +150,20 @@ jobs:
       # not block an unrelated pull request.
       - name: Check the external links
         run: bazel run //scripts:check_links
+
+  dependency-review:
+    name: Dependency review
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # The review reads the dependency graph of the repository and reports the
+      # vulnerabilities that the pull request introduces. It never publishes
+      # anything and needs no secret of the repository.
+      - name: Review the dependencies of the pull request
+        uses: actions/dependency-review-action@bbc44d14a204704ccc493733616cd1e93a0321ec # v5.0.1
+        with:
+          fail-on-severity: low

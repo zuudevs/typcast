@@ -16,7 +16,7 @@ compiler integration, and package installation.
 | Area | Current state |
 |---|---|
 | Test targets | Ten `py_test` targets: `//tools/codegen/tests:unit_tests`, `//tools/publish/tests:publish_tests`, `//scripts/tests:version_tests`, `//scripts/tests:release_tests`, `//scripts/tests:release_flow_tests`, `//scripts/tests:repository_tests`, `//scripts/tests:docs_tests`, `//scripts/tests:link_tests`, `//scripts:docs_checks`, and `//specs/schemas:schema_tests`. |
-| Test cases | Eleven generator cases, 44 publisher cases, 15 release version cases, 20 release preparation cases, 6 release rehearsal cases, 30 repository structure cases, 29 documentation gate cases, 4 link check cases, one documentation check, one schema bundle check. |
+| Test cases | Eleven generator cases, 44 publisher cases, 15 release version cases, 20 release preparation cases, 6 release rehearsal cases, 42 repository structure cases, 29 documentation gate cases, 4 link check cases, one documentation check, one schema bundle check. |
 | Schema tests | `//specs/schemas:schema_tests` validates the built bundle. Meta-schema and instance validation are missing. |
 | Publisher tests | `//tools/publish/tests:publish_tests` covers the publisher, the published identity of the built bundle, the resolution of the versioned raw URLs, and the deterministic archive. |
 | Version tests | `//scripts/tests:version_tests` covers the release version check, including the contract version of every schema source. |

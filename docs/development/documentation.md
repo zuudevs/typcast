@@ -213,9 +213,12 @@ checks the rules that the architecture and the build documents state: the
 dependency direction between `specs/`, the two SDKs, and the repository
 checks, the `__init__.py` of every Python package directory, the hermetic
 Python toolchain, the committed lock file, the TypeScript compiler version of
-the root manifest, the template of every architecture decision record, and the
+the root manifest, the template of every architecture decision record, the
 rule that the generated published schemas are committed only in a release
-commit.
+commit, the rule that every source file belongs to a Bazel package, the
+pinned Bazel version, the `.env` patterns of the ignore file, the private
+channel of the vulnerability policy, the dependency configuration of
+Dependabot, the npm package name, and the scope document.
 
 The check reads the working tree, so it runs against the checkout and not
 against the runfiles tree.
@@ -284,6 +287,7 @@ lane.
 | DOC-024 | The external link check MUST run in the pull request lane and in the main lane, MUST use a timeout, and MUST NOT block the merge. | IMPLEMENTED | The `Link check` job of `pr.yml` and `main.yml`; `//scripts:check_links`. |
 | DOC-025 | The rules of the repository gate and of the external link check MUST be covered by unit tests. | IMPLEMENTED | `//scripts/tests:docs_tests`; `//scripts/tests:link_tests`. The encoding rules are covered too. |
 | DOC-026 | The rules of the repository structure checks MUST be covered by unit tests, and the checks MUST run in the pull request lane, in the main lane, and in the release lane. | IMPLEMENTED | `//scripts/tests:repository_tests`; the `Repository checks` job of `pr.yml` and `main.yml`; the `verify` job of `release.yml`. |
+| DOC-027 | The repository MUST publish a scope document, and the root README MUST link it. | IMPLEMENTED | `//scripts:repository_checks` rejects a missing scope document and a root README that does not link it. |
 
 ## Open questions
 

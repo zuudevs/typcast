@@ -80,6 +80,28 @@ ADR_DATE_RE = re.compile(r"^Date: (\d{4}-\d{2}-\d{2})$")
 # The version of a manifest that must be exact, not a range.
 EXACT_VERSION_RE = re.compile(r"^\d+\.\d+\.\d+([-+].+)?$")
 
+# The version of Bazel that `.bazelversion` holds.
+BAZEL_VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
+
+# The suffixes of the files that belong to a Bazel package.
+SOURCE_SUFFIXES = (".bzl", ".csv", ".py", ".tmpl", ".ts")
+
+# The patterns that the ignore file must hold for the environment files.
+GITIGNORE_PATTERNS = (".env", ".env.*")
+
+# The dependency updates that Dependabot must open a pull request for. Every
+# entry names the ecosystem of the manifest and the directory of the manifest.
+DEPENDABOT_UPDATES = (
+    ("bazel", "/"),
+    ("npm", "/"),
+    ("npm", "/packages/typescript"),
+    ("pip", "/packages/python"),
+)
+
+# The pattern of one update block of the Dependabot configuration.
+DEPENDABOT_ECOSYSTEM_RE = re.compile(r"^\s*-\s*package-ecosystem:\s*(\S+)\s*$")
+DEPENDABOT_DIRECTORY_RE = re.compile(r"^\s*directory:\s*\"?([^\"\s]+)\"?\s*$")
+
 # The imports of a TypeScript file. A module specifier follows `from`, or it
 # is the target of a side effect import.
 TS_FROM_RE = re.compile(r"""\bfrom\s*["']([^"']+)["']""")
@@ -132,20 +154,28 @@ def is_ignored(relative: Path) -> bool:
     return False
 
 
-def source_files(root: Path, pattern: str) -> list[Path]:
-    """Returns the files of the repository that match a pattern."""
+def source_files(root: Path, suffix: str) -> list[Path]:
+    """Returns the files of the repository that end with a suffix.
+
+    The walk skips the ignored directories and does not follow the symbolic
+    links of the Bazel output trees.
+    """
     files: list[Path] = []
-    for path in sorted(root.rglob(pattern)):
-        relative = path.relative_to(root)
-        if is_ignored(relative):
-            continue
-        files.append(path)
-    return files
+    for directory, subdirectories, names in os.walk(root):
+        subdirectories[:] = [
+            name
+            for name in subdirectories
+            if name not in IGNORED_DIRECTORIES and not name.startswith("bazel-")
+        ]
+        for name in names:
+            if name.endswith(suffix):
+                files.append(Path(directory) / name)
+    return sorted(files)
 
 
 def python_files(root: Path) -> list[Path]:
     """Returns the Python modules of the repository, in a stable order."""
-    return source_files(root, "*.py")
+    return source_files(root, ".py")
 
 
 def package_directories(directory: Path, root: Path) -> list[Path]:
@@ -243,10 +273,10 @@ def check_specs_dependencies(root: Path, report: Report) -> int:
                     f"{relative_to_root(path, root)}: imports the SDK package "
                     f"'{name}'; specs/ must not depend on SDK code"
                 )
-    for path in source_files(directory, "*.ts"):
+    for path in source_files(directory, ".ts"):
         checked += 1
         for name in typescript_imports(path):
-            if name.split("/")[0] in (SDK_PACKAGE, "@zuudevs/typcast"):
+            if name.split("/")[0] == SDK_PACKAGE:
                 report.error(
                     f"{relative_to_root(path, root)}: imports the SDK package "
                     f"'{name}'; specs/ must not depend on SDK code"
@@ -276,7 +306,7 @@ def check_sdk_isolation(root: Path, report: Report) -> int:
 
     typescript_sdk = root / "packages" / "typescript"
     if typescript_sdk.is_dir():
-        for path in source_files(typescript_sdk, "*.ts"):
+        for path in source_files(typescript_sdk, ".ts"):
             checked += 1
             for name in typescript_imports(path):
                 if not name.startswith("."):
@@ -631,6 +661,195 @@ def check_decision_template(root: Path, report: Report) -> int:
     return count
 
 
+def check_bazel_packages(root: Path, report: Report) -> int:
+    """Checks that every source file belongs to a Bazel package.
+
+    The repository is a Bazel monorepo, so the root holds the manifests and
+    the policy files, and every source file lives in a package of its own. A
+    source file in the root package would be a file that no target owns.
+    """
+    checked = 0
+    if not (root / "MODULE.bazel").is_file():
+        report.error(
+            "MODULE.bazel is missing; the repository must remain a Bazel module"
+        )
+    if not (root / "BUILD.bazel").is_file():
+        report.error(
+            "BUILD.bazel is missing; the repository must remain a Bazel package"
+        )
+
+    packages = {path.parent for path in source_files(root, ".bazel")}
+    for suffix in SOURCE_SUFFIXES:
+        for path in source_files(root, suffix):
+            checked += 1
+            directory = path.parent
+            owners = [
+                package for package in packages if directory.is_relative_to(package)
+            ]
+            if not owners:
+                report.error(
+                    f"{relative_to_root(path, root)}: is outside every Bazel "
+                    "package; a source file must belong to the build"
+                )
+                continue
+            owner = max(owners, key=lambda package: len(package.parts))
+            if owner == root:
+                report.error(
+                    f"{relative_to_root(path, root)}: is in the root package; "
+                    "source code must live in a package of its own"
+                )
+    return checked
+
+
+def check_bazel_version(root: Path, report: Report) -> int:
+    """Checks that Bazelisk uses the version of `.bazelversion`."""
+    checked = 0
+    version_file = root / ".bazelversion"
+    if not version_file.is_file():
+        report.error(
+            ".bazelversion is missing; Bazelisk must use a pinned Bazel version"
+        )
+        return checked
+    checked += 1
+    version = version_file.read_text(encoding="utf-8").strip()
+    if not BAZEL_VERSION_RE.match(version):
+        report.error(f".bazelversion: '{version}' is not a Bazel version")
+
+    workflow_directory = root / ".github" / "workflows"
+    for path in sorted(workflow_directory.glob("*.y*ml")):
+        checked += 1
+        text = path.read_text(encoding="utf-8")
+        if "USE_BAZEL_VERSION" in text:
+            report.error(
+                f"{relative_to_root(path, root)}: sets USE_BAZEL_VERSION; the "
+                "Bazel version comes from .bazelversion"
+            )
+    return checked
+
+
+def check_gitignore(root: Path, report: Report) -> int:
+    """Checks that the ignore file covers the environment files."""
+    path = root / ".gitignore"
+    if not path.is_file():
+        report.error(".gitignore is missing")
+        return 0
+    lines = {
+        line.strip()
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if line.strip() and not line.strip().startswith("#")
+    }
+    missing = [pattern for pattern in GITIGNORE_PATTERNS if pattern not in lines]
+    if missing:
+        report.error(
+            f".gitignore: missing the patterns: {', '.join(missing)}; an "
+            "environment file must never be committed"
+        )
+    return 1
+
+
+def check_npm_package_name(root: Path, report: Report) -> int:
+    """Checks that the npm package is named `typcast`."""
+    path = root / "packages" / "typescript" / "package.json"
+    if not path.is_file():
+        report.error("packages/typescript/package.json is missing")
+        return 0
+    document = read_json(path)
+    if document is None:
+        report.error("packages/typescript/package.json is not valid JSON")
+        return 1
+    name = document.get("name")
+    if name != SDK_PACKAGE:
+        report.error(
+            "packages/typescript/package.json: the package name must be "
+            f"{SDK_PACKAGE!r}, got {name!r}"
+        )
+    return 1
+
+
+def check_dependabot(root: Path, report: Report) -> int:
+    """Checks that Dependabot watches every dependency manifest.
+
+    The repository declares its dependencies in the module file of Bazel, in
+    the root npm manifest, in the npm manifest of the TypeScript SDK, and in
+    the Python manifest of the Python SDK. A manifest that no update covers
+    would never receive a security update.
+    """
+    path = root / ".github" / "dependabot.yml"
+    if not path.is_file():
+        report.error(
+            ".github/dependabot.yml: is missing; every dependency manifest "
+            "must be covered by an update"
+        )
+        return 0
+
+    updates: set[tuple[str, str]] = set()
+    ecosystem: str | None = None
+    for line in path.read_text(encoding="utf-8").splitlines():
+        match = DEPENDABOT_ECOSYSTEM_RE.match(line)
+        if match:
+            ecosystem = match.group(1)
+            continue
+        match = DEPENDABOT_DIRECTORY_RE.match(line)
+        if match and ecosystem is not None:
+            updates.add((ecosystem, match.group(1)))
+            ecosystem = None
+
+    missing = [
+        f"{ecosystem} in {directory}"
+        for ecosystem, directory in DEPENDABOT_UPDATES
+        if (ecosystem, directory) not in updates
+    ]
+    if missing:
+        report.error(
+            ".github/dependabot.yml: no update for: " + ", ".join(missing)
+        )
+    return 1
+
+
+def check_security_policy(root: Path, report: Report) -> int:
+    """Checks that the security policy names a private reporting channel."""
+    path = root / "SECURITY.md"
+    if not path.is_file():
+        report.error("SECURITY.md is missing")
+        return 0
+    text = path.read_text(encoding="utf-8")
+    lowered = text.lower()
+    if "## reporting a vulnerability" not in lowered:
+        report.error(
+            "SECURITY.md: missing the 'Reporting a vulnerability' section"
+        )
+    if "private" not in lowered or "advisory" not in lowered:
+        report.error(
+            "SECURITY.md: must name the private reporting channel of a "
+            "vulnerability"
+        )
+    if "/issues/new" in text or "new issue" in lowered:
+        report.error(
+            "SECURITY.md: must not direct a reporter of a vulnerability to a "
+            "public issue"
+        )
+    return 1
+
+
+def check_scope_document(root: Path, report: Report) -> int:
+    """Checks that the repository publishes a scope document."""
+    path = root / "docs" / "product" / "vision-and-scope.md"
+    if not path.is_file():
+        report.error(
+            "docs/product/vision-and-scope.md is missing; the repository must "
+            "publish a scope document"
+        )
+        return 0
+    readme = root / "README.md"
+    if readme.is_file():
+        text = readme.read_text(encoding="utf-8")
+        if "docs/product/vision-and-scope.md" not in text:
+            report.error(
+                "README.md: must link the scope document of the repository"
+            )
+    return 1
+
+
 def check_generated_artifacts(root: Path, report: Report) -> int:
     """Checks that the generated published schemas are committed only in a release commit.
 
@@ -681,6 +900,13 @@ def main(argv: list[str] | None = None) -> int:
     import_path = check_python_import_path(root, report)
     decisions = check_decision_template(root, report)
     artifacts = check_generated_artifacts(root, report)
+    bazel_packages = check_bazel_packages(root, report)
+    bazel_version = check_bazel_version(root, report)
+    ignore_file = check_gitignore(root, report)
+    npm_name = check_npm_package_name(root, report)
+    dependabot = check_dependabot(root, report)
+    security_policy = check_security_policy(root, report)
+    scope = check_scope_document(root, report)
 
     print(f"spec files checked: {specs}")
     print(f"sdk files checked: {sdk}")
@@ -692,6 +918,13 @@ def main(argv: list[str] | None = None) -> int:
     print(f"python import paths checked: {import_path}")
     print(f"decision records checked: {decisions}")
     print(f"generated schema files checked: {artifacts}")
+    print(f"bazel packages checked: {bazel_packages}")
+    print(f"bazel version files checked: {bazel_version}")
+    print(f"ignore files checked: {ignore_file}")
+    print(f"npm manifests checked: {npm_name}")
+    print(f"dependency configurations checked: {dependabot}")
+    print(f"security policies checked: {security_policy}")
+    print(f"scope documents checked: {scope}")
     print(f"errors: {len(report.errors)}")
     for error in report.errors:
         print(f"ERROR {error}")

@@ -30,6 +30,7 @@ flowchart TD
   PV --> D["Docs gate"]
   PV --> R["Repository checks"]
   PV --> L["Link check"]
+  PV --> DR["Dependency review"]
   PV --> S["Security checks"]
   M["Push to main"] --> MI["Main integration"]
   MI --> FT["Full tests"]
@@ -47,7 +48,7 @@ flowchart TD
 
 | File | Trigger | Jobs |
 |---|---|---|
-| `.github/workflows/pr.yml` | `pull_request` on `main`, manual | `Build`, `Test`, `Clean build`, `Documentation gate`, `Repository checks`, `Link check` |
+| `.github/workflows/pr.yml` | `pull_request` on `main`, manual | `Build`, `Test`, `Clean build`, `Documentation gate`, `Repository checks`, `Link check`, `Dependency review` |
 | `.github/workflows/main.yml` | `push` to `main`, manual | The same six jobs |
 | `.github/workflows/release.yml` | `push` of a `v*` tag, manual | `Verify`, `Published schema bundle` |
 
@@ -61,7 +62,10 @@ so that a reviewer sees the documentation result as a check of its own. The
 reads the source tree of the checkout, so it reports the dependency, package,
 toolchain, decision, and artifact rules of the repository. The `Link check`
 job runs `bazel run //scripts:check_links`; it needs the network and reports
-warnings only, so it never blocks a merge.
+warnings only, so it never blocks a merge. The `Dependency review` job runs
+`actions/dependency-review-action` against the dependency graph of the
+repository; it needs the graph of the repository and reports the
+vulnerabilities that the pull request introduces.
 
 The release lane checks the version consistency of the manifests and the tag,
 it builds and tests the tagged commit, it compares the published schema bundle
@@ -91,9 +95,10 @@ Jobs:
 7. Cross-language parity tests.
 8. Repository checks: `bazel test //scripts:docs_checks`.
 9. Repository structure checks: `bazel run //scripts:repository_checks`.
-10. Dependency and secret scanning where available.
+10. Dependency review of the pull request.
+11. Dependency and secret scanning where available.
 
-Steps 5 to 7 have no target yet, and step 10 is a repository setting. The
+Steps 5 to 7 have no target yet, and step 11 is a repository setting. The
 workflow runs the steps that have a target today.
 
 Permissions:
@@ -264,21 +269,25 @@ cache or on untracked files.
 - Third-party actions are pinned to commit SHAs.
 - Dependency review runs on pull requests where available.
 - Secret scanning and push protection are enabled on the repository.
+- Dependabot opens a pull request for an update of a dependency manifest, and
+  the security updates of Dependabot are enabled in the settings of the
+  repository.
 
 ## Current state
 
 | Item | Current |
 |---|---|
 | Workflows | Three: `.github/workflows/pr.yml`, `main.yml`, and `release.yml`. |
-| Pull request checks | `Build`, `Test`, `Clean build`, `Documentation gate`, `Repository checks`, and `Link check`. The first four run on Windows and Linux; the repository checks and the link check run on Linux. |
+| Pull request checks | `Build`, `Test`, `Clean build`, `Documentation gate`, `Repository checks`, `Link check`, and `Dependency review`. The first four run on Windows and Linux; the repository checks, the link check, and the dependency review run on Linux. |
 | Cache | Bazel cache per operating system, keyed by version, lockfile, and build files. |
 | Matrix | The operating system dimension. The runtime dimensions wait for the SDK. |
 | Action pinning | Every action is pinned to a commit SHA. The repository gate enforces it. |
 | Release lane | Verifies the version, the tagged build, the published bundle, the archive of the published bundle, and the raw URLs. It does not publish. |
 | Release environment | None. |
 | Trusted publishing | None. |
-| Required checks | The seven checks of the pull request lane. The branch protection of `main` requires them. The link check runs as well, but it reports warnings only and is not required. |
+| Required checks | The eight checks of the pull request lane. The branch protection of `main` requires them. The link check runs as well, but it reports warnings only and is not required. |
 | Published schema bundle | None; the preparation command exists, but no release commit exists yet. |
+| Dependency updates | Dependabot is enabled, and `.github/dependabot.yml` covers every dependency manifest. The security updates are enabled in the settings of the repository. |
 
 The first pull request run of the workflows passed on 2026-11-24: the build,
 the test lane, the clean checkout build, and the documentation gate passed on
@@ -303,7 +312,7 @@ starts with the current `.bazelrc`.
 | CI-012 | CI MUST run on Windows and Linux. | IMPLEMENTED | The build and test lanes run on `windows-latest` and `ubuntu-latest`; the first run passed on both. |
 | CI-013 | Compiler integration MUST run on main and release. | CONFIRMED | Matrix review. |
 | CI-014 | Documentation gate MUST run on PRs and main. | IMPLEMENTED | The `Documentation gate` job of `pr.yml` and `main.yml`. |
-| CI-015 | Security checks MUST run on PRs where available. | CONFIRMED | Workflow review. |
+| CI-015 | Security checks MUST run on PRs where available. | IMPLEMENTED | The `Dependency review` job of `pr.yml` reviews the dependency graph of the pull request, and the secret scanning and the push protection are enabled in the settings of the repository. |
 | CI-016 | Release MUST attach checksums and SBOM. | CONFIRMED | Release check. |
 | CI-017 | Release MUST use a concurrency lock. | IMPLEMENTED | The release workflow uses one concurrency group per tag and does not cancel a run. |
 | CI-018 | CI artifacts MUST have documented retention. | CONFIRMED | This document. |
@@ -316,6 +325,7 @@ starts with the current `.bazelrc`.
 | CI-025 | The workflow files MUST be added in a separate implementation change. | IMPLEMENTED | The three workflow files are in their own commits. |
 | CI-026 | The release lane MUST verify that the tagged commit contains the complete published schema bundle and that every published schema resolves at its versioned raw URL. | IMPLEMENTED | The release lane runs `publish_schemas check`, `compare-archives`, and `publish_schemas verify`. The rehearsal `//scripts/tests:release_flow_tests` runs the path against the built bundle. |
 | CI-027 | The pull request and main lanes MUST run the Bazel build and the test lane on Windows and Linux, MUST run the documentation gate, the repository structure checks, and the external link check, and the release lane MUST verify the version consistency, the tagged build, the published bundle, the archive of the published bundle, and the versioned raw URLs. | IMPLEMENTED | The three workflow files; the first pull request run passed on 2026-11-24. |
+| CI-029 | The pull request lane MUST review the dependencies of the pull request, and the action MUST be pinned to a commit SHA. | IMPLEMENTED | The `Dependency review` job of `pr.yml`; `actions/dependency-review-action` is pinned to a commit SHA. |
 | CI-028 | The repository gate MUST reject an action that is not pinned to a commit SHA, a workflow without a permissions block, a pull request workflow with write access, a pull request workflow that reads a secret, and a workflow that uses `pull_request_target`. | IMPLEMENTED | `scripts/validate_docs.py`; `//scripts:docs_checks` checks three workflow files. |
 
 ## Open questions

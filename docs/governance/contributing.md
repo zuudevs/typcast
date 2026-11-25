@@ -220,7 +220,7 @@ explains how a requirement, a decision, and the changelog are updated.
 | `SECURITY.md` | CLOSED. Present at the repository root. |
 | `LICENSE` | CLOSED. Present at the repository root. |
 | Branch protection | CLOSED. `main` is protected: the required checks must pass, one approval is required, force pushes and deletions are disabled, and a conversation must be resolved. |
-| Required checks | CLOSED. The seven checks of the pull request lane are required: `Build`, `Test`, and `Clean build` on Windows and Linux, the `Documentation gate`, and the `Repository checks`. The `Link check` runs as well, but it reports warnings only and is not required. |
+| Required checks | CLOSED. The eight checks of the pull request lane are required: `Build`, `Test`, and `Clean build` on Windows and Linux, the `Documentation gate`, the `Repository checks`, and the `Dependency review`. The `Link check` runs as well, but it reports warnings only and is not required. |
 | `CODE_OF_CONDUCT.md` | CLOSED. Present at the repository root. |
 
 ## Requirements
@@ -230,7 +230,7 @@ explains how a requirement, a decision, and the changelog are updated.
 | GOV-001 | Development MUST be trunk-based with short-lived branches. | CONFIRMED | Process review. |
 | GOV-002 | Pull requests MUST target `main`. | CONFIRMED | Repository settings. |
 | GOV-003 | At least one maintainer approval MUST be required. | IMPLEMENTED | Branch protection of `main` requires one approving review. |
-| GOV-004 | Required CI checks MUST pass before merge. | IMPLEMENTED | Branch protection of `main` requires the seven checks of the pull request lane. |
+| GOV-004 | Required CI checks MUST pass before merge. | IMPLEMENTED | Branch protection of `main` requires the eight checks of the pull request lane. |
 | GOV-005 | Commits MUST follow Conventional Commits. | CONFIRMED | Review. |
 | GOV-006 | The repository MUST have exactly one pull request template at `.github/PULL_REQUEST_TEMPLATE.md`, and it MUST cover tests, documentation, changelog, and version impact. | IMPLEMENTED | `.github/PULL_REQUEST_TEMPLATE.md`. |
 | GOV-007 | Issue templates are DEFERRED for the MVP; an issue is a free-form report. | DEFERRED | Scope review. |

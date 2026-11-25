@@ -93,7 +93,7 @@ with the classification.
 
 - No secrets in the repository.
 - Secret scanning and push protection are enabled.
-- `.gitignore` includes `.env` patterns.
+- `.gitignore` includes `.env` patterns, and the repository checks enforce it.
 - CI does not print environment variables.
 - Release credentials are environment secrets or OIDC tokens.
 - Pull requests from forks do not receive secrets.
@@ -104,7 +104,11 @@ with the classification.
 - Direct dependencies are reviewed before addition.
 - Bazel module changes require review.
 - Python and npm lockfiles are committed when the ecosystem provides them.
-- Dependabot or Renovate is enabled for supported ecosystems.
+- Dependabot or Renovate is enabled for supported ecosystems. Dependabot is
+  enabled, and `.github/dependabot.yml` covers the module file of Bazel, the
+  root npm manifest, the npm manifest of the TypeScript SDK, and the Python
+  manifest of the Python SDK. The repository checks reject a dependency
+  manifest that no update covers.
 - Bazel dependencies are reviewed manually.
 - License inventory covers direct dependencies.
 - A dependency with an incompatible license is rejected.
@@ -153,12 +157,12 @@ with the classification.
 |---|---|---|
 | No `LICENSE` | Cannot publish legally. | CLOSED. `LICENSE` present. |
 | No `SECURITY.md` | No disclosure channel. | CLOSED. `SECURITY.md` present. |
-| No secret scanning configuration | Leaks are not detected. | OPEN |
-| No dependency update bot | Vulnerabilities age. | OPEN |
+| No secret scanning configuration | Leaks are not detected. | CLOSED. Secret scanning and push protection are enabled in the settings of the repository. |
+| No dependency update bot | Vulnerabilities age. | CLOSED. The security updates of Dependabot are enabled, and `.github/dependabot.yml` covers every dependency manifest. |
 | No SBOM | Release lacks supply-chain record. | OPEN |
 | No checksums | Artifacts are not independently verifiable. | OPEN |
 | No release environment | Publishing is not protected. | OPEN |
-| `.gitignore` lacks `.env` | Accidental secret commit risk. | OPEN |
+| `.gitignore` lacks `.env` | Accidental secret commit risk. | CLOSED. The ignore file holds the `.env` and `.env.*` patterns, and the repository checks enforce it. |
 | Raw Typst not sandboxed | Untrusted raw input is dangerous. | CONFIRMED limitation |
 
 ## Requirements
@@ -167,11 +171,11 @@ with the classification.
 |---|---|---|---|
 | SEC-001 | The repository and packages MUST use Apache-2.0. | CONFIRMED | License check. |
 | SEC-002 | `LICENSE` MUST exist before publication. | IMPLEMENTED | `LICENSE` present at the repository root. |
-| SEC-003 | `SECURITY.md` MUST define private disclosure. | IMPLEMENTED | `SECURITY.md` present at the repository root. |
-| SEC-004 | Secret scanning and push protection MUST be enabled. | CONFIRMED | Repository settings. |
-| SEC-005 | `.gitignore` MUST include `.env` patterns. | CONFIRMED | Review. |
+| SEC-003 | `SECURITY.md` MUST define private disclosure. | IMPLEMENTED | `//scripts:repository_checks` rejects a policy that names no private channel and a policy that sends a reporter to a public issue. |
+| SEC-004 | Secret scanning and push protection MUST be enabled. | IMPLEMENTED | The settings of the repository report secret scanning and push protection as enabled. |
+| SEC-005 | `.gitignore` MUST include `.env` patterns. | IMPLEMENTED | `//scripts:repository_checks` rejects an ignore file without the `.env` and `.env.*` patterns. |
 | SEC-006 | Dependencies MUST be reviewed before addition. | CONFIRMED | Process review. |
-| SEC-007 | Dependency updates MUST be automated where supported. | CONFIRMED | Bot configuration. |
+| SEC-007 | Dependency updates MUST be automated where supported. | IMPLEMENTED | The settings of the repository enable the security updates of Dependabot, and `.github/dependabot.yml` covers every dependency manifest; `//scripts:repository_checks` rejects a manifest that no update covers. |
 | SEC-008 | A license inventory MUST exist for direct dependencies. | CONFIRMED | Release check. |
 | SEC-009 | A SBOM MUST be attached to each release. | CONFIRMED | Release check. |
 | SEC-010 | SHA-256 checksums MUST be published for artifacts. | CONFIRMED | Release check. |

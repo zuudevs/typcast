@@ -47,14 +47,23 @@ No release has been published yet. Every change so far is listed under
   SDKs, and the repository checks, the `__init__.py` of every Python package
   directory, the hermetic Python toolchain, the committed lock file, the
   TypeScript compiler version of the root manifest, the template of every
-  architecture decision record, and the rule that the generated published
-  schemas are committed only in a release commit. The rules are covered by
-  unit tests, and the checks run in the pull request lane, in the main lane,
-  and in the release lane.
+  architecture decision record, the rule that the generated published schemas
+  are committed only in a release commit, the rule that every source file
+  belongs to a Bazel package, the pinned Bazel version, the `.env` patterns of
+  the ignore file, the private channel of the vulnerability policy, the
+  dependency configuration of Dependabot, the npm package name, and the scope
+  document. The rules are covered by unit tests, and the checks run in the
+  pull request lane, in the main lane, and in the release lane.
+- The npm manifest of the TypeScript SDK is named `typcast`, so the
+  publication uses the reserved name.
+- A Dependabot configuration, `.github/dependabot.yml`, that covers the
+  module file of Bazel, the root npm manifest, the npm manifest of the
+  TypeScript SDK, and the Python manifest of the Python SDK. The security
+  updates of Dependabot are enabled in the settings of the repository.
 - Three GitHub Actions workflows: pull request validation, main integration,
   and release verification. The pull request lane builds, tests, and checks
-  the repository on Windows and Linux, and the seven checks are required before
-  a merge into `main`.
+  the repository on Windows and Linux, reviews the dependencies of the pull
+  request, and the eight checks are required before a merge into `main`.
 - A pull request template at `.github/PULL_REQUEST_TEMPLATE.md`, this
   changelog, a contributing guide, and a code of conduct.
 - The security policy and the Apache-2.0 license.

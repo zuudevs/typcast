@@ -82,8 +82,9 @@ The wheel and sdist must include `LICENSE`.
 
 The npm tarball must include `LICENSE`.
 
-The current manifest name is `@zuudevs/typcast` and `private` is `true`. Both
-must change before publication.
+The current manifest name is `typcast` and `private` is `true`. The name must
+stay `typcast`, and the repository checks reject a different one. The
+`private` flag must be removed before publication.
 
 ## Version consistency
 
@@ -416,7 +417,7 @@ Stable `1.0.0`:
 |---|---|
 | Python version | `0.1.0`. |
 | npm version | `0.1.0`. |
-| npm name | `@zuudevs/typcast`. |
+| npm name | `typcast`. The repository checks reject a different name. |
 | npm private | `true`. |
 | Schema contract version | `1.0.0`. The publisher replaces it with the release tag. |
 | Packaging targets | None. |

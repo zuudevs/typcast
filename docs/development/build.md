@@ -71,17 +71,17 @@ root.
 | Check | Result |
 |---|---|
 | `bazel build //...` | Pass, 38 targets. |
-| `bazel test //...` | Pass, 10 test targets: 11 unittest cases, 44 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 30 repository structure cases, 29 documentation gate cases, 4 link check cases, 1 documentation check, 1 schema bundle check. |
+| `bazel test //...` | Pass, 10 test targets: 11 unittest cases, 44 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 42 repository structure cases, 29 documentation gate cases, 4 link check cases, 1 documentation check, 1 schema bundle check. |
 | `bazel build //specs/schemas:schema_bundle` | Pass, 6 schema files. |
 | `bazel build //specs/schemas:schema_manifest` | Pass, 6 paths. |
 | `bazel build //specs/schemas:archive` | Pass, 6 members, deterministic gzip tarball. |
 | `bazel test //specs/schemas:schema_tests` | Pass, 6 bundle files, 0 violations. |
-| `bazel test //scripts:docs_checks` | Pass, 57 files, 459 requirements, and 3 workflows checked, 0 errors. |
+| `bazel test //scripts:docs_checks` | Pass, 57 files, 461 requirements, and 3 workflows checked, 0 errors. |
 | `bazel test //scripts/tests:version_tests` | Pass, 15 cases. |
 | `bazel test //scripts/tests:release_tests` | Pass, 20 cases. |
 | `bazel test //scripts/tests:release_flow_tests` | Pass, 6 cases. |
-| `bazel run //scripts:repository_checks` | Pass, 1 spec file, 2 SDK files, 13 gate files, 36 Python modules, 8 test modules, 2 toolchain files, 3 TypeScript files, 23 decision records, 0 errors. |
-| `bazel test //scripts/tests:repository_tests` | Pass, 30 cases. |
+| `bazel run //scripts:repository_checks` | Pass, 1 spec file, 2 SDK files, 13 gate files, 36 Python modules, 8 test modules, 2 toolchain files, 3 TypeScript files, 23 decision records, 45 Bazel package files, 0 errors. |
+| `bazel test //scripts/tests:repository_tests` | Pass, 42 cases. |
 | `bazel test //scripts/tests:docs_tests` | Pass, 29 cases. |
 | `bazel test //scripts/tests:link_tests` | Pass, 4 cases. |
 | `bazel test //tools/publish/tests:publish_tests` | Pass, 44 publisher cases. |
@@ -219,11 +219,19 @@ document must catch:
 - Toolchain: the Python toolchain is pinned to one version and names no system
   Python, the lock file of the Bazel module is present and tracked, and the
   TypeScript compiler version comes from the root manifest.
+- Build: every source file belongs to a Bazel package, no source file sits in
+  the root package, `.bazelversion` holds a Bazel version, and no workflow
+  overrides it with `USE_BAZEL_VERSION`.
 - Decisions: every ADR holds the title, the fields, and the sections of the
   template of `decisions/README.md`.
 - Artifacts: the generated published schemas are committed only when every
   manifest, every schema source, and the changelog agree on the release
   version.
+- Security: the ignore file holds the `.env` patterns, the vulnerability
+  policy names a private channel, and the dependency configuration of
+  Dependabot covers every dependency manifest.
+- Identity: the npm manifest of the TypeScript SDK is named `typcast`, and the
+  scope document is published and linked from the root README.
 
 The check reads the working tree, so it runs against the checkout and not
 against the runfiles tree:
@@ -346,13 +354,13 @@ The artifact requirements for the packaging targets are defined in
 
 | ID | Requirement | Status | Verification |
 |---|---|---|---|
-| BUILD-001 | Bazel MUST remain the primary build system. | CONFIRMED | `bazel build //...`. |
-| BUILD-002 | Bazelisk MUST use the version in `.bazelversion`. | CONFIRMED | Version check. |
+| BUILD-001 | Bazel MUST remain the primary build system. | IMPLEMENTED | `bazel build //...` passes; `//scripts:repository_checks` rejects a source file that belongs to no Bazel package and a source file in the root package. |
+| BUILD-002 | Bazelisk MUST use the version in `.bazelversion`. | IMPLEMENTED | `//scripts:repository_checks` reads `.bazelversion` and rejects a version that is not a Bazel version and a workflow that overrides it with `USE_BAZEL_VERSION`. |
 | BUILD-003 | `MODULE.bazel.lock` MUST be committed. | IMPLEMENTED | `//scripts:repository_checks` rejects a missing or an empty lock file, and a lock file that git does not track. |
 | BUILD-004 | The Bazel Python toolchain MUST be hermetic. | IMPLEMENTED | `//scripts:repository_checks` reads `MODULE.bazel` and rejects a missing toolchain, a toolchain without a pinned version, two different versions, and a system Python. |
 | BUILD-005 | New Python package directories MUST contain `__init__.py`. | IMPLEMENTED | `//scripts:repository_checks` rejects a package directory that holds Python modules but no `__init__.py`. |
-| BUILD-006 | `bazel build //...` MUST pass before merge. | CONFIRMED | CI. |
-| BUILD-007 | `bazel test //...` MUST pass before merge. | CONFIRMED | CI. |
+| BUILD-006 | `bazel build //...` MUST pass before merge. | IMPLEMENTED | The branch protection of `main` requires the `Build` checks of the pull request lane, and every job of that lane runs `bazel build //...`. |
+| BUILD-007 | `bazel test //...` MUST pass before merge. | IMPLEMENTED | The branch protection of `main` requires the `Test` checks of the pull request lane, and every job of that lane runs `bazel test //...`. |
 | BUILD-008 | Every CSV used by a template MUST be declared in `catalogs`. | IMPLEMENTED | The generator rejects a placeholder whose catalog is not declared as an input of the rule; `//tools/codegen/tests:unit_tests`. |
 | BUILD-009 | Generated artifacts MUST NOT be committed to the development branch; the published schema bundle MUST be committed only in the tagged release commit (`REL-030`). | IMPLEMENTED | `//scripts:repository_checks` rejects committed generated schemas unless every manifest, every schema source, and the changelog agree on the release version. |
 | BUILD-010 | The generator MUST support absolute input and output paths. | IMPLEMENTED | Manual run. |
