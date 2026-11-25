@@ -82,9 +82,10 @@ public enum is a contract change.
 ### `tools/codegen/`
 
 A standalone Python package that expands placeholders in JSON templates. It
-validates JSON syntax, not JSON Schema semantics or `$ref` resolution. It must
-remain independent of the SDKs so that schema generation can run before either
-SDK exists.
+validates JSON syntax, not JSON Schema semantics or `$ref` resolution, and it
+rejects the constants that JSON does not define, such as `NaN` and `Infinity`.
+It must remain independent of the SDKs so that schema generation can run
+before either SDK exists.
 
 ### `packages/python/`
 
@@ -144,15 +145,15 @@ Current targets include:
 |---|---|
 | `//tools/codegen:typcast_codegen` | Generator binary. |
 | `//tools/codegen:typcast_codegen_lib` | Generator library. |
-| `//tools/codegen/tests:unit_tests` | Eleven generator unit tests. |
+| `//tools/codegen/tests:unit_tests` | Sixteen generator unit tests. |
 | `//tools/publish:publish_schemas` | Publisher binary. |
 | `//tools/publish:publish_schemas_lib` | Publisher library. |
-| `//tools/publish/tests:publish_tests` | Forty-four publisher unit tests. |
+| `//tools/publish/tests:publish_tests` | Forty-five publisher unit tests. |
 | `//scripts:docs_checks` | Documentation, requirement, and decision checks. |
 | `//scripts:check_links` | External link check of the documents. |
 | `//scripts:prepare_release` | Prepares the release commit of a release. |
 | `//scripts:repository_checks` | Repository structure, dependency, and toolchain checks. |
-| `//scripts/tests:docs_tests` | Twenty-nine documentation check tests. |
+| `//scripts/tests:docs_tests` | Thirty-two documentation check tests. |
 | `//scripts/tests:link_tests` | Four external link check tests. |
 | `//scripts/tests:release_flow_tests` | Six release rehearsal tests. |
 | `//scripts/tests:release_tests` | Twenty release preparation tests. |
@@ -161,6 +162,7 @@ Current targets include:
 | `//specs/schemas:schema_manifest` | The names of the bundle files. |
 | `//specs/schemas:archive` | The deterministic archive of the bundle. |
 | `//specs/schemas:schema_tests` | Validates the built bundle against the schema contract. |
+| `//specs/schemas:release_tag_tests` | Validates the release tag pattern of the schema contract. |
 | `//packages/python:typcast` | Python library placeholder. |
 | `//packages/typescript:typcast` | TypeScript project placeholder. |
 

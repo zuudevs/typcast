@@ -15,9 +15,10 @@ compiler integration, and package installation.
 
 | Area | Current state |
 |---|---|
-| Test targets | Ten `py_test` targets: `//tools/codegen/tests:unit_tests`, `//tools/publish/tests:publish_tests`, `//scripts/tests:version_tests`, `//scripts/tests:release_tests`, `//scripts/tests:release_flow_tests`, `//scripts/tests:repository_tests`, `//scripts/tests:docs_tests`, `//scripts/tests:link_tests`, `//scripts:docs_checks`, and `//specs/schemas:schema_tests`. |
-| Test cases | Eleven generator cases, 44 publisher cases, 15 release version cases, 20 release preparation cases, 6 release rehearsal cases, 42 repository structure cases, 29 documentation gate cases, 4 link check cases, one documentation check, one schema bundle check. |
+| Test targets | Eleven `py_test` targets: `//tools/codegen/tests:unit_tests`, `//tools/publish/tests:publish_tests`, `//scripts/tests:version_tests`, `//scripts/tests:release_tests`, `//scripts/tests:release_flow_tests`, `//scripts/tests:repository_tests`, `//scripts/tests:docs_tests`, `//scripts/tests:link_tests`, `//scripts:docs_checks`, `//specs/schemas:schema_tests`, and `//specs/schemas:release_tag_tests`. |
+| Test cases | Sixteen generator cases, 45 publisher cases, 15 release version cases, 20 release preparation cases, 6 release rehearsal cases, 42 repository structure cases, 4 release tag cases, 32 documentation gate cases, 4 link check cases, one documentation check, one schema bundle check. |
 | Schema tests | `//specs/schemas:schema_tests` validates the built bundle. Meta-schema and instance validation are missing. |
+| Release tag tests | `//specs/schemas:release_tag_tests` covers the release tag pattern of the contract, so that the contract and the publisher agree on what a release tag is. |
 | Publisher tests | `//tools/publish/tests:publish_tests` covers the publisher, the published identity of the built bundle, the resolution of the versioned raw URLs, and the deterministic archive. |
 | Version tests | `//scripts/tests:version_tests` covers the release version check, including the contract version of every schema source. |
 | Release preparation tests | `//scripts/tests:release_tests` covers the release preparation, the publication, the verification, and the cleanup. |
@@ -31,7 +32,7 @@ compiler integration, and package installation.
 | Install tests | None. |
 | CI | The pull request and main lanes run the build, the test lane, the clean checkout build, and the documentation gate on Windows and Linux. |
 
-The current `--test_filter` is ignored by the `py_test`; all seven cases run. Do
+The current `--test_filter` is ignored by the `py_test`; all sixteen cases run. Do
 not rely on filtering for local iteration.
 
 ## Schema bundle test
@@ -58,6 +59,27 @@ bazel test //specs/schemas:schema_tests
 The bundle satisfies every rule. The test no longer tracks violations: an
 unexplained violation fails the target, and the check also fails when a
 published file is missing or when the bundle carries an unexpected file.
+
+## Release tag test
+
+`//specs/schemas:release_tag_tests` covers the release tag pattern of the
+contract. The pattern must match the whole tag, so a suffix such as
+`v1.0.0-invalid` is not a release tag, and it must stay identical to the
+pattern of the publisher, so that the contract and the publisher agree on
+what a release tag is. The documentation gate applies the same rule to the
+version of every raw URL reference of a document, and
+`//scripts/tests:docs_tests` covers that rule.
+
+```shell
+bazel test //specs/schemas:release_tag_tests
+```
+
+| Tag | Result |
+|---|---|
+| `v1.0.0`, `v0.1.0`, `v12.34.56` | Valid. |
+| `v1.0.0-invalid`, `v1.0.0garbage`, `v1.0.0anything` | Invalid. |
+| `1.0.0`, `main`, `v`, empty | Invalid. |
+| `v1.0`, `v1`, `v1.0.0.0` | Invalid. |
 
 ## Test layers
 
@@ -244,7 +266,7 @@ threshold may be added in a later minor version once the suite stabilizes.
 | TEST-013 | Flaky tests MUST be fixed or quarantined. | CONFIRMED | Process review. |
 | TEST-014 | The MVP MUST use critical-path coverage instead of a numeric threshold, covering every public method, node type, diagnostic code, and failure mode. | CONFIRMED | Coverage inventory. |
 | TEST-015 | CI MUST NOT retry failed tests automatically; quarantined tests MUST be reported separately and tracked by an issue. | CONFIRMED | CI review. |
-| TEST-016 | Schema tests MUST validate the bundle and every `$ref`. | IMPLEMENTED | `//specs/schemas:schema_tests`; 6 bundle files checked, 0 violations, and the file set is checked. |
+| TEST-016 | Schema tests MUST validate the bundle and every `$ref`. | IMPLEMENTED | `//specs/schemas:schema_tests`; 6 bundle files checked, 0 violations, and the file set is checked. The release tag pattern of the identity rule is covered by `//specs/schemas:release_tag_tests`. |
 | TEST-017 | Contract tests MUST cover round-trip serialization. | CONFIRMED | Contract test. |
 | TEST-018 | Tests MUST cover every block and span type. | CONFIRMED | Fixture review. |
 | TEST-019 | Tests MUST cover Unicode and escaping. | CONFIRMED | Golden test. |

@@ -172,6 +172,9 @@ The generator:
 - Writes a parent directory when needed.
 - Re-serializes JSON with two-space indentation.
 - Validates JSON syntax only, not JSON Schema semantics or `$ref` resolution.
+  The constants `NaN`, `Infinity`, and `-Infinity` are not valid JSON, so the
+  generator rejects them instead of writing a file that every standard JSON
+  parser refuses.
 
 The generator does not validate that the generated schema is a valid JSON Schema.
 That check belongs to the schema validation test layer.

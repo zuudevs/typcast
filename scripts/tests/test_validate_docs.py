@@ -8,6 +8,7 @@ from validate_docs import (
     check_encoding,
     check_markdown_lint,
     check_mermaid,
+    check_schema_references,
 )
 
 
@@ -444,6 +445,55 @@ class EncodingTests(GateTestCase):
 
         self.assertTrue(
             any("placeholder marker" in error for error in report.errors),
+            report.errors,
+        )
+
+
+class SchemaReferenceTests(GateTestCase):
+    """Checks the release tag rule of the raw URL references."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.write("specs/schemas/validator.schema.json", "{}\n")
+
+    def report_for(self, path: Path) -> Report:
+        report = Report()
+        check_schema_references(self.root, [path], report)
+        return report
+
+    def write_reference(self, name: str, version: str) -> Path:
+        return self.write(
+            name,
+            "# Title\n"
+            "\n"
+            f"https://raw.githubusercontent.com/zuudevs/typcast/{version}/"
+            "specs/schemas/validator.schema.json\n",
+        )
+
+    def test_a_release_tag_reports_no_error(self) -> None:
+        path = self.write_reference("reference.md", "v1.0.0")
+
+        report = self.report_for(path)
+
+        self.assertEqual(report.errors, [])
+
+    def test_a_release_tag_with_a_suffix_is_reported(self) -> None:
+        path = self.write_reference("suffix.md", "v1.0.0-invalid")
+
+        report = self.report_for(path)
+
+        self.assertTrue(
+            any("is not a release tag" in error for error in report.errors),
+            report.errors,
+        )
+
+    def test_a_partial_release_tag_is_reported(self) -> None:
+        path = self.write_reference("partial.md", "v1.0")
+
+        report = self.report_for(path)
+
+        self.assertTrue(
+            any("is not a release tag" in error for error in report.errors),
             report.errors,
         )
 

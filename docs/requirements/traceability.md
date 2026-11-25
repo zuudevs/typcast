@@ -135,7 +135,7 @@ a target for the MVP and is not yet verified in the repository.
 | `SCH-011` | `read_csv_column` rejects an empty value in the selected column. | `test_empty_value_in_selected_column_reports_an_error` in `//tools/codegen/tests:unit_tests`. |
 | `SCH-012` | `read_csv_column` skips fully blank rows. | `test_fully_blank_rows_are_skipped` in `//tools/codegen/tests:unit_tests`. |
 | `SCH-001` | Every schema of the bundle declares the draft 2020-12 dialect. | `//specs/schemas:schema_tests`; the dialect rule. |
-| `SCH-002` | Every schema of the bundle declares an absolute, unique `$id` that matches its versioned raw URL. | `//specs/schemas:schema_tests`; the identity and uniqueness rules. |
+| `SCH-002` | Every schema of the bundle declares an absolute, unique `$id` that matches its versioned raw URL, and the release tag of that URL matches the whole tag. | `//specs/schemas:schema_tests`; the identity and uniqueness rules; `//specs/schemas:release_tag_tests`. |
 | `SCH-003` | Every object schema of the bundle is closed. | `//specs/schemas:schema_tests`; the closed-object rule. |
 | `SCH-006` | Every union of the bundle uses a `type` discriminator with unique `const` values. | `//specs/schemas:schema_tests`; the discriminator rule. |
 | `SCH-008` | Every relative `$ref` of the bundle resolves inside the bundle. | `//specs/schemas:schema_tests`; the reference rule. |
@@ -185,9 +185,9 @@ a target for the MVP and is not yet verified in the repository.
 | `DOC-010` | The external links are checked with a timeout, and an unreachable link is a warning that does not block the merge. | `//scripts:check_links`; `//scripts/tests:link_tests`. |
 | `DOC-024` | The external link check runs in the pull request lane and in the main lane. | The `Link check` job of `.github/workflows/pr.yml` and `main.yml`. |
 | `DOC-025` | The rules of the repository gate and of the external link check are covered by unit tests, including the encoding and the text hygiene rules. | `//scripts/tests:docs_tests`; `//scripts/tests:link_tests`. |
-| `TEST-016` | `//specs/schemas:schema_tests` validates every bundle file and resolves every relative `$ref`. | `//specs/schemas:schema_tests`; 6 bundle files checked, 0 violations. |
+| `TEST-016` | `//specs/schemas:schema_tests` validates every bundle file and resolves every relative `$ref`, and `//specs/schemas:release_tag_tests` covers the release tag pattern of the identity rule. | `//specs/schemas:schema_tests`; 6 bundle files checked, 0 violations; `//specs/schemas:release_tag_tests`; 4 cases. |
 | `TEST-025` | The test lane runs on Windows and Linux. | The `Test` jobs of the workflows; the first run passed on `windows-latest` and `ubuntu-latest`. |
-| `TEST-026` | `//tools/publish/tests:publish_tests` covers the publisher with unit tests and with an integration test against the built bundle. | `//tools/publish/tests:publish_tests`; 44 cases. |
+| `TEST-026` | `//tools/publish/tests:publish_tests` covers the publisher with unit tests and with an integration test against the built bundle. | `//tools/publish/tests:publish_tests`; 45 cases. |
 | `TEST-027` | `//scripts/tests:version_tests` covers the release version check. | `//scripts/tests:version_tests`; 15 cases. |
 | `TEST-028` | The publisher tests serve the published files from a local server, so the test suite needs no network access. | `//tools/publish/tests:publish_tests`; the `PublishedUrlTests` cases. |
 | `TEST-029` | The publisher tests cover the content, the member metadata, and the byte-for-byte determinism of the schema archive. | `//tools/publish/tests:publish_tests`; the `ArchiveTests` cases. |

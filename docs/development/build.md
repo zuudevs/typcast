@@ -70,24 +70,25 @@ root.
 
 | Check | Result |
 |---|---|
-| `bazel build //...` | Pass, 38 targets. |
-| `bazel test //...` | Pass, 10 test targets: 11 unittest cases, 44 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 42 repository structure cases, 29 documentation gate cases, 4 link check cases, 1 documentation check, 1 schema bundle check. |
+| `bazel build //...` | Pass, 39 targets. |
+| `bazel test //...` | Pass, 11 test targets: 16 unittest cases, 45 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 42 repository structure cases, 4 release tag cases, 32 documentation gate cases, 4 link check cases, 1 documentation check, 1 schema bundle check. |
 | `bazel build //specs/schemas:schema_bundle` | Pass, 6 schema files. |
 | `bazel build //specs/schemas:schema_manifest` | Pass, 6 paths. |
 | `bazel build //specs/schemas:archive` | Pass, 6 members, deterministic gzip tarball. |
 | `bazel test //specs/schemas:schema_tests` | Pass, 6 bundle files, 0 violations. |
+| `bazel test //specs/schemas:release_tag_tests` | Pass, 4 cases. |
 | `bazel test //scripts:docs_checks` | Pass, 57 files, 461 requirements, and 3 workflows checked, 0 errors. |
 | `bazel test //scripts/tests:version_tests` | Pass, 15 cases. |
 | `bazel test //scripts/tests:release_tests` | Pass, 20 cases. |
 | `bazel test //scripts/tests:release_flow_tests` | Pass, 6 cases. |
-| `bazel run //scripts:repository_checks` | Pass, 1 spec file, 2 SDK files, 13 gate files, 36 Python modules, 8 test modules, 2 toolchain files, 3 TypeScript files, 23 decision records, 45 Bazel package files, 0 errors. |
+| `bazel run //scripts:repository_checks` | Pass, 2 spec files, 2 SDK files, 13 gate files, 37 Python modules, 9 test modules, 2 toolchain files, 3 TypeScript files, 23 decision records, 46 Bazel package files, 0 errors. |
 | `bazel test //scripts/tests:repository_tests` | Pass, 42 cases. |
-| `bazel test //scripts/tests:docs_tests` | Pass, 29 cases. |
+| `bazel test //scripts/tests:docs_tests` | Pass, 32 cases. |
 | `bazel test //scripts/tests:link_tests` | Pass, 4 cases. |
-| `bazel test //tools/publish/tests:publish_tests` | Pass, 44 publisher cases. |
+| `bazel test //tools/publish/tests:publish_tests` | Pass, 45 publisher cases. |
 | `bazel run //scripts:check_links` | Pass, 4 external links checked, 0 unreachable. |
-| `bazel query "kind(rule, //...)"` | 35 rules; 9 test targets. |
-| `--test_filter` on the unittest target | Ignored; all 7 cases run. |
+| `bazel query "kind(rule, //...)"` | 39 rules; 11 test targets. |
+| `--test_filter` on the unittest target | Ignored; all 16 cases run. |
 
 The schema bundle contains:
 
@@ -103,13 +104,13 @@ bazel-bin/specs/schemas/
 
 ## Current targets
 
-`bazel query "kind(rule, //...)"` reports 38 rules. All of them:
+`bazel query "kind(rule, //...)"` reports 39 rules. All of them:
 
 | Target | Kind | Purpose |
 |---|---|---|
 | `//tools/codegen:typcast_codegen` | `py_binary` | Generator CLI. |
 | `//tools/codegen:typcast_codegen_lib` | `py_library` | Generator library. |
-| `//tools/codegen/tests:unit_tests` | `py_test` | Eleven generator tests. |
+| `//tools/codegen/tests:unit_tests` | `py_test` | Sixteen generator tests. |
 | `//tools/publish:publish_schemas` | `py_binary` | Publisher CLI. |
 | `//tools/publish:publish_schemas_lib` | `py_library` | Publisher library. |
 | `//tools/publish/tests:publish_tests` | `py_test` | Publisher tests. |
@@ -123,7 +124,7 @@ bazel-bin/specs/schemas/
 | `//scripts:repository_checks_lib` | `py_library` | Repository check library. |
 | `//scripts:docs_checks` | `py_test` | Documentation, requirement, decision, and workflow checks. |
 | `//scripts:docs_lib` | `py_library` | Documentation check library. |
-| `//scripts/tests:docs_tests` | `py_test` | Twenty-nine documentation check tests. |
+| `//scripts/tests:docs_tests` | `py_test` | Thirty-two documentation check tests. |
 | `//scripts/tests:link_tests` | `py_test` | Four external link check tests. |
 | `//scripts/tests:release_flow_tests` | `py_test` | Six release rehearsal tests. |
 | `//scripts/tests:release_tests` | `py_test` | Twenty release preparation tests. |
@@ -140,6 +141,7 @@ bazel-bin/specs/schemas/
 | `//specs/schemas:schema_manifest` | `typcast_schema_manifest` | Name every file of the bundle. |
 | `//specs/schemas:archive` | `typcast_schema_archive` | Deterministic gzip tarball of the bundle. |
 | `//specs/schemas:schema_tests` | `py_test` | Validate the built bundle against the contract. |
+| `//specs/schemas:release_tag_tests` | `py_test` | Validate the release tag pattern of the contract. |
 | `//specs/schemas/definitions:bound_schema` | `typcast_schema_copy` | Stage the bound schema. |
 | `//specs/schemas/definitions:node_schema` | `typcast_schema_copy` | Stage the node schema. |
 | `//packages/python:typcast` | `py_library` | Python SDK placeholder. |
@@ -174,7 +176,9 @@ The generator:
 - Skips fully blank rows.
 - Creates output parent directories.
 - Re-serializes JSON with two-space indentation.
-- Validates JSON syntax only.
+- Validates JSON syntax only. The constants `NaN`, `Infinity`, and
+  `-Infinity` are not valid JSON, so the generator rejects them instead of
+  writing a file that every standard JSON parser refuses.
 - Rejects a placeholder whose catalog is not declared as an input of the
   rule. The rule passes every declared catalog to the generator, so a
   catalog that is missing from the `catalogs` attribute fails the build

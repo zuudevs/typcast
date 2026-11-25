@@ -207,6 +207,19 @@ class PublishBundleTests(unittest.TestCase):
                 "v1.0",
             )
 
+    def test_publish_rejects_a_version_with_a_suffix(self) -> None:
+        # The schema contract rejects the same tags, so the publisher and the
+        # contract agree on what a release tag is.
+        for version in ("v1.0.0-invalid", "v1.0.0garbage", "v1.0.0anything"):
+            with self.subTest(version=version):
+                with self.assertRaises(PublishError):
+                    publish_bundle(
+                        self.bundle,
+                        self.manifest,
+                        self.root / "published",
+                        version,
+                    )
+
     def test_publish_rejects_a_missing_bundle(self) -> None:
         with self.assertRaises(PublishError):
             publish_bundle(

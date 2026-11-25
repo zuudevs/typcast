@@ -34,7 +34,11 @@ PUBLISHED_PATTERN = re.compile(
     r"^https://raw\.githubusercontent\.com/zuudevs/typcast/"
     r"(?P<tag>[^/]+)/specs/schemas/(?P<path>.+)$"
 )
-RELEASE_TAG_PATTERN = re.compile(r"^v\d+\.\d+\.\d+")
+RELEASE_TAG_PATTERN = re.compile(r"^v\d+\.\d+\.\d+$")
+# The pattern must stay identical to the release tag pattern of the publisher
+# (`tools/publish/src/typcast_publish/publisher.py`), so that the schema
+# contract and the publisher agree on what a release tag is. The pattern
+# matches the whole tag, so a suffix such as `v1.0.0-invalid` is not a tag.
 
 # The files that the published bundle carries. A missing file or an unexpected
 # file fails the target, so the published set cannot change unnoticed.

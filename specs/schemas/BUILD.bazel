@@ -89,3 +89,17 @@ py_test(
         ":schema_bundle",
     ],
 )
+
+# The release tag validation of the contract. The pattern must match the
+# whole tag, so the test pins the behavior of the contract and of the
+# publisher.
+py_test(
+    name = "release_tag_tests",
+    size = "small",
+    srcs = [
+        "schema_tests.py",
+        "test_release_tag.py",
+    ],
+    main = "test_release_tag.py",
+    imports = ["."],
+)

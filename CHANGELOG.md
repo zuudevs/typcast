@@ -20,9 +20,12 @@ No release has been published yet. Every change so far is listed under
 - A JSON Schema generator that expands CSV catalog placeholders in templates,
   with unit tests. The generator rejects a placeholder whose catalog is not
   declared as an input of the rule, so a missing declaration fails the build
-  instead of leaving a stale output.
+  instead of leaving a stale output. The generator accepts only standard JSON,
+  so the constants `NaN`, `Infinity`, and `-Infinity` are errors.
 - The schema bundle and its validation target, `//specs/schemas:schema_tests`,
-  which checks the built bundle against the contract.
+  which checks the built bundle against the contract, and
+  `//specs/schemas:release_tag_tests`, which covers the release tag pattern of
+  the contract.
 - A schema publisher, `//tools/publish:publish_schemas`, which writes the
   published bundle with the identity of a release tag, verifies it against the
   build, and checks that every published schema resolves at its versioned raw
@@ -108,6 +111,17 @@ No release has been published yet. Every change so far is listed under
   required fields.
 - The alignment catalog holds the three alignment values of the MVP. The
   remaining Typst alignment values are not part of the contract.
+
+### Fixed
+
+- The generator rejects the constants `NaN`, `Infinity`, and `-Infinity`, which
+  Python accepts by default and which the JSON specification does not define.
+  The generator reported success and wrote a file that every standard JSON
+  parser rejects.
+- The schema contract and the documentation gate check the whole release tag
+  of an identity and of a raw URL reference, so a suffix such as
+  `v1.0.0-invalid` is no longer accepted as a release tag. The patterns are
+  identical to the pattern of the publisher.
 
 ### Known issues
 

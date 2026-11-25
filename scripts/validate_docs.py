@@ -67,6 +67,11 @@ RAW_URL_RE = re.compile(
     r"https://raw\.githubusercontent\.com/zuudevs/typcast/"
     r"([^/\s`\"'()]+)/specs/schemas/([^\s`\"'()]+)"
 )
+# The release tag pattern must stay identical to the pattern of the publisher
+# (`tools/publish/src/typcast_publish/publisher.py`) and to the pattern of the
+# schema contract (`specs/schemas/schema_tests.py`). It matches the whole
+# tag, so a suffix such as `v1.0.0-invalid` is not a release tag.
+RELEASE_TAG_PATTERN = re.compile(r"^v\d+\.\d+\.\d+$")
 OUTPUT_RE = re.compile(r'output\s*=\s*"([^"]+)"')
 USES_RE = re.compile(r"^\s*(?:-\s+)?uses:\s*([^\s#]+)", re.M)
 COMMIT_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
@@ -785,7 +790,7 @@ def check_schema_references(root: Path, files: list[Path], report: Report) -> in
                     continue
                 if schema_path not in paths:
                     report.error(f"{rel}:{lineno}: raw URL path is not a repository path: {schema_path}")
-                if version.startswith("v") and not re.match(r"^v\d+\.\d+\.\d+", version):
+                if version.startswith("v") and not RELEASE_TAG_PATTERN.match(version):
                     report.error(f"{rel}:{lineno}: raw URL version is not a release tag: {version}")
         if rel in LEGACY_DOMAIN_DOCUMENTS:
             continue
