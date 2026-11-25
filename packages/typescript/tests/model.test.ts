@@ -618,6 +618,15 @@ function deserializationTests(): void {
     "a number that overflows the number domain must be rejected",
   );
 
+  const longToken = buildDocument()
+    .toJSONString()
+    .replace('"value": 2,', `"value": ${"1".repeat(5000)},`);
+  expectCode(
+    "TYPCAST-IR-0004",
+    () => Document.fromJSONString(longToken),
+    "a long integer token must be rejected as an overflow",
+  );
+
   const nested = buildDocument().toJSON() as Record<string, unknown>;
   const nestedPage = nested["page"] as Record<string, unknown>;
   const nestedMargins = nestedPage["margin"] as Record<string, unknown>;

@@ -520,6 +520,19 @@ class DeserializationTests(unittest.TestCase):
             Document.from_dict(value)
         self.assertEqual(caught.exception.diagnostics[0].code, "TYPCAST-IR-0004")
 
+    def test_a_long_integer_token_is_rejected_as_an_overflow(self) -> None:
+        # The interpreter limits the conversion of a long digit string to an
+        # integer, while the number domain of the IR is the binary64 domain.
+        # The token is valid JSON, so the reader reports the overflow.
+        source = document().to_json().replace(
+            '"value": 2,',
+            f'"value": {"1" * 5000},',
+            1,
+        )
+        with self.assertRaises(SerializationError) as caught:
+            Document.from_json(source)
+        self.assertEqual(caught.exception.diagnostics[0].code, "TYPCAST-IR-0004")
+
     def test_a_supported_patch_version_is_accepted(self) -> None:
         value = document().to_dict()
         value["schemaVersion"] = "1.0.7"

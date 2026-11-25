@@ -225,6 +225,11 @@ No release has been published yet. Every change so far is listed under
   diagnostic, and such a number has no token in JSON. Both SDKs now spell a
   number that is not finite in the form of ECMAScript, so the details of both
   SDKs stay JSON-serializable.
+- The Python SDK read a JSON integer token of more than 4300 digits with the
+  integer parser of the interpreter, which reports such a token as malformed
+  JSON. The token is valid JSON, and the TypeScript reader reads it as an
+  infinity. The Python SDK now reads every integer token in the number domain
+  of the IR, so both SDKs report the same overflow.
 
 ### Known issues
 

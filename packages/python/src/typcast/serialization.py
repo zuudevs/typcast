@@ -136,7 +136,11 @@ def document_from_json(source: str) -> Document:
             "The source must be a JSON string.",
         )
     try:
-        value = json.loads(source, parse_constant=_reject_constant)
+        value = json.loads(
+            source,
+            parse_constant=_reject_constant,
+            parse_int=_parse_json_int,
+        )
     except ValueError as error:
         raise_serialization(
             CODE_MALFORMED_JSON,
@@ -152,6 +156,21 @@ def document_from_json(source: str) -> Document:
 
 def _reject_constant(name: str) -> Any:
     raise ValueError(f"{name} is not a valid JSON value")
+
+
+def _parse_json_int(text: str) -> float:
+    """Parses a JSON integer in the number domain of the document IR.
+
+    The integer is converted to a float directly. The conversion of a long
+    digit string to an integer of Python is limited by the interpreter, while
+    the number domain of the IR is the binary64 domain of ECMAScript, in
+    which such a number is an infinity. The TypeScript reader accepts the
+    same text and reaches the same value.
+    """
+    try:
+        return float(text)
+    except OverflowError:
+        return math.inf
 
 
 def _as_object(value: Any, path: str) -> dict[str, Any]:
