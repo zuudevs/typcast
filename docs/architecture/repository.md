@@ -186,7 +186,7 @@ Current targets include:
 | `//specs/schemas:schema_tests` | Validates the built bundle against the schema contract. |
 | `//specs/schemas:release_tag_tests` | Validates the release tag pattern of the schema contract. |
 | `//packages/python:typcast` | Python SDK library with the immutable document model. |
-| `//packages/python/tests:model_tests` | One hundred twenty-four document model unit tests. |
+| `//packages/python/tests:model_tests` | One hundred twenty-five document model unit tests. |
 | `//packages/typescript:typcast` | TypeScript project with the immutable document model. |
 | `//packages/typescript:model_test_run` | Document model unit tests of the TypeScript SDK. |
 | `//tests/fixtures:documents` | The shared document IR fixtures. |

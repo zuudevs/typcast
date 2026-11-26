@@ -553,6 +553,14 @@ function constructorTests(): void {
     () => new Length(Number.POSITIVE_INFINITY, "cm"),
     "a length that overflows the number domain must be rejected",
   );
+  expectDiagnostic(
+    "TYPCAST-VAL-0004",
+    "/value",
+    "'/value' must be a finite number.",
+    { value: "-Infinity" },
+    () => new Length(Number.NEGATIVE_INFINITY, "cm"),
+    "a length that overflows the number domain must keep its sign",
+  );
   expectCode(
     "TYPCAST-VAL-0004",
     () => new Image("figures/logo.png", "Logo", null, new Length(0, "cm")),

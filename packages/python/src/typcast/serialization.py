@@ -175,7 +175,10 @@ def _parse_json_int(text: str) -> float:
     try:
         return float(text)
     except OverflowError:
-        return math.inf
+        # The conversion of a text that the binary64 domain cannot hold raises
+        # an error of the interpreter, while the domain holds an infinity that
+        # keeps the sign of the token.
+        return -math.inf if text.startswith("-") else math.inf
 
 
 def _as_object(value: Any, path: str) -> dict[str, Any]:

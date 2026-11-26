@@ -34,7 +34,11 @@ def to_binary64(value: int) -> float:
     try:
         return float(value)
     except OverflowError:
-        return math.inf
+        # The conversion of an integer that the binary64 domain cannot hold
+        # raises an error of the interpreter, while the domain holds an
+        # infinity that keeps the sign of the integer, exactly as the
+        # conversion of a number of ECMAScript does.
+        return -math.inf if value < 0 else math.inf
 
 
 def format_number(value: int | float) -> str:
@@ -49,7 +53,7 @@ def format_number(value: int | float) -> str:
     if isinstance(value, int) and not isinstance(value, bool):
         if -_MAX_EXACT_INTEGER <= value <= _MAX_EXACT_INTEGER:
             return str(value)
-        return _format_float(float(value))
+        return _format_float(to_binary64(value))
     return _format_float(value)
 
 

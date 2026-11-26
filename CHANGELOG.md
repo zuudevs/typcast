@@ -309,6 +309,14 @@ No release has been published yet. Every change so far is listed under
   positive width of an image. The width of an image now carries an exclusive
   lower bound of zero, the length of a margin stays non-negative, and the
   requirement `SCH-023` records the rule.
+- The Python SDK lost the sign of an integer that overflows the binary64
+  number domain of ECMAScript, because the conversion of such an integer to a
+  float raises an error of the interpreter, and the fallback returned a
+  positive infinity for every sign. A length whose value was a negative
+  integer of more than 400 digits therefore reported `{"value": "Infinity"}`
+  in its details, while the TypeScript SDK reported `{"value": "-Infinity"}`.
+  The conversion now keeps the sign, exactly as the conversion of a number of
+  ECMAScript does, and the canonical format of a number follows the same rule.
 - The shared fixtures held no case for a quoted value, a control character, a
   supplementary character, a long value, a version that ends with a newline, a
   number at the boundary of the binary64 domain, a lone surrogate, a key that

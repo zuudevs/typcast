@@ -71,7 +71,7 @@ root.
 | Check | Result |
 |---|---|
 | `bazel build //...` | Pass, 55 targets. |
-| `bazel test //...` | Pass, 17 of 17 test targets of the 19 test rules, because the two transitive type-check rules are tagged `manual`: 16 unittest cases, 45 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 47 repository structure cases, 4 release tag cases, 32 documentation gate cases, 4 link check cases, 1 documentation check, 1 schema bundle check, 124 document model cases, 12 contract fixture cases, and the TypeScript model, contract, and type-check targets. |
+| `bazel test //...` | Pass, 17 of 17 test targets of the 19 test rules, because the two transitive type-check rules are tagged `manual`: 16 unittest cases, 45 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 47 repository structure cases, 4 release tag cases, 32 documentation gate cases, 4 link check cases, 1 documentation check, 1 schema bundle check, 125 document model cases, 12 contract fixture cases, and the TypeScript model, contract, and type-check targets. |
 | `bazel build //specs/schemas:schema_bundle` | Pass, 6 schema files. |
 | `bazel build //specs/schemas:schema_manifest` | Pass, 6 paths. |
 | `bazel build //specs/schemas:archive` | Pass, 6 members, deterministic gzip tarball. |
@@ -86,7 +86,7 @@ root.
 | `bazel test //scripts/tests:docs_tests` | Pass, 32 cases. |
 | `bazel test //scripts/tests:link_tests` | Pass, 4 cases. |
 | `bazel test //tools/publish/tests:publish_tests` | Pass, 45 publisher cases. |
-| `bazel test //packages/python/tests:model_tests` | Pass, 124 cases. |
+| `bazel test //packages/python/tests:model_tests` | Pass, 125 cases. |
 | `bazel test //packages/typescript:model_test_run` | Pass. |
 | `bazel test //tests/contract:contract_py` | Pass, 12 cases. |
 | `bazel test //tests/contract:contract_ts_test` | Pass. |
@@ -149,7 +149,7 @@ bazel-bin/specs/schemas/
 | `//specs/schemas/definitions:bound_schema` | `typcast_schema_copy` | Stage the bound schema. |
 | `//specs/schemas/definitions:node_schema` | `typcast_schema_copy` | Stage the node schema. |
 | `//packages/python:typcast` | `py_library` | Python SDK with the immutable document model. |
-| `//packages/python/tests:model_tests` | `py_test` | One hundred twenty-four document model unit tests. |
+| `//packages/python/tests:model_tests` | `py_test` | One hundred twenty-five document model unit tests. |
 | `//packages/typescript:typcast` | `ts_project` | TypeScript SDK with the immutable document model. |
 | `//packages/typescript:typcast_types` | `filegroup` | TypeScript declaration outputs. |
 | `//packages/typescript:model_test` | `ts_project` | Compiles the document model unit tests. |

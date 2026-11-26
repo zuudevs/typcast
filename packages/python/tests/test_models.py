@@ -274,6 +274,21 @@ class ConstructorValidationTests(unittest.TestCase):
             lambda: Length(value=10**400, unit="cm"),
         )
 
+    def test_a_negative_length_that_overflows_the_number_domain_keeps_its_sign(
+        self,
+    ) -> None:
+        # The number domain of the IR is the binary64 domain of ECMAScript, in
+        # which an integer that the domain cannot hold is an infinity that keeps
+        # the sign of the integer. The TypeScript SDK reports the same sign, so
+        # the details of the two SDKs agree.
+        with self.assertRaises(TypcastError) as caught:
+            Length(value=-(10**400), unit="cm")
+
+        diagnostic = caught.exception.diagnostics[0]
+        self.assertEqual(diagnostic.code, "TYPCAST-VAL-0004")
+        self.assertEqual(diagnostic.path, "/value")
+        self.assertEqual(diagnostic.details, {"value": "-Infinity"})
+
     def test_empty_content_is_rejected(self) -> None:
         self.assert_code("TYPCAST-VAL-0006", lambda: Paragraph(content=[]))
 
