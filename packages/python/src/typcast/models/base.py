@@ -22,6 +22,7 @@ from typcast.diagnostics import (
     safe_text,
     safe_value,
 )
+from typcast.numbers import to_binary64
 
 __all__ = [
     "Block",
@@ -57,21 +58,6 @@ def _element_plural(name: str) -> str:
     if name.startswith("array of "):
         return f"arrays of {name[len('array of '):]}"
     return f"{name} values"
-
-
-def to_binary64(value: int) -> float:
-    """Returns an integer in the number domain of the document IR.
-
-    The canonical JSON text of the IR follows the number format of
-    ECMAScript, so the numbers of a document live in the binary64 domain.
-    An integer that the domain cannot hold exactly is rounded to the nearest
-    representable value, exactly as TypeScript and `JSON.parse` do, and an
-    integer that overflows the domain becomes an infinity.
-    """
-    try:
-        return float(value)
-    except OverflowError:
-        return math.inf
 
 
 def require_string(

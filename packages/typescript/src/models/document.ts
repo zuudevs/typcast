@@ -7,6 +7,7 @@
  * build the result.
  */
 
+import { assertEncodable, escapePointerToken } from "../canonical.js";
 import {
   CODE_INVALID_ENUM,
   CODE_MALFORMED_JSON,
@@ -19,7 +20,7 @@ import {
   throwValidation,
   withPath,
 } from "../diagnostics.js";
-import { assertEncodable, canonicalJson } from "../json_writer.js";
+import { canonicalJson } from "../json_writer.js";
 import { checkSchemaVersion, SCHEMA_VERSION } from "../version.js";
 import { requireInstance } from "./base.js";
 import {
@@ -96,20 +97,22 @@ export class Document {
 
   /** Returns the JSON value of the document. */
   toJSON(): Record<string, unknown> {
-    return {
+    const value = {
       schemaVersion: this.schemaVersion,
       metadata: this.metadata.toJSON(),
       page: this.page.toJSON(),
       contents: this.contents.map((block) => block.toJSON()),
       modules: this.modules.map((module) => module.toJSON()),
     };
+    // The canonical text of the document is UTF-8, so a document that holds a
+    // character that UTF-8 cannot encode has no JSON value.
+    assertEncodable(value, "");
+    return value;
   }
 
   /** Returns the canonical JSON text of the document. */
   toJSONString(): string {
-    const value = this.toJSON();
-    assertEncodable(value, "");
-    return canonicalJson(value) + "\n";
+    return canonicalJson(this.toJSON()) + "\n";
   }
 
   /** Builds a document from a JSON value. */
@@ -133,9 +136,7 @@ export function documentToJSON(document: Document): Record<string, unknown> {
 
 /** Returns the canonical JSON text of a document. */
 export function documentToJSONString(document: Document): string {
-  const value = documentToJSON(document);
-  assertEncodable(value, "");
-  return canonicalJson(value) + "\n";
+  return canonicalJson(documentToJSON(document)) + "\n";
 }
 
 /** Builds a document from a JSON value. */
@@ -194,7 +195,20 @@ function asObject(value: unknown, path: string): Record<string, unknown> {
       path === "" ? null : path,
     );
   }
-  return value as Record<string, unknown>;
+  const record = value as Record<string, unknown>;
+  // A JSON object has string keys only. A symbol key is not a key of a JSON
+  // value, and the Python SDK rejects a key that is not a string, so both SDKs
+  // reject the same value. The details name the kind of the key in the same
+  // words in both SDKs.
+  if (Object.getOwnPropertySymbols(record).length > 0) {
+    throwSerialization(
+      CODE_ROOT_SHAPE,
+      `'${path === "" ? "/" : path}' must be a JSON object whose keys are strings.`,
+      path === "" ? null : path,
+      { keyType: "non-string" },
+    );
+  }
+  return record;
 }
 
 function asArray(value: unknown, path: string): unknown[] {
@@ -257,16 +271,6 @@ function asNumber(value: unknown, path: string): number {
     );
   }
   return value;
-}
-
-/**
- * Returns a JSON Pointer token, as RFC 6901 defines it.
- *
- * A `~` becomes `~0` and a `/` becomes `~1`, so that a property name that
- * holds one of those characters still points at the property.
- */
-function escapePointerToken(token: string): string {
-  return token.replace(/~/g, "~0").replace(/\//g, "~1");
 }
 
 function checkFields(

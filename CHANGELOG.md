@@ -279,6 +279,30 @@ No release has been published yet. Every change so far is listed under
   requirement `DIAG-016` records the rule. The manifest of the shared fixtures
   names the details of every negative fixture, so a drift in the details fails
   the contract tests.
+- The two SDKs showed a rejected value in no canonical form, so a value that
+  holds a quote, a backslash, or a control character broke the text of the
+  message, and a value that holds a supplementary character was cut in the
+  middle of the character. Both SDKs now show the value in the same escaped
+  form, and the text holds at most 64 Unicode code points. The requirement
+  `DIAG-017` records the rule.
+- The pattern of `schemaVersion` in `validator.schema.json` accepted a version
+  with a leading zero, a Unicode digit, and a trailing newline or carriage
+  return, while the readers of the SDKs rejected them. The pattern now matches
+  the whole text of a semantic version, and the requirement `SCH-022` records
+  the rule.
+- The Python SDK wrote a number in the canonical text with the format of the
+  interpreter, so a number such as `1e-7` and a number such as `1e+21` were
+  written in another form than the TypeScript SDK wrote them. The Python SDK
+  now writes every number in the format of ECMAScript, so the canonical text
+  of a document is the same in both SDKs.
+- The Python SDK checked the encodability of a document only when it wrote the
+  canonical text, so the JSON value of a document could hold a character that
+  UTF-8 cannot encode. The check now runs on every public path of both SDKs.
+- The details of the diagnostic of a mapping with a key that is not a string
+  named the type of the key in the language of the SDK, and the TypeScript SDK
+  accepted an object with a symbol key. Both SDKs now report the same
+  details, `{"keyType": "non-string"}`, and the TypeScript SDK rejects such an
+  object with the same diagnostic as the Python SDK.
 
 ### Known issues
 

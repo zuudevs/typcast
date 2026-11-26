@@ -20,6 +20,7 @@ from typcast.models.base import (
     require_string,
     to_binary64,
 )
+from typcast.numbers import format_number
 
 __all__ = [
     "Length",
@@ -71,12 +72,13 @@ class Length:
                 },
             )
         if value < 0:
-            number = int(value) if value.is_integer() else value
+            # The number is shown in the canonical format of the IR, so that
+            # the TypeScript SDK shows the same text.
             raise_validation(
                 CODE_INVALID_LENGTH,
-                f"'/value' must not be negative, got {number}.",
+                f"'/value' must not be negative, got {format_number(value)}.",
                 "/value",
-                {"value": number},
+                {"value": int(value) if value.is_integer() else value},
             )
         if self.unit not in LENGTH_UNITS:
             raise_validation(

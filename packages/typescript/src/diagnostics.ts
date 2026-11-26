@@ -100,20 +100,59 @@ export function safeValue(value: unknown): unknown {
 }
 
 /**
- * Returns a short, readable representation of a value.
+ * Returns the canonical text of a rejected value.
  *
- * The message of a diagnostic stays readable, so a long value is shortened.
- * The length is counted in Unicode code points, as the Python SDK counts it,
- * so that both SDKs show the same characters. The Python SDK applies the same
- * rule.
+ * The text holds at most 64 code points of the value, followed by an ellipsis
+ * when the value is longer. Every character that could break the text of a
+ * message is escaped, so that a quote, a backslash, a newline, a carriage
+ * return, a tab, and any other control character appear as an escape
+ * sequence. Every other character is shown as it is.
+ *
+ * The rule is the one of `docs/specifications/diagnostics.md`, and the Python
+ * SDK applies the same rule, so that the message of a diagnostic is the same
+ * in both SDKs.
  */
 export function safeText(value: unknown): string {
   const text = typeof value === "string" ? value : String(safeValue(value));
   const characters = [...text];
   if (characters.length <= MAX_DIAGNOSTIC_VALUE_LENGTH) {
-    return text;
+    return escapeText(text);
   }
-  return `${characters.slice(0, MAX_DIAGNOSTIC_VALUE_LENGTH).join("")}…`;
+  const shown = escapeText(
+    characters.slice(0, MAX_DIAGNOSTIC_VALUE_LENGTH).join(""),
+  );
+  return `${shown}…`;
+}
+
+// The escape sequences of a rejected value. A control character that has no
+// sequence of its own is written as a `\u00xx` escape. The Python SDK applies
+// the same rule.
+const ESCAPE_SEQUENCES: Readonly<Record<string, string>> = {
+  "\\": "\\\\",
+  "'": "\\'",
+  '"': '\\"',
+  "\n": "\\n",
+  "\r": "\\r",
+  "\t": "\\t",
+};
+
+/** Returns the text of a value with every breakable character escaped. */
+function escapeText(text: string): string {
+  let result = "";
+  for (const character of text) {
+    const sequence = ESCAPE_SEQUENCES[character];
+    if (sequence !== undefined) {
+      result += sequence;
+      continue;
+    }
+    const code = character.codePointAt(0) ?? 0;
+    if (code < 0x20 || code === 0x7f) {
+      result += `\\u${code.toString(16).padStart(4, "0")}`;
+      continue;
+    }
+    result += character;
+  }
+  return result;
 }
 
 /** The base class of every error raised by Typcast. */

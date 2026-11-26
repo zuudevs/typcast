@@ -290,6 +290,14 @@ The document IR carries `schemaVersion`. The reader:
 - MUST ignore patch differences after validating the supported schema.
 - MUST NOT silently drop unknown fields.
 
+The pattern of `schemaVersion` in `validator.schema.json` is the one of a
+semantic version: a component holds the ASCII digits only, a component holds
+no leading zero, and the pattern matches the whole text, so a version that
+ends with a newline or with a carriage return is rejected. The component of
+the patch holds no limit on its length, because the reader ignores the patch
+number. The pattern of the schema and the pattern of the reader of both SDKs
+agree, so both accept and reject the same versions.
+
 Lockstep versioning means the schema version, Python package version, and npm
 package version share the same release number. The mapping is `PROPOSED` as an
 exact equality and `CONFIRMED` for the major version.
@@ -359,6 +367,7 @@ the public API to JSON Schema limitations.
 | SCH-019 | The schema MUST be language-neutral and usable from Python and TypeScript. | CONFIRMED | Cross-language test. |
 | SCH-020 | The prototype defects SCH-D01 to SCH-D10 MUST be resolved before 1.0.0. | IMPLEMENTED | The migration is complete; `//specs/schemas:schema_tests` reports no violation. |
 | SCH-021 | A published schema MUST be referenced by the versioned raw URL of its release tag, and a `main` URL MUST NOT be used as a stable reference. | CONFIRMED | Release check. |
+| SCH-022 | The pattern of `schemaVersion` MUST be the one of a semantic version, and it MUST match the whole text. | IMPLEMENTED | `//specs/schemas:schema_tests`; the check of the pattern reads the pattern that `validator.schema.json` carries and rejects a leading zero, a Unicode digit, and a trailing newline or carriage return. |
 
 ## Open questions
 

@@ -1,6 +1,6 @@
 /** The metadata of the document IR. */
 
-import { CODE_INVALID_DATE, throwValidation } from "../diagnostics.js";
+import { CODE_INVALID_DATE, safeText, throwValidation } from "../diagnostics.js";
 import { requireBoundedString } from "./base.js";
 
 // The pattern holds the ASCII digits only. The `\d` of JavaScript matches
@@ -61,7 +61,7 @@ function checkDate(value: string): string {
   if (match === null) {
     throwValidation(
       CODE_INVALID_DATE,
-      `'/date' must be a calendar date in YYYY-MM-DD form, got '${value}'.`,
+      `'/date' must be a calendar date in YYYY-MM-DD form, got '${safeText(value)}'.`,
       "/date",
       { value },
     );
@@ -82,7 +82,7 @@ function checkDate(value: string): string {
   if (!valid) {
     throwValidation(
       CODE_INVALID_DATE,
-      `'/date' is not a calendar date: '${value}'.`,
+      `'/date' is not a calendar date: '${safeText(value)}'.`,
       "/date",
       { value },
     );

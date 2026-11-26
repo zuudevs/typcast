@@ -7,7 +7,7 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
-from typcast.diagnostics import CODE_INVALID_DATE, raise_validation
+from typcast.diagnostics import CODE_INVALID_DATE, raise_validation, safe_text
 from typcast.models.base import require_bounded_string
 
 __all__ = ["Metadata"]
@@ -61,7 +61,8 @@ class Metadata:
         if match is None:
             raise_validation(
                 CODE_INVALID_DATE,
-                f"'/date' must be a calendar date in YYYY-MM-DD form, got {value!r}.",
+                "'/date' must be a calendar date in YYYY-MM-DD form, "
+                f"got '{safe_text(value)}'.",
                 "/date",
                 {"value": value},
             )
@@ -74,7 +75,7 @@ class Metadata:
             # failure without it. The details of both SDKs must agree.
             raise_validation(
                 CODE_INVALID_DATE,
-                f"'/date' is not a calendar date: {value!r}.",
+                f"'/date' is not a calendar date: '{safe_text(value)}'.",
                 "/date",
                 {"value": value},
             )

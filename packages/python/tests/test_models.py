@@ -44,6 +44,7 @@ from typcast import (
     ValidationError,
     __version__,
 )
+from typcast.canonical import assert_encodable
 
 
 def margin(value: float | int = 2, unit: str = "cm") -> Margin:
@@ -464,6 +465,218 @@ class ConstructorValidationTests(unittest.TestCase):
         self.assertEqual(caught.exception.diagnostics[0].code, "TYPCAST-IR-0002")
 
 
+class RejectedValueTests(unittest.TestCase):
+    """Checks the canonical text that a diagnostic shows for a rejected value."""
+
+    def test_a_rejected_value_escapes_the_quotes_and_the_backslash(self) -> None:
+        # The TypeScript SDK writes the same message.
+        with self.assertRaises(ValidationError) as caught:
+            Page(paper="a4", orientation="di'\"\\", margin=margin())
+        self.assertEqual(
+            caught.exception.diagnostics[0].message,
+            "'/orientation' must be one of landscape, portrait, got 'di\\'\\\"\\\\'.",
+        )
+
+    def test_a_rejected_value_escapes_the_control_characters(self) -> None:
+        # The TypeScript SDK writes the same message.
+        with self.assertRaises(ValidationError) as caught:
+            Page(paper="a4", orientation="di\n\r\t", margin=margin())
+        self.assertEqual(
+            caught.exception.diagnostics[0].message,
+            "'/orientation' must be one of landscape, portrait, got 'di\\n\\r\\t'.",
+        )
+
+    def test_a_rejected_value_escapes_the_other_control_characters(self) -> None:
+        # The TypeScript SDK writes the same message.
+        with self.assertRaises(ValidationError) as caught:
+            Page(paper="a4", orientation="di\x00\x1f\x7f", margin=margin())
+        self.assertEqual(
+            caught.exception.diagnostics[0].message,
+            "'/orientation' must be one of landscape, portrait, "
+            "got 'di\\u0000\\u001f\\u007f'.",
+        )
+
+    def test_a_rejected_date_escapes_the_value(self) -> None:
+        # The TypeScript SDK writes the same message.
+        with self.assertRaises(ValidationError) as caught:
+            Metadata(title="Title", date="2026-01-01'\"\\")
+        self.assertEqual(
+            caught.exception.diagnostics[0].message,
+            "'/date' must be a calendar date in YYYY-MM-DD form, "
+            "got '2026-01-01\\'\\\"\\\\'.",
+        )
+
+    def test_an_impossible_date_names_the_value(self) -> None:
+        # The TypeScript SDK writes the same message.
+        with self.assertRaises(ValidationError) as caught:
+            Metadata(title="Title", date="2026-02-30")
+        self.assertEqual(
+            caught.exception.diagnostics[0].message,
+            "'/date' is not a calendar date: '2026-02-30'.",
+        )
+
+    def test_a_date_with_a_trailing_newline_escapes_the_value(self) -> None:
+        # The TypeScript SDK writes the same message.
+        with self.assertRaises(ValidationError) as caught:
+            Metadata(title="Title", date="2026-01-01\n")
+        self.assertEqual(
+            caught.exception.diagnostics[0].message,
+            "'/date' must be a calendar date in YYYY-MM-DD form, "
+            "got '2026-01-01\\n'.",
+        )
+
+    def test_a_rejected_version_escapes_the_value(self) -> None:
+        # The TypeScript SDK writes the same message.
+        with self.assertRaises(SerializationError) as caught:
+            document(schema_version="1.0.0'\"\\")
+        self.assertEqual(
+            caught.exception.diagnostics[0].message,
+            "'schemaVersion' must be a semantic version, got '1.0.0\\'\\\"\\\\'.",
+        )
+
+    def test_an_unsupported_version_names_the_value(self) -> None:
+        with self.assertRaises(SerializationError) as caught:
+            document(schema_version="2.0.0")
+        self.assertEqual(
+            caught.exception.diagnostics[0].message,
+            "'schemaVersion' '2.0.0' is not supported; this SDK reads 1.0.x.",
+        )
+
+    def test_a_rejected_value_is_shortened_in_code_points(self) -> None:
+        # The TypeScript SDK writes the same message.
+        with self.assertRaises(ValidationError) as caught:
+            Page(paper="a4", orientation="😀" * 100, margin=margin())
+        message = caught.exception.diagnostics[0].message
+        self.assertIn("😀" * 64, message)
+        self.assertNotIn("😀" * 65, message)
+
+    def test_the_details_of_a_rejected_value_hold_the_value(self) -> None:
+        # The details hold the value as it is, and the message holds the
+        # canonical text of the value. Both SDKs agree on the two.
+        with self.assertRaises(ValidationError) as caught:
+            Page(paper="a4", orientation="di\n", margin=margin())
+        self.assertEqual(
+            dict(caught.exception.diagnostics[0].details),
+            {"allowed": ["landscape", "portrait"], "value": "di\n"},
+        )
+
+    def test_the_details_of_a_rejected_value_stay_json_serializable(self) -> None:
+        with self.assertRaises(ValidationError) as caught:
+            Page(paper="a4", orientation="di\n", margin=margin())
+        text = json.dumps(caught.exception.diagnostics[0].to_dict())
+        self.assertIn('"value": "di\\n"', text)
+
+
+class EncodabilityTests(unittest.TestCase):
+    """Checks that the document holds no character that UTF-8 cannot encode."""
+
+    def test_a_lone_surrogate_is_rejected(self) -> None:
+        built = document(metadata=Metadata(title="Title\uD800"))
+        with self.assertRaises(SerializationError) as caught:
+            built.to_json()
+        diagnostic = caught.exception.diagnostics[0]
+        self.assertEqual(diagnostic.code, "TYPCAST-IR-0003")
+        self.assertEqual(diagnostic.path, "/metadata/title")
+
+    def test_a_lone_trailing_surrogate_is_rejected(self) -> None:
+        built = document(metadata=Metadata(title="Title\uDC00"))
+        with self.assertRaises(SerializationError) as caught:
+            built.to_json()
+        self.assertEqual(
+            caught.exception.diagnostics[0].code,
+            "TYPCAST-IR-0003",
+        )
+
+    def test_a_surrogate_in_a_nested_string_is_rejected(self) -> None:
+        built = document(contents=[Paragraph(content=[Text("Body\uD800")])])
+        with self.assertRaises(SerializationError) as caught:
+            built.to_json()
+        diagnostic = caught.exception.diagnostics[0]
+        self.assertEqual(diagnostic.code, "TYPCAST-IR-0003")
+        self.assertEqual(diagnostic.path, "/contents/0/content/0/value")
+
+    def test_a_surrogate_in_the_name_of_a_property_is_rejected(self) -> None:
+        # The names of the properties of a document are fixed, so the check of
+        # a name belongs to the helper that walks a value.
+        with self.assertRaises(SerializationError) as caught:
+            assert_encodable({"a\uD800b": "value"}, "")
+        self.assertEqual(
+            caught.exception.diagnostics[0].code,
+            "TYPCAST-IR-0003",
+        )
+
+    def test_a_character_outside_the_basic_multilingual_plane_is_accepted(self) -> None:
+        built = document(metadata=Metadata(title="Title\U0001f600"))
+        self.assertIn("😀", built.to_json())
+
+    def test_the_json_value_of_a_document_holds_no_surrogate(self) -> None:
+        built = document(metadata=Metadata(title="Title\uD800"))
+        with self.assertRaises(SerializationError) as caught:
+            built.to_dict()
+        self.assertEqual(
+            caught.exception.diagnostics[0].code,
+            "TYPCAST-IR-0003",
+        )
+
+
+class NumberDomainTests(unittest.TestCase):
+    """Checks the number domain of the document IR."""
+
+    def test_a_length_that_the_number_domain_cannot_hold_is_narrowed(self) -> None:
+        # The numbers of the IR live in the binary64 domain of ECMAScript, so
+        # a Python integer that the domain cannot hold exactly is rounded to
+        # the nearest representable value, exactly as TypeScript does.
+        length = Length(value=9007199254740993, unit="cm")
+        self.assertEqual(length.value, 9007199254740992.0)
+        self.assertEqual(length.to_dict()["value"], 9007199254740992)
+
+    def test_the_narrowed_length_survives_the_round_trip(self) -> None:
+        built = document(
+            page=Page(
+                paper="a4",
+                orientation="portrait",
+                margin=margin(9007199254740993),
+            )
+        )
+        text = built.to_json()
+        self.assertIn('"value": 9007199254740992,', text)
+        again = Document.from_json(text)
+        self.assertEqual(again.to_dict(), built.to_dict())
+
+    def test_a_negative_length_shows_the_canonical_number(self) -> None:
+        # The TypeScript SDK writes the same message.
+        with self.assertRaises(ValidationError) as caught:
+            Length(-1e-7, "cm")
+        self.assertEqual(
+            caught.exception.diagnostics[0].message,
+            "'/value' must not be negative, got -1e-7.",
+        )
+
+    def test_a_negative_zero_is_written_as_zero(self) -> None:
+        built = document(
+            page=Page(paper="a4", orientation="portrait", margin=margin(-0.0))
+        )
+        self.assertIn('"value": 0,', built.to_json())
+
+    def test_a_small_number_is_written_in_the_exponential_form(self) -> None:
+        built = document(
+            page=Page(paper="a4", orientation="portrait", margin=margin(1e-7))
+        )
+        self.assertIn('"value": 1e-7,', built.to_json())
+
+    def test_a_large_number_is_written_in_the_exponential_form(self) -> None:
+        built = document(
+            page=Page(paper="a4", orientation="portrait", margin=margin(1e21))
+        )
+        self.assertIn('"value": 1e+21,', built.to_json())
+
+    def test_the_smallest_number_of_the_domain_is_written_exactly(self) -> None:
+        built = document(
+            page=Page(paper="a4", orientation="portrait", margin=margin(5e-324))
+        )
+        self.assertIn('"value": 5e-324,', built.to_json())
+
+
 class SerializationTests(unittest.TestCase):
     """Checks the canonical JSON form of the document."""
 
@@ -775,6 +988,34 @@ class DeserializationTests(unittest.TestCase):
         with self.assertRaises(SerializationError) as caught:
             Document.from_dict(value)
         self.assertEqual(caught.exception.diagnostics[0].code, "TYPCAST-IR-0004")
+
+    def test_a_nested_object_with_a_key_that_is_not_a_string_is_rejected(self) -> None:
+        value = document().to_dict()
+        value["metadata"][1] = value["metadata"]["title"]
+        with self.assertRaises(SerializationError) as caught:
+            Document.from_dict(value)
+        diagnostic = caught.exception.diagnostics[0]
+        self.assertEqual(diagnostic.code, "TYPCAST-IR-0004")
+        self.assertEqual(diagnostic.path, "/metadata")
+        self.assertEqual(dict(diagnostic.details), {"keyType": "non-string"})
+
+    def test_a_block_with_a_key_that_is_not_a_string_is_rejected(self) -> None:
+        value = document().to_dict()
+        value["contents"][0][1] = "not a field"
+        with self.assertRaises(SerializationError) as caught:
+            Document.from_dict(value)
+        diagnostic = caught.exception.diagnostics[0]
+        self.assertEqual(diagnostic.code, "TYPCAST-IR-0004")
+        self.assertEqual(diagnostic.path, "/contents/0")
+
+    def test_a_module_with_a_key_that_is_not_a_string_is_rejected(self) -> None:
+        value = document().to_dict()
+        value["modules"] = [{"path": "modules/report.typ", 1: "not a field"}]
+        with self.assertRaises(SerializationError) as caught:
+            Document.from_dict(value)
+        diagnostic = caught.exception.diagnostics[0]
+        self.assertEqual(diagnostic.code, "TYPCAST-IR-0004")
+        self.assertEqual(diagnostic.path, "/modules/0")
 
     def test_every_error_carries_a_diagnostic(self) -> None:
         with self.assertRaises(TypcastError) as caught:

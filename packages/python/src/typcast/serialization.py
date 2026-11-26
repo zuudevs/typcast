@@ -11,9 +11,9 @@ from __future__ import annotations
 
 import json
 import math
-from decimal import Decimal
 from typing import Any, Callable, Mapping, Sequence, TypeVar
 
+from typcast.canonical import assert_encodable, escape_pointer_token
 from typcast.diagnostics import (
     CODE_INVALID_ENUM,
     CODE_MALFORMED_JSON,
@@ -50,6 +50,7 @@ from typcast.models.spans import (
     RawSpan,
     Text,
 )
+from typcast.numbers import format_number
 from typcast.version import check_schema_version
 
 __all__ = [
@@ -124,7 +125,7 @@ def document_from_dict(value: Any) -> Document:
 def document_to_json(document: Document) -> str:
     """Returns the canonical JSON text of a document."""
     value = document_to_dict(document)
-    _assert_encodable(value, "")
+    assert_encodable(value, "")
     return _dumps(value) + "\n"
 
 
@@ -186,13 +187,14 @@ def _as_object(value: Any, path: str) -> dict[str, Any]:
         )
     # A JSON object has string keys only. A mapping of another key type is
     # not a JSON object, and the key cannot become a token of a JSON Pointer.
+    # The details name the kind of the key in the same words in both SDKs.
     for name in value:
         if not isinstance(name, str):
             raise_serialization(
                 CODE_ROOT_SHAPE,
                 f"'{path or '/'}' must be a JSON object whose keys are strings.",
                 path or None,
-                {"keyType": type(name).__name__},
+                {"keyType": "non-string"},
             )
     return value
 
@@ -268,19 +270,10 @@ def _as_number(value: Any, path: str) -> float:
     return number
 
 
-def _escape_pointer_token(token: str) -> str:
-    """Returns a JSON Pointer token, as RFC 6901 defines it.
-
-    A `~` becomes `~0` and a `/` becomes `~1`, so that a property name that
-    holds one of those characters still points at the property.
-    """
-    return token.replace("~", "~0").replace("/", "~1")
-
-
 def _check_fields(value: Mapping[str, Any], allowed: frozenset[str], path: str) -> None:
     for name in value:
         if name not in allowed:
-            location = f"{path}/{_escape_pointer_token(name)}"
+            location = f"{path}/{escape_pointer_token(name)}"
             raise_validation(
                 CODE_UNKNOWN_FIELD,
                 f"'{location}' is not a known field.",
@@ -574,42 +567,6 @@ def _parse_blocks(value: Any, path: str) -> tuple[Block, ...]:
 # ---------------------------------------------------------------------------
 
 
-def _assert_encodable(value: Any, path: str) -> None:
-    """Rejects a value that holds a character that UTF-8 cannot encode.
-
-    Python holds a lone surrogate in a string, and the writer writes such a
-    character literally because it keeps the text of the document. The result
-    would be a JSON text that no UTF-8 encoder can encode. The TypeScript SDK
-    rejects the same value, so both SDKs reject it.
-    """
-    if isinstance(value, str):
-        for index, character in enumerate(value):
-            code = ord(character)
-            if 0xD800 <= code <= 0xDBFF:
-                following = ord(value[index + 1]) if index + 1 < len(value) else 0
-                if not 0xDC00 <= following <= 0xDFFF:
-                    _raise_unencodable(path)
-            elif 0xDC00 <= code <= 0xDFFF:
-                _raise_unencodable(path)
-        return
-    if isinstance(value, Mapping):
-        for name, item in value.items():
-            _assert_encodable(name, path)
-            _assert_encodable(item, f"{path}/{name}")
-        return
-    if isinstance(value, (list, tuple)):
-        for index, item in enumerate(value):
-            _assert_encodable(item, f"{path}/{index}")
-
-
-def _raise_unencodable(path: str) -> None:
-    raise_serialization(
-        CODE_NOT_SERIALIZABLE,
-        f"'{path}' holds a surrogate that UTF-8 cannot encode.",
-        path if path else None,
-    )
-
-
 def _dumps(value: Any) -> str:
     parts: list[str] = []
     _write(value, 0, parts)
@@ -625,10 +582,8 @@ def _write(value: Any, level: int, parts: list[str]) -> None:
         parts.append("false")
     elif isinstance(value, str):
         parts.append(json.dumps(value, ensure_ascii=False))
-    elif isinstance(value, int):
-        parts.append(_format_integer(value))
-    elif isinstance(value, float):
-        parts.append(_format_float(value))
+    elif isinstance(value, (int, float)):
+        parts.append(format_number(value))
     elif isinstance(value, dict):
         _write_object(value, level, parts)
     elif isinstance(value, (list, tuple)):
@@ -672,40 +627,3 @@ def _write_array(value: Sequence[Any], level: int, parts: list[str]) -> None:
     parts.append("\n")
     parts.append("  " * level)
     parts.append("]")
-
-
-def _format_integer(value: int) -> str:
-    if -(2**53) <= value <= 2**53:
-        return str(value)
-    return _format_float(float(value))
-
-
-def _format_float(value: float) -> str:
-    """Formats a number the way the JavaScript serializer formats it."""
-    if math.isnan(value) or math.isinf(value):
-        raise_serialization(
-            CODE_NOT_SERIALIZABLE,
-            "NaN and Infinity cannot be serialized.",
-        )
-    if value == 0:
-        return "0"
-    sign, digits, exponent = Decimal(repr(value)).as_tuple()
-    coefficient = list(digits)
-    while len(coefficient) > 1 and coefficient[-1] == 0:
-        coefficient.pop()
-        exponent += 1
-    text = "".join(str(digit) for digit in coefficient)
-    count = len(text)
-    point = exponent + count
-    if -6 < point <= 21:
-        if point <= 0:
-            body = "0." + "0" * (-point) + text
-        elif point >= count:
-            body = text + "0" * (point - count)
-        else:
-            body = text[:point] + "." + text[point:]
-    else:
-        mantissa = text[0] if count == 1 else text[0] + "." + text[1:]
-        power = point - 1
-        body = mantissa + "e" + ("+" if power >= 0 else "-") + str(abs(power))
-    return ("-" if sign else "") + body

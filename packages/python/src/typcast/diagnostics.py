@@ -131,16 +131,55 @@ def safe_value(value: Any) -> Any:
     return type(value).__name__
 
 
-def safe_text(value: Any) -> str:
-    """Returns a short, readable representation of a value.
+# The escape sequences of a rejected value. A control character that has no
+# sequence of its own is written as a `\u00xx` escape. The TypeScript SDK
+# applies the same rule.
+_ESCAPE_SEQUENCES: Mapping[str, str] = {
+    "\\": "\\\\",
+    "'": "\\'",
+    '"': '\\"',
+    "\n": "\\n",
+    "\r": "\\r",
+    "\t": "\\t",
+}
 
-    The message of a diagnostic stays readable, so a long value is shortened.
-    The TypeScript SDK applies the same rule.
+
+def _escape_text(text: str) -> str:
+    """Returns the text of a value with every breakable character escaped."""
+    parts: list[str] = []
+    for character in text:
+        sequence = _ESCAPE_SEQUENCES.get(character)
+        if sequence is not None:
+            parts.append(sequence)
+            continue
+        code = ord(character)
+        if code < 0x20 or code == 0x7F:
+            parts.append(f"\\u{code:04x}")
+            continue
+        parts.append(character)
+    return "".join(parts)
+
+
+def safe_text(value: Any) -> str:
+    """Returns the canonical text of a rejected value.
+
+    The text holds at most 64 code points of the value, followed by an
+    ellipsis when the value is longer. Every character that could break the
+    text of a message is escaped, so that a quote, a backslash, a newline, a
+    carriage return, a tab, and any other control character appear as an
+    escape sequence. Every other character is shown as it is.
+
+    The rule is the one of `docs/specifications/diagnostics.md`, and the
+    TypeScript SDK applies the same rule, so that the message of a diagnostic
+    is the same in both SDKs.
     """
     text = value if isinstance(value, str) else str(safe_value(value))
-    if len(text) <= MAX_DIAGNOSTIC_VALUE_LENGTH:
-        return text
-    return text[:MAX_DIAGNOSTIC_VALUE_LENGTH] + "…"
+    characters = list(text)
+    truncated = len(characters) > MAX_DIAGNOSTIC_VALUE_LENGTH
+    if truncated:
+        characters = characters[:MAX_DIAGNOSTIC_VALUE_LENGTH]
+    escaped = _escape_text("".join(characters))
+    return escaped + "…" if truncated else escaped
 
 
 @dataclass(frozen=True)

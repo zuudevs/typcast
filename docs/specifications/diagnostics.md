@@ -49,8 +49,28 @@ cannot represent is replaced by the name of its type, and a number that is not
 finite is spelled in the form of ECMAScript.
 
 The `message` of a diagnostic is human-readable text. When it shows a rejected
-value, it shows at most 64 code points of that value, so that the message stays
-readable.
+value, it shows it in the canonical form of the next section, so that the
+message stays readable.
+
+## Rejected values
+
+A message that shows a rejected value shows it in one canonical form. The two
+SDKs apply the same rule, so that the message of a diagnostic is the same in
+both SDKs.
+
+| Step | Rule |
+|---|---|
+| Text | The value is reduced to its text. A value of a type that JSON cannot represent is the name of its type, and a number that is not finite is spelled in the form of ECMAScript. |
+| Length | The text holds at most 64 Unicode code points. A longer text is cut after the 64th code point, and an ellipsis (`…`) follows the cut. |
+| Escaping | A backslash becomes `\\`, a single quote becomes `\'`, a double quote becomes `\"`, a newline becomes `\n`, a carriage return becomes `\r`, a tab becomes `\t`, and every other control character (U+0000 to U+001F and U+007F) becomes a `\u00xx` escape with lower-case hexadecimal digits. Every other character is shown as it is. |
+
+The length is counted in Unicode code points, and the cut never splits a
+character that lies outside the basic multilingual plane.
+
+The `details` of a diagnostic hold the rejected value under `value` in the
+JSON-safe form: the value itself for a string, a number, a boolean, or `null`,
+and the name of its type for a value of another type. The details are
+machine-readable, and the message holds the canonical text of the value.
 
 ## Message wording
 
@@ -64,6 +84,9 @@ these rules:
 - An element of a collection names its type, such as `must be a Span`.
 - A rejected enum value is shown in single quotes after `got`, and a rejected
   value of another type is not shown at all.
+- A rejected value is shown in the canonical form of the section above, so
+  that a quote, a backslash, and a control character never break the text of
+  a message.
 - The reason of a parser of the runtime belongs to `details`, not to the
   message, because the parsers of the two runtimes word their reason
   differently. The message of a malformed JSON text is the same in both SDKs.
@@ -259,6 +282,7 @@ parsers of the two runtimes word their reason differently.
 | DIAG-014 | The details of a diagnostic MUST stay JSON-serializable. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the details cases. |
 | DIAG-015 | The message of a diagnostic MUST be the same in both SDKs, and MUST show at most 64 code points of a rejected value. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the message cases, and `//tests/contract:contract_py` and `//tests/contract:contract_ts_test` compare the message of every negative fixture that the manifest names. |
 | DIAG-016 | The details of a diagnostic MUST be the same in both SDKs, except the reason of the parser of the runtime. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the details cases, and `//tests/contract:contract_py` and `//tests/contract:contract_ts_test` compare the details of every negative fixture that the manifest names. |
+| DIAG-017 | A rejected value MUST be shown in one canonical form in both SDKs: the same escaping of the quotes, the backslash, and the control characters, and the same limit of 64 Unicode code points. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the rejected-value cases, and the shared fixtures `date-quoted.json`, `date-control-chars.json`, `date-long.json`, `date-unicode.json`, `version-quoted.json`, `version-control-chars.json`, `version-long.json`, `enum-quoted.json`, `enum-control-chars.json`, and `enum-long.json` of `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`. |
 | DIAG-007 | Compiler diagnostics MUST preserve raw output in `details.raw`. | CONFIRMED | Compiler test. |
 | DIAG-008 | Compiler diagnostics MUST include location when parseable. | CONFIRMED | Compiler test. |
 | DIAG-009 | Messages MUST be English-only for `1.0.0`. | IMPLEMENTED | Every diagnostic message of both SDKs is English. |

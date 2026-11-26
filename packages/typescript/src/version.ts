@@ -8,6 +8,7 @@
 
 import {
   CODE_UNSUPPORTED_VERSION,
+  safeText,
   throwSerialization,
 } from "./diagnostics.js";
 
@@ -35,7 +36,7 @@ export function parseSchemaVersion(value: string): [number, number, number] {
   if (match === null) {
     throwSerialization(
       CODE_UNSUPPORTED_VERSION,
-      `'schemaVersion' must be a semantic version, got '${value}'.`,
+      `'schemaVersion' must be a semantic version, got '${safeText(value)}'.`,
       "/schemaVersion",
       { value },
     );
@@ -56,7 +57,7 @@ export function checkSchemaVersion(value: string): [number, number, number] {
   if (major !== SUPPORTED_SCHEMA_MAJOR || minor > SUPPORTED_SCHEMA_MINOR) {
     throwSerialization(
       CODE_UNSUPPORTED_VERSION,
-      `'schemaVersion' '${value}' is not supported; this SDK reads ` +
+      `'schemaVersion' '${safeText(value)}' is not supported; this SDK reads ` +
         `${SUPPORTED_SCHEMA_MAJOR}.${SUPPORTED_SCHEMA_MINOR}.x.`,
       "/schemaVersion",
       {

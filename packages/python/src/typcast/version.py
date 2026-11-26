@@ -13,6 +13,7 @@ import re
 from typcast.diagnostics import (
     CODE_UNSUPPORTED_VERSION,
     raise_serialization,
+    safe_text,
 )
 
 __all__ = [
@@ -63,7 +64,7 @@ def parse_schema_version(value: str) -> tuple[float, float, float]:
     if match is None:
         raise_serialization(
             CODE_UNSUPPORTED_VERSION,
-            f"'schemaVersion' must be a semantic version, got {value!r}.",
+            f"'schemaVersion' must be a semantic version, got '{safe_text(value)}'.",
             "/schemaVersion",
             {"value": value},
         )
@@ -87,7 +88,7 @@ def check_schema_version(value: str) -> tuple[float, float, float]:
     if major != SUPPORTED_SCHEMA_MAJOR or minor > SUPPORTED_SCHEMA_MINOR:
         raise_serialization(
             CODE_UNSUPPORTED_VERSION,
-            f"'schemaVersion' {value!r} is not supported; this SDK reads "
+            f"'schemaVersion' '{safe_text(value)}' is not supported; this SDK reads "
             f"{SUPPORTED_SCHEMA_MAJOR}.{SUPPORTED_SCHEMA_MINOR}.x.",
             "/schemaVersion",
             {

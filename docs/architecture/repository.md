@@ -98,6 +98,8 @@ The Python distribution named `typcast`. The modules of the first release are:
 | `typcast.diagnostics` | Diagnostic types and code catalog. |
 | `typcast.serialization` | JSON IR serialization and deserialization. |
 | `typcast.version` | The schema version of the document IR and the version rules. |
+| `typcast.numbers` | The binary64 number domain of the IR and the canonical number text. |
+| `typcast.canonical` | The canonical JSON Pointer escaping and the encodability check. |
 | `typcast.builder` | Fluent builder. Not implemented. |
 | `typcast.validation` | Schema and semantic validation. Not implemented. |
 | `typcast.typst` | Typst emitter and escaping. Not implemented. |
@@ -112,8 +114,9 @@ but the public import path MUST NOT change.
 The npm distribution named `typcast`. The source modules mirror the Python
 responsibilities: `src/models/` holds the immutable model types, `src/diagnostics.ts`
 holds the diagnostic types and the code catalog, `src/serialization.ts` holds the
-JSON IR serialization and deserialization, and `src/version.ts` holds the schema
-version and the version rules. The package MUST expose ESM entry points, type
+JSON IR serialization and deserialization, `src/version.ts` holds the schema
+version and the version rules, and `src/canonical.ts` holds the canonical JSON
+Pointer escaping and the encodability check. The package MUST expose ESM entry points, type
 declarations, and compiled JavaScript. The current `package.json` name is
 `typcast`, and the repository checks reject a different name. The manifest is
 still `private`, and that must change before publication.

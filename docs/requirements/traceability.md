@@ -2,7 +2,7 @@
 
 Status: CONFIRMED
 Scope: Normative
-Last updated: 2026-11-25
+Last updated: 2026-11-26
 
 ## Purpose
 
@@ -18,13 +18,13 @@ change impact analysis.
 | Use cases | `product/use-cases.md` | Journey IDs `UC-001` to `UC-004`; acceptance criteria `AC-001` to `AC-018`; requirements `UCR-001` to `UCR-007` | Example and integration tests. |
 | Architecture | `architecture/overview.md` | `ARC-001` to `ARC-015` | Design review, parity tests. |
 | Repository | `architecture/repository.md` | `REPO-001` to `REPO-012` | Bazel build, dependency review. |
-| Document IR | `specifications/document-ir.md` | `IR-001` to `IR-022` | Schema and contract tests. |
+| Document IR | `specifications/document-ir.md` | `IR-001` to `IR-024` | Schema and contract tests. |
 | Nodes | `specifications/nodes.md` | `NODE-001` to `NODE-025` | Golden and emitter tests. |
-| Schema | `specifications/schema.md` | `SCH-001` to `SCH-021` | Schema lint and bundle tests. |
+| Schema | `specifications/schema.md` | `SCH-001` to `SCH-022` | Schema lint and bundle tests. |
 | SDK API | `specifications/sdk-api.md` | `API-001` to `API-026` | API and parity tests. |
 | Emitter | `specifications/emitter.md` | `EMIT-001` to `EMIT-022` | Byte-level golden tests. |
 | Compiler | `specifications/compiler.md` | `COMP-001` to `COMP-022` | Compiler integration tests. |
-| Diagnostics | `specifications/diagnostics.md` | `DIAG-001` to `DIAG-016` | Negative and parity tests. |
+| Diagnostics | `specifications/diagnostics.md` | `DIAG-001` to `DIAG-017` | Negative and parity tests. |
 | Assets | `specifications/assets.md` | `ASSET-001` to `ASSET-020` | Path and workspace tests. |
 | Compatibility | `specifications/compatibility.md` | `COMPAT-001` to `COMPAT-019` | CI matrix. |
 | Build | `development/build.md` | `BUILD-001` to `BUILD-022` | Bazel commands. |
@@ -142,9 +142,10 @@ a target for the MVP and is not yet verified in the repository.
 | `SCH-008` | Every relative `$ref` of the bundle resolves inside the bundle. | `//specs/schemas:schema_tests`; the reference rule. |
 | `SCH-009` | The schema contract is validated against the built bundle, not against the source tree. | `//specs/schemas:schema_tests`; 6 bundle files checked, 0 violations. |
 | `SCH-020` | The ten prototype defects `SCH-D01` to `SCH-D10` are closed. | `specifications/schema.md`; the bundle test reports no violation. |
+| `SCH-022` | The pattern of `schemaVersion` is the one of a semantic version, and it matches the whole text. | `//specs/schemas:schema_tests`; the check of the pattern reads the pattern that `validator.schema.json` carries and rejects a leading zero, a Unicode digit, and a trailing newline or carriage return. |
 | `DOC-015` | The root `README.md` uses standard code fences and LF line endings. | Documentation validation script run on 2026-11-24. |
 | `DOC-016` | `.gitattributes` pins LF for text files and `.editorconfig` pins UTF-8, LF, final newline, and indentation. | Files present at the repository root. |
-| `DOC-021` | `scripts/validate_docs.py` validates the documents, the requirement index, the ADR index, and the schema references with the standard library only. | `//scripts:docs_checks`; 57 files, 461 requirements, and 3 workflows checked with 0 errors. |
+| `DOC-021` | `scripts/validate_docs.py` validates the documents, the requirement index, the ADR index, and the schema references with the standard library only. | `//scripts:docs_checks`; 57 files, 473 requirements, and 3 workflows checked with 0 errors. |
 | `DOC-012` | The documentation gate runs on pull requests. | The `Documentation gate` job of `.github/workflows/pr.yml`. |
 | `DOC-013` | The documentation gate runs on `main`. | The `Documentation gate` job of `.github/workflows/main.yml`. |
 | `DOC-022` | The repository gate validates the workflow files: pinned actions, declared permissions, no write access or secret in a pull request workflow, and no `pull_request_target`. | `//scripts:docs_checks`; 3 workflows checked. |
@@ -173,7 +174,7 @@ a target for the MVP and is not yet verified in the repository.
 | `BUILD-007` | The branch protection of `main` requires the `Test` checks of the pull request lane, and every job of that lane runs `bazel test //...`. | The branch protection settings of the repository; the checks passed on 2026-11-24. |
 | `DOC-014` | No module of `scripts/` imports the SDK package, so the documentation tooling adds no SDK runtime dependency. | `//scripts:repository_checks`; `//scripts/tests:repository_tests`. |
 | `DOC-017` | Every ADR holds the title, the fields, and the sections of the template of `docs/decisions/README.md`, in the documented order. | `//scripts:repository_checks`; `//scripts/tests:repository_tests`. |
-| `DOC-026` | The rules of the repository structure checks are covered by unit tests, and the checks run in the pull request lane, in the main lane, and in the release lane. | `//scripts/tests:repository_tests`; 30 cases; the `Repository checks` job of `pr.yml` and `main.yml`; the `verify` job of `release.yml`. |
+| `DOC-026` | The rules of the repository structure checks are covered by unit tests, and the checks run in the pull request lane, in the main lane, and in the release lane. | `//scripts/tests:repository_tests`; 47 cases; the `Repository checks` job of `pr.yml` and `main.yml`; the `verify` job of `release.yml`. |
 | `DOC-027` | The repository publishes the scope document, and the root README links it. | `//scripts:repository_checks`; `//scripts/tests:repository_tests`. |
 | `DOC-001` | Every document is UTF-8 without a byte order mark. | `//scripts:docs_checks`; the encoding rule. |
 | `DOC-002` | Every document uses LF line endings and ends with a final newline. | `//scripts:docs_checks`; the encoding rule. |
@@ -247,6 +248,8 @@ a target for the MVP and is not yet verified in the repository.
 | `IR-018` | The shared fixtures are language-neutral JSON, and both SDKs read them. | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`; the fixtures under `tests/fixtures/documents/`. |
 | `IR-021` | Both SDKs hold the numbers of a document in the binary64 number domain of ECMAScript, so a value that the domain cannot hold is narrowed the same way and a value that overflows the domain is rejected. | `//packages/python/tests:model_tests`; `//packages/typescript:model_test_run`; the number-domain cases, and the fixture `large-number.json`. |
 | `IR-022` | Both SDKs reject an image whose width is zero, because the IR requires a positive width. | `//packages/python/tests:model_tests`; `//packages/typescript:model_test_run`; the image-width cases, and the fixture `invalid-image-width.json`. |
+| `IR-023` | Both SDKs reject a JSON object that holds a key that is not a string. | `//packages/python/tests:model_tests`; `//packages/typescript:model_test_run`; the nested-key cases, and the fixture `non-string-key.json` of `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`. |
+| `IR-024` | Both SDKs reject a document that holds a character that UTF-8 cannot encode when they write it. | `//packages/python/tests:model_tests`; `//packages/typescript:model_test_run`; the encodability cases, and the fixture `unpaired-surrogate.json` of `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`. |
 | `API-004` | The constructors of both SDKs check the type, the enum literal, the range, and the emptiness of their arguments. | `//packages/python/tests:model_tests`; `//packages/typescript:model_test_run`; the constructor cases, including the text-length cases of the title and the author, and the negative fixture `invalid-title-length.json`. |
 | `API-009` | Both SDKs write the canonical JSON form: two-space indentation, the field order of the contract, and a trailing newline. | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`; every shared fixture is written back byte for byte. |
 | `API-010` | Both SDKs reject an unknown field, a missing required field, and an unsupported version. | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`; the negative fixtures of the manifest. |
@@ -263,6 +266,7 @@ a target for the MVP and is not yet verified in the repository.
 | `DIAG-014` | The details of a diagnostic of both SDKs stay JSON-serializable, even when the rejected value has a type that JSON cannot represent. | `//packages/python/tests:model_tests`; `//packages/typescript:model_test_run`; the details cases. |
 | `DIAG-015` | Both SDKs report an invalid input with the same message, and the message shows at most 64 code points of a rejected value. | `//packages/python/tests:model_tests`; `//packages/typescript:model_test_run`; the message cases, and `//tests/contract:contract_py` and `//tests/contract:contract_ts_test` compare the message of every negative fixture that the manifest names. |
 | `DIAG-016` | Both SDKs describe an invalid input with the same details, except the reason of the parser of the runtime. | `//packages/python/tests:model_tests`; `//packages/typescript:model_test_run`; the details cases, and `//tests/contract:contract_py` and `//tests/contract:contract_ts_test` compare the details of every negative fixture that the manifest names. |
+| `DIAG-017` | Both SDKs show a rejected value in one canonical form, with the same escaping and the same limit of 64 Unicode code points. | `//packages/python/tests:model_tests`; `//packages/typescript:model_test_run`; the rejected-value cases, and the fixtures of the manifest that hold a quoted, a control-character, or a long value. |
 | `DIAG-009` | Every diagnostic message of both SDKs is English. | `typcast.diagnostics`; `packages/typescript/src/diagnostics.ts`. |
 | `DIAG-010` | An application handles an error by its code, and the manifest names the expected code of every negative fixture. | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`; the manifest of the shared fixtures. |
 | `NODE-001` | The model of both SDKs holds the seven block types of the catalog and no other. | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the node-type case. |

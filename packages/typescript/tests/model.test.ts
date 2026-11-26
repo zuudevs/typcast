@@ -34,6 +34,7 @@ import {
   VERSION,
 } from "../lib/src/index.js";
 import type { Block } from "../lib/src/index.js";
+import { assertEncodable } from "../lib/src/canonical.js";
 
 const failures: string[] = [];
 
@@ -124,6 +125,266 @@ function expectMessage(
     return;
   }
   failures.push(`${message}: the call must fail`);
+}
+
+/**
+ * Returns the details of a diagnostic with the keys sorted.
+ *
+ * The order of the keys of a JSON object belongs to no contract, so the two
+ * SDKs may write the same details in another order.
+ */
+function sortedDetails(
+  details: Readonly<Record<string, unknown>>,
+): Record<string, unknown> {
+  const sorted: Record<string, unknown> = {};
+  for (const key of Object.keys(details).sort()) {
+    sorted[key] = details[key];
+  }
+  return sorted;
+}
+
+/** Checks a diagnostic against an expectation. */
+function expectDiagnostic(
+  code: string,
+  path: string | null,
+  message: string,
+  details: Readonly<Record<string, unknown>>,
+  factory: () => unknown,
+  context: string,
+): void {
+  try {
+    factory();
+  } catch (error) {
+    if (!(error instanceof TypcastError)) {
+      failures.push(`${context}: the failure must be a TypcastError`);
+      return;
+    }
+    const diagnostic = error.diagnostics[0];
+    checkEqual(diagnostic?.code ?? "", code, `${context}: the code must match`);
+    checkEqual(
+      diagnostic?.path ?? "",
+      path ?? "",
+      `${context}: the path must match`,
+    );
+    checkEqual(
+      diagnostic?.message ?? "",
+      message,
+      `${context}: the message must match`,
+    );
+    check(
+      JSON.stringify(sortedDetails(diagnostic?.details ?? {})) ===
+        JSON.stringify(sortedDetails(details)),
+      `${context}: the details must match`,
+    );
+    return;
+  }
+  failures.push(`${context}: the call must fail`);
+}
+
+// ---------------------------------------------------------------------------
+// Rejected values
+// ---------------------------------------------------------------------------
+
+function rejectedValueTests(): void {
+  // The Python SDK writes the same messages, and the shared fixtures of the
+  // contract name them.
+  expectDiagnostic(
+    "TYPCAST-VAL-0003",
+    "/orientation",
+    "'/orientation' must be one of landscape, portrait, got 'di\\'\\\"\\\\'.",
+    { allowed: ["landscape", "portrait"], value: "di'\"\\" },
+    () => new Page("a4", "di'\"\\" as "portrait", margin()),
+    "a rejected value must escape the quotes and the backslash",
+  );
+  expectDiagnostic(
+    "TYPCAST-VAL-0003",
+    "/orientation",
+    "'/orientation' must be one of landscape, portrait, got 'di\\n\\r\\t'.",
+    { allowed: ["landscape", "portrait"], value: "di\n\r\t" },
+    () => new Page("a4", "di\n\r\t" as "portrait", margin()),
+    "a rejected value must escape the control characters",
+  );
+  expectDiagnostic(
+    "TYPCAST-VAL-0003",
+    "/orientation",
+    "'/orientation' must be one of landscape, portrait, got 'di\\u0000\\u001f\\u007f'.",
+    { allowed: ["landscape", "portrait"], value: "di\u0000\u001f\u007f" },
+    () => new Page("a4", "di\u0000\u001f\u007f" as "portrait", margin()),
+    "a rejected value must escape the other control characters",
+  );
+  expectDiagnostic(
+    "TYPCAST-VAL-0011",
+    "/date",
+    "'/date' must be a calendar date in YYYY-MM-DD form, got '2026-01-01\\'\\\"\\\\'.",
+    { value: "2026-01-01'\"\\" },
+    () => new Metadata("Title", null, "2026-01-01'\"\\"),
+    "a rejected date must escape the value",
+  );
+  expectDiagnostic(
+    "TYPCAST-VAL-0011",
+    "/date",
+    "'/date' is not a calendar date: '2026-02-30'.",
+    { value: "2026-02-30" },
+    () => new Metadata("Title", null, "2026-02-30"),
+    "an impossible date must name the value",
+  );
+  expectDiagnostic(
+    "TYPCAST-VAL-0011",
+    "/date",
+    "'/date' must be a calendar date in YYYY-MM-DD form, got '2026-01-01\\n'.",
+    { value: "2026-01-01\n" },
+    () => new Metadata("Title", null, "2026-01-01\n"),
+    "a date with a trailing newline must escape the value",
+  );
+  expectDiagnostic(
+    "TYPCAST-IR-0002",
+    "/schemaVersion",
+    "'schemaVersion' must be a semantic version, got '1.0.0\\'\\\"\\\\'.",
+    { value: "1.0.0'\"\\" },
+    () => new Document(new Metadata("Title"), new Page("a4", "portrait", margin()), [new Paragraph([new Text("Body")])], [], "1.0.0'\"\\"),
+    "a rejected version must escape the value",
+  );
+  expectDiagnostic(
+    "TYPCAST-IR-0002",
+    "/schemaVersion",
+    "'schemaVersion' '2.0.0' is not supported; this SDK reads 1.0.x.",
+    { value: "2.0.0", supportedMajor: 1, supportedMinor: 0 },
+    () => new Document(new Metadata("Title"), new Page("a4", "portrait", margin()), [new Paragraph([new Text("Body")])], [], "2.0.0"),
+    "an unsupported version must name the value",
+  );
+
+  // The length of the shown value is counted in code points, as the Python
+  // SDK counts it.
+  try {
+    new Page("a4", "😀".repeat(100) as "portrait", margin());
+    failures.push("a long enum value must be rejected");
+  } catch (error) {
+    if (error instanceof TypcastError) {
+      const message = error.diagnostics[0]?.message ?? "";
+      check(
+        message.includes("😀".repeat(64)),
+        "a shortened value must count code points",
+      );
+      check(
+        !message.includes("😀".repeat(65)),
+        "a shortened value must hold at most 64 code points",
+      );
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Encodability
+// ---------------------------------------------------------------------------
+
+function encodabilityTests(): void {
+  expectDiagnostic(
+    "TYPCAST-IR-0003",
+    "/metadata/title",
+    "'/metadata/title' holds a surrogate that UTF-8 cannot encode.",
+    {},
+    () => buildDocument(new Metadata("Title\uD800")).toJSONString(),
+    "a lone surrogate must be rejected",
+  );
+  expectDiagnostic(
+    "TYPCAST-IR-0003",
+    "/metadata/title",
+    "'/metadata/title' holds a surrogate that UTF-8 cannot encode.",
+    {},
+    () => buildDocument(new Metadata("Title\uDC00")).toJSONString(),
+    "a lone trailing surrogate must be rejected",
+  );
+  expectDiagnostic(
+    "TYPCAST-IR-0003",
+    "/contents/0/content/0/value",
+    "'/contents/0/content/0/value' holds a surrogate that UTF-8 cannot encode.",
+    {},
+    () =>
+      buildDocument(
+        undefined,
+        undefined,
+        [new Paragraph([new Text("Body\uD800")])],
+      ).toJSONString(),
+    "a surrogate in a nested string must be rejected",
+  );
+  expectCode(
+    "TYPCAST-IR-0003",
+    () => assertEncodable({ "a\uD800b": "value" }, ""),
+    "a surrogate in the name of a property must be rejected",
+  );
+  check(
+    buildDocument(new Metadata("Title😀")).toJSONString().includes("😀"),
+    "a character outside the basic multilingual plane must be accepted",
+  );
+  expectCode(
+    "TYPCAST-IR-0003",
+    () => buildDocument(new Metadata("Title\uD800")).toJSON(),
+    "the JSON value of a document must hold no surrogate",
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Number domain
+// ---------------------------------------------------------------------------
+
+function numberDomainTests(): void {
+  // The numbers of the IR live in the binary64 domain of ECMAScript, so a
+  // value that the domain cannot hold exactly is narrowed to the nearest
+  // representable value.
+  const length = new Length(9007199254740993, "cm");
+  checkEqual(
+    length.value,
+    9007199254740992,
+    "a length that the number domain cannot hold must be narrowed",
+  );
+  const built = buildDocument(
+    undefined,
+    new Page("a4", "portrait", margin(9007199254740993)),
+  );
+  const text = built.toJSONString();
+  check(
+    text.includes('"value": 9007199254740992,'),
+    "the narrowed length must be written exactly",
+  );
+  check(
+    JSON.stringify(Document.fromJSONString(text).toJSON()) ===
+      JSON.stringify(built.toJSON()),
+    "the narrowed length must survive the round trip",
+  );
+
+  expectMessage(
+    "'/value' must not be negative, got -1e-7.",
+    () => new Length(-1e-7, "cm"),
+    "a negative length must show the canonical number",
+  );
+  check(
+    buildDocument(
+      undefined,
+      new Page("a4", "portrait", margin(-0)),
+    ).toJSONString().includes('"value": 0,'),
+    "a negative zero must be written as zero",
+  );
+  check(
+    buildDocument(
+      undefined,
+      new Page("a4", "portrait", margin(1e-7)),
+    ).toJSONString().includes('"value": 1e-7,'),
+    "a small number must be written in the exponential form",
+  );
+  check(
+    buildDocument(
+      undefined,
+      new Page("a4", "portrait", margin(1e21)),
+    ).toJSONString().includes('"value": 1e+21,'),
+    "a large number must be written in the exponential form",
+  );
+  check(
+    buildDocument(
+      undefined,
+      new Page("a4", "portrait", margin(5e-324)),
+    ).toJSONString().includes('"value": 5e-324,'),
+    "the smallest number of the domain must be written exactly",
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -812,6 +1073,26 @@ function deserializationTests(): void {
     "an integer valued float level must be accepted",
   );
 
+  // The grammar of JSON holds no key that is not a string. A symbol key is
+  // the only key of a JavaScript object that is not a string, and the reader
+  // must reject it as it rejects another key in the Python SDK.
+  const symbolKey = buildDocument().toJSON() as Record<string, unknown>;
+  const symbolMetadata = symbolKey["metadata"] as Record<string, unknown>;
+  Object.defineProperty(symbolMetadata, Symbol("key"), {
+    value: "not a field",
+    enumerable: true,
+    configurable: true,
+    writable: true,
+  });
+  expectDiagnostic(
+    "TYPCAST-IR-0004",
+    "/metadata",
+    "'/metadata' must be a JSON object whose keys are strings.",
+    { keyType: "non-string" },
+    () => Document.fromJSON(symbolKey),
+    "a nested object with a key that is not a string must be rejected",
+  );
+
   const overflow = buildDocument().toJSON() as Record<string, unknown>;
   const page = overflow["page"] as Record<string, unknown>;
   const margins = page["margin"] as Record<string, unknown>;
@@ -954,6 +1235,9 @@ function versionTests(): void {
 
 immutabilityTests();
 constructorTests();
+rejectedValueTests();
+encodabilityTests();
+numberDomainTests();
 diagnosticMessageTests();
 serializationTests();
 deserializationTests();
