@@ -513,6 +513,32 @@ function diagnosticMessageTests(): void {
       );
     }
   }
+
+  // The details of a diagnostic name the same things in both SDKs.
+  try {
+    new Metadata("Title", null, "2026-02-30");
+    failures.push("an impossible date must be rejected");
+  } catch (error) {
+    if (error instanceof TypcastError) {
+      checkEqual(
+        JSON.stringify(error.diagnostics[0]?.details),
+        JSON.stringify({ value: "2026-02-30" }),
+        "the details of an invalid date must hold no cause",
+      );
+    }
+  }
+  try {
+    new Paragraph("Body" as unknown as readonly Text[]);
+    failures.push("a wrong collection must be rejected");
+  } catch (error) {
+    if (error instanceof TypcastError) {
+      checkEqual(
+        JSON.stringify(error.diagnostics[0]?.details),
+        JSON.stringify({ expected: "Span" }),
+        "the details of a collection error must name the element",
+      );
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------

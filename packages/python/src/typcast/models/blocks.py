@@ -6,7 +6,6 @@ so a later mutation of a caller-owned list cannot change a block.
 
 from __future__ import annotations
 
-from collections.abc import Sequence as SequenceABC
 from dataclasses import dataclass
 from typing import Any, ClassVar, Sequence
 
@@ -21,6 +20,7 @@ from typcast.models.base import (
     require_enum,
     require_instance,
     require_int,
+    require_sequence,
     require_string,
     require_tuple,
 )
@@ -108,9 +108,8 @@ class ListBlock(Block):
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "ordered", require_bool(self.ordered, "/ordered"))
-        items = require_tuple(
+        items = require_sequence(
             self.items,
-            SequenceABC,
             "/items",
             allow_empty=False,
             element_name="array of Span values",
@@ -180,18 +179,16 @@ class Table(Block):
             "columns",
             require_tuple(self.columns, TableColumn, "/columns", allow_empty=False),
         )
-        rows = require_tuple(
+        rows = require_sequence(
             self.rows,
-            SequenceABC,
             "/rows",
             allow_empty=False,
             element_name="array of arrays of Span values",
         )
         table_rows: list[tuple[tuple[Span, ...], ...]] = []
         for row_index, row in enumerate(rows):
-            cells = require_tuple(
+            cells = require_sequence(
                 row,
-                SequenceABC,
                 f"/rows/{row_index}",
                 element_name="array of Span values",
             )

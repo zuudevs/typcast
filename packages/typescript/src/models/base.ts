@@ -191,6 +191,9 @@ export function requireArray(
       CODE_REQUIRED_FIELD,
       `'${path}' must be an array${plural}.`,
       path,
+      // The details of a diagnostic must be JSON-serializable, and the
+      // Python SDK reports the same failure with the same details.
+      elementName === undefined ? {} : { expected: elementName },
     );
   }
   if (!allowEmpty && value.length === 0) {

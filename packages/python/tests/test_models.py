@@ -363,6 +363,22 @@ class ConstructorValidationTests(unittest.TestCase):
         self.assertIn("😀" * 64, diagnostic.message)
         self.assertNotIn("😀" * 65, diagnostic.message)
 
+    def test_the_details_of_an_invalid_date_hold_no_cause(self) -> None:
+        # The text of the exception of the runtime belongs to no place of the
+        # diagnostic, because the TypeScript SDK reports the same failure
+        # without it.
+        with self.assertRaises(ValidationError) as caught:
+            Metadata(title="T", date="2026-02-30")
+        diagnostic = caught.exception.diagnostics[0]
+        self.assertEqual(dict(diagnostic.details), {"value": "2026-02-30"})
+
+    def test_the_details_of_a_collection_error_name_the_element(self) -> None:
+        # The TypeScript SDK writes the same details.
+        with self.assertRaises(ValidationError) as caught:
+            Paragraph(content="Body")  # type: ignore[arg-type]
+        diagnostic = caught.exception.diagnostics[0]
+        self.assertEqual(dict(diagnostic.details), {"expected": "Span"})
+
     def test_a_collection_message_names_the_array(self) -> None:
         # The TypeScript SDK writes the same message.
         with self.assertRaises(ValidationError) as caught:

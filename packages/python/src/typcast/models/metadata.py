@@ -68,12 +68,15 @@ class Metadata:
         year, month, day = (int(part) for part in match.groups())
         try:
             datetime.date(year, month, day)
-        except ValueError as error:
+        except ValueError:
+            # The text of the exception of the runtime belongs to no place of
+            # the diagnostic, because the TypeScript SDK reports the same
+            # failure without it. The details of both SDKs must agree.
             raise_validation(
                 CODE_INVALID_DATE,
                 f"'/date' is not a calendar date: {value!r}.",
                 "/date",
-                {"value": value, "cause": str(error)},
+                {"value": value},
             )
 
     def to_dict(self) -> dict[str, Any]:

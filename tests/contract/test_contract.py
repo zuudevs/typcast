@@ -154,6 +154,21 @@ class DocumentFixtureTests(unittest.TestCase):
                     entry["message"],
                 )
 
+    def test_invalid_fixtures_are_rejected_with_the_expected_details(self) -> None:
+        # The manifest names the details of every negative fixture, so that
+        # the two SDKs describe an invalid input in the same way.
+        for entry in self.manifest["invalid"]:
+            with self.subTest(fixture=entry["file"]):
+                source = (self.root / entry["file"]).read_text(encoding="utf-8")
+                with self.assertRaises(TypcastError) as caught:
+                    Document.from_json(source)
+                details = dict(caught.exception.diagnostics[0].details)
+                # The reason of the parser of the runtime belongs to no
+                # expectation of the contract, because the two parsers word
+                # their reason differently.
+                details.pop("reason", None)
+                self.assertEqual(details, entry["details"])
+
     def test_invalid_fixtures_are_rejected_when_parsed_as_a_value(self) -> None:
         for entry in self.manifest["invalid"]:
             with self.subTest(fixture=entry["file"]):

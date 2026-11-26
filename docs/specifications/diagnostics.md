@@ -68,6 +68,16 @@ these rules:
   message, because the parsers of the two runtimes word their reason
   differently. The message of a malformed JSON text is the same in both SDKs.
 
+The `details` of a diagnostic follow the same rules in both SDKs:
+
+- The details name the rejected value under `value`, the allowed literals
+  under `allowed`, the name of the expected element under `expected`, the name
+  of the missing or unknown field under `field`, and the length of a string
+  under `length` and `maxLength`.
+- The details hold no text of the runtime, because the two runtimes word their
+  own errors differently. The reason of the parser of a malformed JSON text is
+  the only such text, and it belongs to the details under `reason`.
+
 ## Code families
 
 | Prefix | Family | Raised by |
@@ -227,11 +237,13 @@ Python and TypeScript diagnostics are compared on:
 - `phase`
 - `path`
 - `location` when deterministic
-- `details` after removing raw compiler output
+- `details` after removing raw compiler output and the reason of the parser of
+  the runtime
 - `message`
 
 Raw compiler output is excluded because it may contain absolute paths or
-platform-specific formatting.
+platform-specific formatting. The reason of the parser is excluded because the
+parsers of the two runtimes word their reason differently.
 
 ## Requirements
 
@@ -246,6 +258,7 @@ platform-specific formatting.
 | DIAG-013 | The tokens of a JSON Pointer MUST be escaped as RFC 6901 defines them. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the escaped-pointer cases. |
 | DIAG-014 | The details of a diagnostic MUST stay JSON-serializable. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the details cases. |
 | DIAG-015 | The message of a diagnostic MUST be the same in both SDKs, and MUST show at most 64 code points of a rejected value. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the message cases, and `//tests/contract:contract_py` and `//tests/contract:contract_ts_test` compare the message of every negative fixture that the manifest names. |
+| DIAG-016 | The details of a diagnostic MUST be the same in both SDKs, except the reason of the parser of the runtime. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the details cases, and `//tests/contract:contract_py` and `//tests/contract:contract_ts_test` compare the details of every negative fixture that the manifest names. |
 | DIAG-007 | Compiler diagnostics MUST preserve raw output in `details.raw`. | CONFIRMED | Compiler test. |
 | DIAG-008 | Compiler diagnostics MUST include location when parseable. | CONFIRMED | Compiler test. |
 | DIAG-009 | Messages MUST be English-only for `1.0.0`. | IMPLEMENTED | Every diagnostic message of both SDKs is English. |

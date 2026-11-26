@@ -273,6 +273,12 @@ No release has been published yet. Every change so far is listed under
   runtime, and the two parsers word their reason differently. Both SDKs now
   write the same message, and the reason belongs to the details of the
   diagnostic.
+- The Python SDK added the text of the exception of the runtime to the details
+  of the diagnostic of an impossible date, while the TypeScript SDK named the
+  rejected value only. Both SDKs now write the same details, and the
+  requirement `DIAG-016` records the rule. The manifest of the shared fixtures
+  names the details of every negative fixture, so a drift in the details fails
+  the contract tests.
 
 ### Known issues
 

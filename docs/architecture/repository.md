@@ -146,8 +146,9 @@ tests/
 Fixtures are language-neutral JSON documents. Expected `.typ` files are shared
 by both SDKs. Test code may be language-specific, but the inputs and expected
 outputs are not. The `manifest.json` of the fixture directory names every valid
-fixture and every negative fixture with the diagnostic code and the diagnostic
-message that the fixture must produce, so both SDKs check the same expectation.
+fixture and every negative fixture with the diagnostic code, the diagnostic
+message, and the diagnostic details that the fixture must produce, so both SDKs
+check the same expectation.
 
 ### `bazel/`
 

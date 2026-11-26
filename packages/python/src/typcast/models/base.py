@@ -232,17 +232,27 @@ def require_sequence(
     path: str,
     *,
     allow_empty: bool = True,
+    element_name: str | None = None,
 ) -> tuple[Any, ...]:
     """Returns a copied tuple after checking that the value is a sequence.
 
     The elements are not checked. A caller that accepts more than one kind of
-    element checks every element itself.
+    element checks every element itself. The name of the expected element is
+    the name of the type of the elements, unless the caller names another one.
+    The TypeScript SDK applies the same rule.
     """
     if isinstance(value, (str, bytes)) or not isinstance(value, Sequence):
+        if element_name is None:
+            raise_validation(
+                CODE_REQUIRED_FIELD,
+                f"'{path}' must be an array.",
+                path,
+            )
         raise_validation(
             CODE_REQUIRED_FIELD,
-            f"'{path}' must be an array.",
+            f"'{path}' must be an array of {_element_plural(element_name)}.",
             path,
+            {"expected": element_name},
         )
     items = tuple(value)
     if not allow_empty and not items:

@@ -34,6 +34,7 @@ interface InvalidEntry {
   readonly file: string;
   readonly code: string;
   readonly message: string;
+  readonly details: Readonly<Record<string, unknown>>;
 }
 
 interface Manifest {
@@ -101,6 +102,22 @@ function checkEqual(actual: string, expected: string, message: string): void {
   if (actual !== expected) {
     failures.push(`${message}\n--- actual ---\n${actual}\n--- expected ---\n${expected}`);
   }
+}
+
+/**
+ * Returns the details of a diagnostic as JSON, with the keys sorted.
+ *
+ * The order of the keys of a JSON object belongs to no contract, so the two
+ * SDKs may write the same details in another order.
+ */
+function sortedDetails(
+  details: Readonly<Record<string, unknown>>,
+): Record<string, unknown> {
+  const sorted: Record<string, unknown> = {};
+  for (const key of Object.keys(details).sort()) {
+    sorted[key] = details[key];
+  }
+  return sorted;
 }
 
 function main(): void {
@@ -189,6 +206,17 @@ function main(): void {
       diagnostics[0]?.message ?? "",
       entry.message,
       `${entry.file}: the diagnostic message must match the manifest`,
+    );
+    // The manifest names the details of every negative fixture, so that the
+    // two SDKs describe an invalid input in the same way.
+    const details = { ...(diagnostics[0]?.details ?? {}) };
+    // The reason of the parser of the runtime belongs to no expectation of
+    // the contract, because the two parsers word their reason differently.
+    delete details["reason"];
+    checkEqual(
+      JSON.stringify(sortedDetails(details)),
+      JSON.stringify(sortedDetails(entry.details)),
+      `${entry.file}: the diagnostic details must match the manifest`,
     );
   }
 
