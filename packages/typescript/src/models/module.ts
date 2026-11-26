@@ -82,7 +82,7 @@ export function requireModules(
   path: string,
   allowEmpty = true,
 ): readonly Module[] {
-  const items = requireArray(value, path, allowEmpty);
+  const items = requireArray(value, path, allowEmpty, "Module");
   const modules = items.map((item, index) =>
     requireInstance(item, Module, `${path}/${index}`),
   );

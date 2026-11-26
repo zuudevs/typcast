@@ -105,6 +105,27 @@ function expectPath(
   failures.push(`${message}: the call must fail`);
 }
 
+function expectMessage(
+  expected: string,
+  factory: () => unknown,
+  message: string,
+): void {
+  try {
+    factory();
+  } catch (error) {
+    if (!(error instanceof TypcastError)) {
+      failures.push(`${message}: the failure must be a TypcastError`);
+      return;
+    }
+    const actual = error.diagnostics[0]?.message;
+    if (actual !== expected) {
+      failures.push(`${message}: expected ${expected}, got ${String(actual)}`);
+    }
+    return;
+  }
+  failures.push(`${message}: the call must fail`);
+}
+
 // ---------------------------------------------------------------------------
 // Immutability
 // ---------------------------------------------------------------------------
@@ -413,6 +434,85 @@ function constructorTests(): void {
     () => new Document(new Metadata("Title"), new Page("a4", "portrait", margin()), [new Paragraph([new Text("Body")])], [], "1.0.0\n"),
     "a schema version with a trailing newline must be rejected",
   );
+}
+
+// ---------------------------------------------------------------------------
+// Diagnostic messages
+// ---------------------------------------------------------------------------
+
+function diagnosticMessageTests(): void {
+  // The Python SDK writes the same messages, and the shared fixtures of the
+  // contract name them.
+  expectMessage(
+    "'/orientation' must be one of landscape, portrait, got 'diagonal'.",
+    () => new Page("a4", "diagonal" as "portrait", margin()),
+    "an enum message must name the rejected value",
+  );
+  expectMessage(
+    "'/content' must be an array of Span values.",
+    () => new Paragraph("Body" as unknown as readonly Text[]),
+    "a collection message must name the array",
+  );
+  expectMessage(
+    "'/content/0' must be a Span.",
+    () => new Paragraph([1 as unknown as Text]),
+    "an element message must name the type",
+  );
+  expectMessage(
+    "'/items/0' must be an array of Span values.",
+    () => new ListBlock(true, [1 as unknown as readonly Text[]]),
+    "a nested collection message must name the arrays",
+  );
+
+  // The message shows at most 64 characters of the rejected value.
+  try {
+    new Page("a4", "d".repeat(200) as "portrait", margin());
+    failures.push("a long enum value must be rejected");
+  } catch (error) {
+    if (error instanceof TypcastError) {
+      const message = error.diagnostics[0]?.message ?? "";
+      check(message.includes("…"), "a long enum value must be shortened");
+      check(message.length < 200, "a short message must stay short");
+    }
+  }
+
+  // The length of the shown value is counted in code points, as the Python
+  // SDK counts it.
+  try {
+    new Page("a4", "😀".repeat(200) as "portrait", margin());
+    failures.push("a long enum value must be rejected");
+  } catch (error) {
+    if (error instanceof TypcastError) {
+      const message = error.diagnostics[0]?.message ?? "";
+      check(
+        message.includes("😀".repeat(64)),
+        "a shortened value must count code points",
+      );
+      check(
+        !message.includes("😀".repeat(65)),
+        "a shortened value must hold at most 64 code points",
+      );
+    }
+  }
+
+  // The reason of the parser belongs to the details, so that the message is
+  // the same in both SDKs.
+  try {
+    Document.fromJSONString("{");
+    failures.push("malformed JSON must be rejected");
+  } catch (error) {
+    if (error instanceof TypcastError) {
+      checkEqual(
+        error.diagnostics[0]?.message,
+        "The source is not valid JSON.",
+        "a malformed JSON message must not name the parser",
+      );
+      check(
+        error.diagnostics[0]?.details?.["reason"] !== undefined,
+        "the details of a malformed JSON diagnostic must hold the reason",
+      );
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -828,6 +928,7 @@ function versionTests(): void {
 
 immutabilityTests();
 constructorTests();
+diagnosticMessageTests();
 serializationTests();
 deserializationTests();
 roundTripTests();

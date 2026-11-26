@@ -336,6 +336,69 @@ class ConstructorValidationTests(unittest.TestCase):
         self.assertLess(len(diagnostic.message), 200)
         self.assertIn("…", diagnostic.message)
 
+    def test_an_enum_message_names_the_rejected_value(self) -> None:
+        # The TypeScript SDK writes the same message.
+        with self.assertRaises(ValidationError) as caught:
+            Page(paper="a4", orientation="diagonal", margin=margin())
+        diagnostic = caught.exception.diagnostics[0]
+        self.assertEqual(
+            diagnostic.message,
+            "'/orientation' must be one of landscape, portrait, got 'diagonal'.",
+        )
+
+    def test_an_enum_message_shortens_a_long_value(self) -> None:
+        # The message shows at most 64 characters of the rejected value.
+        with self.assertRaises(ValidationError) as caught:
+            Page(paper="a4", orientation="d" * 200, margin=margin())
+        diagnostic = caught.exception.diagnostics[0]
+        self.assertIn("…", diagnostic.message)
+        self.assertLess(len(diagnostic.message), 200)
+
+    def test_an_enum_message_counts_code_points(self) -> None:
+        # The length of the shown value is counted in code points, as the
+        # TypeScript SDK counts it.
+        with self.assertRaises(ValidationError) as caught:
+            Page(paper="a4", orientation="😀" * 200, margin=margin())
+        diagnostic = caught.exception.diagnostics[0]
+        self.assertIn("😀" * 64, diagnostic.message)
+        self.assertNotIn("😀" * 65, diagnostic.message)
+
+    def test_a_collection_message_names_the_array(self) -> None:
+        # The TypeScript SDK writes the same message.
+        with self.assertRaises(ValidationError) as caught:
+            Paragraph(content="Body")  # type: ignore[arg-type]
+        diagnostic = caught.exception.diagnostics[0]
+        self.assertEqual(
+            diagnostic.message,
+            "'/content' must be an array of Span values.",
+        )
+
+    def test_an_element_message_names_the_type(self) -> None:
+        # The TypeScript SDK writes the same message.
+        with self.assertRaises(ValidationError) as caught:
+            Paragraph(content=[1])  # type: ignore[list-item]
+        diagnostic = caught.exception.diagnostics[0]
+        self.assertEqual(diagnostic.message, "'/content/0' must be a Span.")
+
+    def test_a_nested_collection_message_names_the_arrays(self) -> None:
+        # The TypeScript SDK writes the same message.
+        with self.assertRaises(ValidationError) as caught:
+            ListBlock(ordered=True, items=[1])  # type: ignore[list-item]
+        diagnostic = caught.exception.diagnostics[0]
+        self.assertEqual(
+            diagnostic.message,
+            "'/items/0' must be an array of Span values.",
+        )
+
+    def test_a_malformed_json_message_does_not_name_the_parser(self) -> None:
+        # The reason of the parser belongs to the details, so that the
+        # message is the same in both SDKs.
+        with self.assertRaises(SerializationError) as caught:
+            Document.from_json("{")
+        diagnostic = caught.exception.diagnostics[0]
+        self.assertEqual(diagnostic.message, "The source is not valid JSON.")
+        self.assertIn("reason", diagnostic.details)
+
     def test_module_alias_and_items_are_exclusive(self) -> None:
         self.assert_code(
             "TYPCAST-VAL-0009",

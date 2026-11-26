@@ -167,9 +167,9 @@ export function requireSpans(
   path: string,
   allowEmpty = true,
 ): readonly Span[] {
-  const items = requireArray(value, path, allowEmpty);
+  const items = requireArray(value, path, allowEmpty, "Span");
   const spans = items.map((item, index) =>
-    requireInstance(item, SpanBase, `${path}/${index}`),
+    requireInstance(item, SpanBase, `${path}/${index}`, "Span"),
   );
   return freezeArray(spans as readonly Span[]);
 }

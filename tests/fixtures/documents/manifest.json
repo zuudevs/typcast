@@ -12,27 +12,115 @@
     { "file": "large-number.json" }
   ],
   "invalid": [
-    { "file": "malformed.txt", "code": "TYPCAST-IR-0001" },
-    { "file": "root-array.json", "code": "TYPCAST-IR-0004" },
-    { "file": "missing-version.json", "code": "TYPCAST-VAL-0001" },
-    { "file": "unsupported-version.json", "code": "TYPCAST-IR-0002" },
-    { "file": "malformed-version.json", "code": "TYPCAST-IR-0002" },
-    { "file": "version-leading-zero.json", "code": "TYPCAST-IR-0002" },
-    { "file": "unknown-root-field.json", "code": "TYPCAST-VAL-0002" },
-    { "file": "missing-metadata.json", "code": "TYPCAST-VAL-0001" },
-    { "file": "unknown-node-field.json", "code": "TYPCAST-VAL-0002" },
-    { "file": "unknown-discriminator.json", "code": "TYPCAST-VAL-0003" },
-    { "file": "inherited-discriminator.json", "code": "TYPCAST-VAL-0003" },
-    { "file": "invalid-orientation.json", "code": "TYPCAST-VAL-0003" },
-    { "file": "invalid-length.json", "code": "TYPCAST-VAL-0004" },
-    { "file": "invalid-image-width.json", "code": "TYPCAST-VAL-0004" },
-    { "file": "invalid-heading-level.json", "code": "TYPCAST-VAL-0005" },
-    { "file": "empty-content.json", "code": "TYPCAST-VAL-0006" },
-    { "file": "empty-text.json", "code": "TYPCAST-VAL-0006" },
-    { "file": "invalid-module-alias.json", "code": "TYPCAST-VAL-0008" },
-    { "file": "module-alias-and-items.json", "code": "TYPCAST-VAL-0009" },
-    { "file": "invalid-date.json", "code": "TYPCAST-VAL-0011" },
-    { "file": "invalid-title-length.json", "code": "TYPCAST-VAL-0013" },
-    { "file": "invalid-type.json", "code": "TYPCAST-IR-0004" }
+    {
+      "file": "malformed.txt",
+      "code": "TYPCAST-IR-0001",
+      "message": "The source is not valid JSON."
+    },
+    {
+      "file": "root-array.json",
+      "code": "TYPCAST-IR-0004",
+      "message": "'/' must be a JSON object."
+    },
+    {
+      "file": "missing-version.json",
+      "code": "TYPCAST-VAL-0001",
+      "message": "'/schemaVersion' is required."
+    },
+    {
+      "file": "unsupported-version.json",
+      "code": "TYPCAST-IR-0002",
+      "message": "'schemaVersion' '2.0.0' is not supported; this SDK reads 1.0.x."
+    },
+    {
+      "file": "malformed-version.json",
+      "code": "TYPCAST-IR-0002",
+      "message": "'schemaVersion' must be a semantic version, got '1.0'."
+    },
+    {
+      "file": "version-leading-zero.json",
+      "code": "TYPCAST-IR-0002",
+      "message": "'schemaVersion' must be a semantic version, got '01.0.0'."
+    },
+    {
+      "file": "unknown-root-field.json",
+      "code": "TYPCAST-VAL-0002",
+      "message": "'/theme' is not a known field."
+    },
+    {
+      "file": "missing-metadata.json",
+      "code": "TYPCAST-VAL-0001",
+      "message": "'/metadata' is required."
+    },
+    {
+      "file": "unknown-node-field.json",
+      "code": "TYPCAST-VAL-0002",
+      "message": "'/contents/0/style' is not a known field."
+    },
+    {
+      "file": "unknown-discriminator.json",
+      "code": "TYPCAST-VAL-0003",
+      "message": "'/contents/0/type' must be one of heading, image, list, pageBreak, paragraph, raw, table."
+    },
+    {
+      "file": "inherited-discriminator.json",
+      "code": "TYPCAST-VAL-0003",
+      "message": "'/contents/0/type' must be one of heading, image, list, pageBreak, paragraph, raw, table."
+    },
+    {
+      "file": "invalid-orientation.json",
+      "code": "TYPCAST-VAL-0003",
+      "message": "'/orientation' must be one of landscape, portrait, got 'diagonal'."
+    },
+    {
+      "file": "invalid-length.json",
+      "code": "TYPCAST-VAL-0004",
+      "message": "'/value' must not be negative, got -1."
+    },
+    {
+      "file": "invalid-image-width.json",
+      "code": "TYPCAST-VAL-0004",
+      "message": "'/width/value' must be greater than zero, got 0."
+    },
+    {
+      "file": "invalid-heading-level.json",
+      "code": "TYPCAST-VAL-0005",
+      "message": "'/level' must be between 1 and 6, got 7."
+    },
+    {
+      "file": "empty-content.json",
+      "code": "TYPCAST-VAL-0006",
+      "message": "'/content' must not be empty."
+    },
+    {
+      "file": "empty-text.json",
+      "code": "TYPCAST-VAL-0006",
+      "message": "'/value' must not be empty."
+    },
+    {
+      "file": "invalid-module-alias.json",
+      "code": "TYPCAST-VAL-0008",
+      "message": "'/alias' must match [A-Za-z_][A-Za-z0-9_]*, got '1report'."
+    },
+    {
+      "file": "module-alias-and-items.json",
+      "code": "TYPCAST-VAL-0009",
+      "message": "'/alias' and '/items' must not both be set."
+    },
+    {
+      "file": "invalid-date.json",
+      "code": "TYPCAST-VAL-0011",
+      "message": "'/date' is not a calendar date: '2026-02-30'."
+    },
+    {
+      "file": "invalid-title-length.json",
+      "code": "TYPCAST-VAL-0013",
+      "message": "'/title' must not hold more than 512 code points."
+    },
+    {
+      "file": "invalid-type.json",
+      "code": "TYPCAST-IR-0004",
+      "message": "'/contents' must be a JSON array."
+    }
   ]
 }

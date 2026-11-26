@@ -173,9 +173,14 @@ export function documentFromJSONString(source: string): Document {
   try {
     value = JSON.parse(source);
   } catch (error) {
+    // The parser of the runtime reports the reason in its own words, so the
+    // reason belongs to the details of the diagnostic. The message itself is
+    // the same in both SDKs.
     throwSerialization(
       CODE_MALFORMED_JSON,
-      `The source is not valid JSON: ${(error as Error).message}.`,
+      "The source is not valid JSON.",
+      null,
+      { reason: (error as Error).message },
     );
   }
   return documentFromJSON(value);
@@ -237,10 +242,17 @@ function asInteger(value: unknown, path: string): number {
 }
 
 function asNumber(value: unknown, path: string): number {
-  if (typeof value !== "number" || !Number.isFinite(value)) {
+  if (typeof value !== "number") {
     throwSerialization(
       CODE_ROOT_SHAPE,
       `'${path}' must be a JSON number.`,
+      path,
+    );
+  }
+  if (!Number.isFinite(value)) {
+    throwSerialization(
+      CODE_ROOT_SHAPE,
+      `'${path}' must be a finite JSON number.`,
       path,
     );
   }

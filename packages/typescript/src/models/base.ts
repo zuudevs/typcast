@@ -12,8 +12,31 @@ import {
   CODE_INVALID_ENUM,
   CODE_REQUIRED_FIELD,
   CODE_STRING_TOO_LONG,
+  safeText,
+  safeValue,
   throwValidation,
 } from "../diagnostics.js";
+
+/** Returns the article that a name of a type needs. */
+function article(name: string): string {
+  return "aeiou".includes(name.slice(0, 1).toLowerCase()) ? "an" : "a";
+}
+
+/**
+ * Returns the name of the elements of a collection, in the plural.
+ *
+ * The Python SDK applies the same rule, so that the message of a diagnostic
+ * is the same in both SDKs.
+ */
+function elementPlural(name: string): string {
+  if (name === "array") {
+    return "arrays";
+  }
+  if (name.startsWith("array of ")) {
+    return `arrays of ${name.slice("array of ".length)}`;
+  }
+  return `${name} values`;
+}
 
 /** Returns a string argument after checking its type and length. */
 export function requireString(
@@ -67,12 +90,22 @@ export function requireEnum<T extends string>(
   path: string,
 ): T {
   const names = [...allowed].sort();
-  if (typeof value !== "string" || !allowed.includes(value as T)) {
+  if (typeof value !== "string") {
     throwValidation(
       CODE_INVALID_ENUM,
       `'${path}' must be one of ${names.join(", ")}.`,
       path,
       { allowed: names },
+    );
+  }
+  if (!allowed.includes(value as T)) {
+    // The rejected value is shown in a bounded form, so that the message of
+    // the diagnostic stays readable. The Python SDK applies the same rule.
+    throwValidation(
+      CODE_INVALID_ENUM,
+      `'${path}' must be one of ${names.join(", ")}, got '${safeText(value)}'.`,
+      path,
+      { allowed: names, value: safeValue(value) },
     );
   }
   return value as T;
@@ -114,33 +147,49 @@ export function requireNumber(value: unknown, path: string): number {
   return value;
 }
 
-/** Returns a model argument after checking its type. */
+/**
+ * Returns a model argument after checking its type.
+ *
+ * The name of the expected type is the name of the class, unless the caller
+ * names another one. The Python SDK applies the same rule.
+ */
 export function requireInstance<T>(
   value: unknown,
   expected: abstract new (...args: never[]) => T,
   path: string,
+  name?: string,
 ): T {
+  const label = name ?? expected.name;
   if (!(value instanceof expected)) {
     throwValidation(
       CODE_REQUIRED_FIELD,
-      `'${path}' must be a ${expected.name}.`,
+      `'${path}' must be ${article(label)} ${label}.`,
       path,
-      { expected: expected.name },
+      { expected: label },
     );
   }
   return value;
 }
 
-/** Returns a copied array after checking that the value is an array. */
+/**
+ * Returns a copied array after checking that the value is an array.
+ *
+ * The name of the elements of the array is the name of the type of the
+ * elements, unless the caller names another one. The Python SDK applies the
+ * same rule.
+ */
 export function requireArray(
   value: unknown,
   path: string,
   allowEmpty = true,
+  elementName?: string,
 ): readonly unknown[] {
   if (!Array.isArray(value)) {
+    const plural =
+      elementName === undefined ? "" : ` of ${elementPlural(elementName)}`;
     throwValidation(
       CODE_REQUIRED_FIELD,
-      `'${path}' must be an array.`,
+      `'${path}' must be an array${plural}.`,
       path,
     );
   }

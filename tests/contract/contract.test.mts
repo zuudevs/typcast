@@ -33,6 +33,7 @@ interface ValidEntry {
 interface InvalidEntry {
   readonly file: string;
   readonly code: string;
+  readonly message: string;
 }
 
 interface Manifest {
@@ -181,6 +182,13 @@ function main(): void {
       code ?? "",
       entry.code,
       `${entry.file}: the diagnostic code must match the manifest`,
+    );
+    // The manifest names the message of every negative fixture, so that the
+    // two SDKs report an invalid input in the same words.
+    checkEqual(
+      diagnostics[0]?.message ?? "",
+      entry.message,
+      `${entry.file}: the diagnostic message must match the manifest`,
     );
   }
 

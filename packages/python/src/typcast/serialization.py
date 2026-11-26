@@ -142,9 +142,13 @@ def document_from_json(source: str) -> Document:
             parse_int=_parse_json_int,
         )
     except ValueError as error:
+        # The parser of the runtime reports the reason in its own words, so
+        # the reason belongs to the details of the diagnostic. The message
+        # itself is the same in both SDKs.
         raise_serialization(
             CODE_MALFORMED_JSON,
-            f"The source is not valid JSON: {error}.",
+            "The source is not valid JSON.",
+            details={"reason": str(error)},
         )
     return document_from_dict(value)
 

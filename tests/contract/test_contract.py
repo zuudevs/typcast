@@ -141,6 +141,19 @@ class DocumentFixtureTests(unittest.TestCase):
                 self.assertTrue(error.diagnostics, "the error must carry a diagnostic")
                 self.assertEqual(error.diagnostics[0].code, entry["code"])
 
+    def test_invalid_fixtures_are_rejected_with_the_expected_message(self) -> None:
+        # The manifest names the message of every negative fixture, so that
+        # the two SDKs report an invalid input in the same words.
+        for entry in self.manifest["invalid"]:
+            with self.subTest(fixture=entry["file"]):
+                source = (self.root / entry["file"]).read_text(encoding="utf-8")
+                with self.assertRaises(TypcastError) as caught:
+                    Document.from_json(source)
+                self.assertEqual(
+                    caught.exception.diagnostics[0].message,
+                    entry["message"],
+                )
+
     def test_invalid_fixtures_are_rejected_when_parsed_as_a_value(self) -> None:
         for entry in self.manifest["invalid"]:
             with self.subTest(fixture=entry["file"]):

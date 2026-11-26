@@ -108,7 +108,13 @@ class ListBlock(Block):
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "ordered", require_bool(self.ordered, "/ordered"))
-        items = require_tuple(self.items, SequenceABC, "/items", allow_empty=False)
+        items = require_tuple(
+            self.items,
+            SequenceABC,
+            "/items",
+            allow_empty=False,
+            element_name="array of Span values",
+        )
         cells: list[tuple[Span, ...]] = []
         for index, item in enumerate(items):
             cells.append(
@@ -174,10 +180,21 @@ class Table(Block):
             "columns",
             require_tuple(self.columns, TableColumn, "/columns", allow_empty=False),
         )
-        rows = require_tuple(self.rows, SequenceABC, "/rows", allow_empty=False)
+        rows = require_tuple(
+            self.rows,
+            SequenceABC,
+            "/rows",
+            allow_empty=False,
+            element_name="array of arrays of Span values",
+        )
         table_rows: list[tuple[tuple[Span, ...], ...]] = []
         for row_index, row in enumerate(rows):
-            cells = require_tuple(row, SequenceABC, f"/rows/{row_index}")
+            cells = require_tuple(
+                row,
+                SequenceABC,
+                f"/rows/{row_index}",
+                element_name="array of Span values",
+            )
             table_cells: list[tuple[Span, ...]] = []
             for cell_index, cell in enumerate(cells):
                 table_cells.append(

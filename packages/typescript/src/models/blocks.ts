@@ -95,7 +95,7 @@ export class ListBlock extends BlockBase {
   constructor(ordered: boolean, items: readonly (readonly Span[])[]) {
     super();
     this.ordered = requireBoolean(ordered, "/ordered");
-    const entries = requireArray(items, "/items", false);
+    const entries = requireArray(items, "/items", false, "array of Span values");
     this.items = freezeArray(
       entries.map((item, index) => requireSpans(item, `/items/${index}`, false)),
     );
@@ -143,16 +143,26 @@ export class Table extends BlockBase {
     rows: readonly (readonly (readonly Span[])[])[],
   ) {
     super();
-    const columnItems = requireArray(columns, "/columns", false);
+    const columnItems = requireArray(columns, "/columns", false, "TableColumn");
     this.columns = freezeArray(
       columnItems.map((item, index) =>
         requireInstance(item, TableColumn, `/columns/${index}`),
       ),
     );
-    const rowItems = requireArray(rows, "/rows", false);
+    const rowItems = requireArray(
+      rows,
+      "/rows",
+      false,
+      "array of arrays of Span values",
+    );
     this.rows = freezeArray(
       rowItems.map((row, rowIndex) => {
-        const cells = requireArray(row, `/rows/${rowIndex}`);
+        const cells = requireArray(
+          row,
+          `/rows/${rowIndex}`,
+          true,
+          "array of Span values",
+        );
         return freezeArray(
           cells.map((cell, cellIndex) =>
             requireSpans(cell, `/rows/${rowIndex}/${cellIndex}`),
@@ -275,9 +285,9 @@ export function requireBlocks(
   path: string,
   allowEmpty = true,
 ): readonly Block[] {
-  const items = requireArray(value, path, allowEmpty);
+  const items = requireArray(value, path, allowEmpty, "Block");
   const blocks = items.map((item, index) =>
-    requireInstance(item, BlockBase, `${path}/${index}`),
+    requireInstance(item, BlockBase, `${path}/${index}`, "Block"),
   );
   return freezeArray(blocks as readonly Block[]);
 }

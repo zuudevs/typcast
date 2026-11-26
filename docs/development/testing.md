@@ -16,7 +16,7 @@ compiler integration, and package installation.
 | Area | Current state |
 |---|---|
 | Test targets | Fifteen hand-written test targets: `//tools/codegen/tests:unit_tests`, `//tools/publish/tests:publish_tests`, `//scripts/tests:version_tests`, `//scripts/tests:release_tests`, `//scripts/tests:release_flow_tests`, `//scripts/tests:repository_tests`, `//scripts/tests:docs_tests`, `//scripts/tests:link_tests`, `//scripts:docs_checks`, `//specs/schemas:schema_tests`, `//specs/schemas:release_tag_tests`, `//packages/python/tests:model_tests`, `//packages/typescript:model_test_run`, `//tests/contract:contract_py`, and `//tests/contract:contract_ts_test`. The TypeScript toolchain adds two generated type-check targets. |
-| Test cases | Sixteen generator cases, 45 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 47 repository structure cases, 4 release tag cases, 32 documentation gate cases, 4 link check cases, one documentation check, one schema bundle check, 88 document model cases, and 6 contract fixture cases. |
+| Test cases | Sixteen generator cases, 45 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 47 repository structure cases, 4 release tag cases, 32 documentation gate cases, 4 link check cases, one documentation check, one schema bundle check, 95 document model cases, and 7 contract fixture cases. |
 | Schema tests | `//specs/schemas:schema_tests` validates the built bundle. Meta-schema and instance validation are missing. |
 | Release tag tests | `//specs/schemas:release_tag_tests` covers the release tag pattern of the contract, so that the contract and the publisher agree on what a release tag is. |
 | Publisher tests | `//tools/publish/tests:publish_tests` covers the publisher, the published identity of the built bundle, the resolution of the versioned raw URLs, and the deterministic archive. |
@@ -162,13 +162,20 @@ the golden `.typ` files and for the compiler tests. They do not exist yet.
 
 The `manifest.json` of the fixture directory is the index of the fixtures. It
 names the valid fixtures and the negative fixtures, and every negative fixture
-carries the diagnostic code that both SDKs must report:
+carries the diagnostic code and the diagnostic message that both SDKs must
+report:
 
 ```json
 {
   "version": 1,
   "valid": [{ "file": "minimal.json" }],
-  "invalid": [{ "file": "invalid-date.json", "code": "TYPCAST-VAL-0011" }]
+  "invalid": [
+    {
+      "file": "invalid-date.json",
+      "code": "TYPCAST-VAL-0011",
+      "message": "'/date' is not a calendar date: '2026-02-30'."
+    }
+  ]
 }
 ```
 
@@ -185,6 +192,8 @@ Rules:
   text for a large, a fractional, and an exponential number.
 - The manifest and the fixture directory must list the same files, so a fixture
   that no runner reads fails the contract tests.
+- The manifest names the message of every negative fixture, so that a drift in
+  the wording of a diagnostic fails the contract tests.
 - A fixture change requires a review of expected output.
 
 The fixtures carry the paths of the document IR, such as `modules/report.typ`.
@@ -220,8 +229,8 @@ The parity test must not compare implementation-specific object representations.
 The document IR part of the rule is implemented. `//tests/contract:contract_py`
 and `//tests/contract:contract_ts_test` read the same fixtures and the same
 manifest, write every valid fixture back byte for byte, and compare the
-diagnostic code of every negative fixture. The `.typ` part waits for the
-emitter.
+diagnostic code and the diagnostic message of every negative fixture. The
+`.typ` part waits for the emitter.
 
 ## Compiler integration
 

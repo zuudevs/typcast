@@ -262,6 +262,17 @@ No release has been published yet. Every change so far is listed under
   raised a raw error of the interpreter instead of a diagnostic. Both SDKs now
   render the value in a bounded form, so the message stays readable and the
   details of the diagnostic stay JSON-serializable.
+- The two SDKs reported an invalid input in different words. The Python SDK
+  named the rejected value of an invalid enum, while the TypeScript SDK named
+  it in no message at all, and the Python SDK called a collection a sequence
+  while the TypeScript SDK called it an array. Both SDKs now use the same
+  wording, and the requirement `DIAG-015` records the rule. The manifest of
+  the shared fixtures names the message of every negative fixture, so a drift
+  in the wording fails the contract tests.
+- The message of a malformed JSON text quoted the reason of the parser of the
+  runtime, and the two parsers word their reason differently. Both SDKs now
+  write the same message, and the reason belongs to the details of the
+  diagnostic.
 
 ### Known issues
 

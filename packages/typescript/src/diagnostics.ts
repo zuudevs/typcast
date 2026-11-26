@@ -103,13 +103,17 @@ export function safeValue(value: unknown): unknown {
  * Returns a short, readable representation of a value.
  *
  * The message of a diagnostic stays readable, so a long value is shortened.
- * The Python SDK applies the same rule.
+ * The length is counted in Unicode code points, as the Python SDK counts it,
+ * so that both SDKs show the same characters. The Python SDK applies the same
+ * rule.
  */
 export function safeText(value: unknown): string {
   const text = typeof value === "string" ? value : String(safeValue(value));
-  return text.length <= MAX_DIAGNOSTIC_VALUE_LENGTH
-    ? text
-    : `${text.slice(0, MAX_DIAGNOSTIC_VALUE_LENGTH)}…`;
+  const characters = [...text];
+  if (characters.length <= MAX_DIAGNOSTIC_VALUE_LENGTH) {
+    return text;
+  }
+  return `${characters.slice(0, MAX_DIAGNOSTIC_VALUE_LENGTH).join("")}…`;
 }
 
 /** The base class of every error raised by Typcast. */

@@ -19,6 +19,8 @@ from typcast.diagnostics import (
     CODE_REQUIRED_FIELD,
     CODE_STRING_TOO_LONG,
     raise_validation,
+    safe_text,
+    safe_value,
 )
 
 __all__ = [
@@ -37,6 +39,24 @@ __all__ = [
 ]
 
 T = TypeVar("T")
+
+
+def _article(name: str) -> str:
+    """Returns the article that a name of a type needs."""
+    return "an" if name[:1].lower() in "aeiou" else "a"
+
+
+def _element_plural(name: str) -> str:
+    """Returns the name of the elements of a collection, in the plural.
+
+    The TypeScript SDK applies the same rule, so that the message of a
+    diagnostic is the same in both SDKs.
+    """
+    if name == "array":
+        return "arrays"
+    if name.startswith("array of "):
+        return f"arrays of {name[len('array of '):]}"
+    return f"{name} values"
 
 
 def to_binary64(value: int) -> float:
@@ -106,31 +126,46 @@ def require_enum(
     path: str,
 ) -> str:
     """Returns an enum argument after checking that it is a known literal."""
+    names = sorted(allowed)
     if not isinstance(value, str):
         raise_validation(
             CODE_INVALID_ENUM,
-            f"'{path}' must be one of {', '.join(sorted(allowed))}.",
+            f"'{path}' must be one of {', '.join(names)}.",
             path,
-            {"allowed": sorted(allowed)},
+            {"allowed": names},
         )
-    if value not in allowed:
+    if value not in names:
+        # The rejected value is shown in a bounded form, so that the message
+        # of the diagnostic stays readable. The TypeScript SDK applies the
+        # same rule.
         raise_validation(
             CODE_INVALID_ENUM,
-            f"'{path}' must be one of {', '.join(sorted(allowed))}, got {value!r}.",
+            f"'{path}' must be one of {', '.join(names)}, got '{safe_text(value)}'.",
             path,
-            {"allowed": sorted(allowed), "value": value},
+            {"allowed": names, "value": safe_value(value)},
         )
     return value
 
 
-def require_instance(value: Any, expected: type[T], path: str) -> T:
-    """Returns a model argument after checking its type."""
+def require_instance(
+    value: Any,
+    expected: type[T],
+    path: str,
+    *,
+    name: str | None = None,
+) -> T:
+    """Returns a model argument after checking its type.
+
+    The name of the expected type is the name of the class, unless the
+    caller names another one. The TypeScript SDK applies the same rule.
+    """
+    label = name if name is not None else expected.__name__
     if not isinstance(value, expected):
         raise_validation(
             CODE_REQUIRED_FIELD,
-            f"'{path}' must be a {expected.__name__}.",
+            f"'{path}' must be {_article(label)} {label}.",
             path,
-            {"expected": expected.__name__},
+            {"expected": label},
         )
     return value
 
@@ -206,7 +241,7 @@ def require_sequence(
     if isinstance(value, (str, bytes)) or not isinstance(value, Sequence):
         raise_validation(
             CODE_REQUIRED_FIELD,
-            f"'{path}' must be a sequence.",
+            f"'{path}' must be an array.",
             path,
         )
     items = tuple(value)
@@ -225,23 +260,31 @@ def require_tuple(
     path: str,
     *,
     allow_empty: bool = True,
+    element_name: str | None = None,
 ) -> tuple[T, ...]:
-    """Returns a copied tuple after checking the type of every element."""
+    """Returns a copied tuple after checking the type of every element.
+
+    The name of the expected element is the name of the class, unless the
+    caller names another one. The TypeScript SDK applies the same rule.
+    """
+    label = element_name if element_name is not None else expected.__name__
     if isinstance(value, (str, bytes)) or not isinstance(value, Sequence):
         raise_validation(
             CODE_REQUIRED_FIELD,
-            f"'{path}' must be a sequence of {expected.__name__} values.",
+            f"'{path}' must be an array of {_element_plural(label)}.",
             path,
-            {"expected": expected.__name__},
+            {"expected": label},
         )
     items = tuple(value)
     for index, item in enumerate(items):
-        if not isinstance(item, expected):
+        # A string is a sequence of characters, not a sequence of elements,
+        # so it is rejected here, exactly as the TypeScript SDK rejects it.
+        if isinstance(item, (str, bytes)) or not isinstance(item, expected):
             raise_validation(
                 CODE_REQUIRED_FIELD,
-                f"'{path}/{index}' must be a {expected.__name__}.",
+                f"'{path}/{index}' must be {_article(label)} {label}.",
                 f"{path}/{index}",
-                {"expected": expected.__name__},
+                {"expected": label},
             )
     if not allow_empty and not items:
         raise_validation(

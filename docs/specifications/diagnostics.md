@@ -2,7 +2,7 @@
 
 Status: CONFIRMED
 Scope: Normative
-Last updated: 2026-11-25
+Last updated: 2026-11-26
 
 ## Purpose
 
@@ -49,8 +49,24 @@ cannot represent is replaced by the name of its type, and a number that is not
 finite is spelled in the form of ECMAScript.
 
 The `message` of a diagnostic is human-readable text. When it shows a rejected
-value, it shows at most 64 characters of that value, so that the message stays
+value, it shows at most 64 code points of that value, so that the message stays
 readable.
+
+## Message wording
+
+The two SDKs report an invalid input in the same words. The wording follows
+these rules:
+
+- A message names the path of the failing node, the rule that the value broke,
+  and the rejected value when the value helps the reader.
+- A collection is an array, because the IR is a JSON IR. A message names the
+  elements of the collection, such as `an array of Span values`.
+- An element of a collection names its type, such as `must be a Span`.
+- A rejected enum value is shown in single quotes after `got`, and a rejected
+  value of another type is not shown at all.
+- The reason of a parser of the runtime belongs to `details`, not to the
+  message, because the parsers of the two runtimes word their reason
+  differently. The message of a malformed JSON text is the same in both SDKs.
 
 ## Code families
 
@@ -229,6 +245,7 @@ platform-specific formatting.
 | DIAG-006 | Validation errors MUST include a JSON Pointer when known. | IMPLEMENTED | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`; the diagnostic path points at the failing node. |
 | DIAG-013 | The tokens of a JSON Pointer MUST be escaped as RFC 6901 defines them. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the escaped-pointer cases. |
 | DIAG-014 | The details of a diagnostic MUST stay JSON-serializable. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the details cases. |
+| DIAG-015 | The message of a diagnostic MUST be the same in both SDKs, and MUST show at most 64 code points of a rejected value. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the message cases, and `//tests/contract:contract_py` and `//tests/contract:contract_ts_test` compare the message of every negative fixture that the manifest names. |
 | DIAG-007 | Compiler diagnostics MUST preserve raw output in `details.raw`. | CONFIRMED | Compiler test. |
 | DIAG-008 | Compiler diagnostics MUST include location when parseable. | CONFIRMED | Compiler test. |
 | DIAG-009 | Messages MUST be English-only for `1.0.0`. | IMPLEMENTED | Every diagnostic message of both SDKs is English. |
