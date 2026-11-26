@@ -253,6 +253,10 @@ No release has been published yet. Every change so far is listed under
   TypeScript `VERSION` export. Both package roots now export the version of
   the package, the requirement `API-026` records the rule, and the repository
   gate compares every export with the manifest of its package.
+- Both SDKs accepted a schema version whose component held a leading zero,
+  such as `01.0.0`, while a semantic version holds none. Both SDKs now reject
+  such a version, and the negative fixture `version-leading-zero.json` records
+  the rule.
 
 ### Known issues
 

@@ -24,7 +24,10 @@ export const SUPPORTED_SCHEMA_MINOR = 0;
  */
 export const VERSION = "0.1.0";
 
-const VERSION_PATTERN = /^(\d+)\.(\d+)\.(\d+)$/;
+// The pattern holds the ASCII digits only, and the match covers the whole
+// text. A component holds no leading zero, because a semantic version holds
+// none.
+const VERSION_PATTERN = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
 
 /** Returns the major, minor, and patch numbers of a version string. */
 export function parseSchemaVersion(value: string): [number, number, number] {

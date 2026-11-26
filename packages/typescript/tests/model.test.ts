@@ -640,6 +640,16 @@ function deserializationTests(): void {
     "a version with a trailing newline must be rejected",
   );
 
+  for (const version of ["01.0.0", "1.00.0", "1.0.00"]) {
+    const leadingZero = buildDocument().toJSON() as Record<string, unknown>;
+    leadingZero["schemaVersion"] = version;
+    expectCode(
+      "TYPCAST-IR-0002",
+      () => Document.fromJSON(leadingZero),
+      "a version with a leading zero must be rejected",
+    );
+  }
+
   const floatLevel = buildDocument().toJSON() as Record<string, unknown>;
   floatLevel["contents"] = [
     { type: "heading", level: 1.0, content: [{ type: "text", value: "H" }] },

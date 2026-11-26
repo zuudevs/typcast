@@ -401,7 +401,7 @@ first two layers only.
 | IR-009 | Image and module paths MUST be relative and traversal-safe. | CONFIRMED | Asset tests. |
 | IR-010 | Module aliases MUST be unique identifiers. | CONFIRMED | Semantic validation test. |
 | IR-011 | Raw values MUST be non-empty and valid UTF-8. | IMPLEMENTED | The constructor of both SDKs rejects an empty raw value, and the raw value is a Unicode string in both SDKs. |
-| IR-012 | `schemaVersion` MUST be a semantic version. | IMPLEMENTED | The reader rejects a malformed or an unsupported version with `TYPCAST-IR-0002`; the negative fixtures `malformed-version.json` and `unsupported-version.json`. |
+| IR-012 | `schemaVersion` MUST be a semantic version. | IMPLEMENTED | The reader rejects a malformed or an unsupported version with `TYPCAST-IR-0002`; the negative fixtures `malformed-version.json`, `version-leading-zero.json`, and `unsupported-version.json`. |
 | IR-013 | `to_json` MUST be deterministic across Python and TypeScript. | IMPLEMENTED | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`; every shared fixture is written back byte for byte, including the fixture `large-number.json`. |
 | IR-014 | `from_json` MUST reject unknown fields and unsupported versions. | IMPLEMENTED | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`; the negative fixtures of the manifest. |
 | IR-015 | Round-trip serialization MUST preserve the document. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the round-trip cases. |

@@ -17,6 +17,7 @@
     { "file": "missing-version.json", "code": "TYPCAST-VAL-0001" },
     { "file": "unsupported-version.json", "code": "TYPCAST-IR-0002" },
     { "file": "malformed-version.json", "code": "TYPCAST-IR-0002" },
+    { "file": "version-leading-zero.json", "code": "TYPCAST-IR-0002" },
     { "file": "unknown-root-field.json", "code": "TYPCAST-VAL-0002" },
     { "file": "missing-metadata.json", "code": "TYPCAST-VAL-0001" },
     { "file": "unknown-node-field.json", "code": "TYPCAST-VAL-0002" },

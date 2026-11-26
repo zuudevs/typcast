@@ -557,6 +557,15 @@ class DeserializationTests(unittest.TestCase):
             Document.from_dict(value)
         self.assertEqual(caught.exception.diagnostics[0].code, "TYPCAST-IR-0002")
 
+    def test_a_version_with_a_leading_zero_is_rejected(self) -> None:
+        # A semantic version holds no leading zero in a component.
+        for version in ("01.0.0", "1.00.0", "1.0.00"):
+            value = document().to_dict()
+            value["schemaVersion"] = version
+            with self.assertRaises(SerializationError) as caught:
+                Document.from_dict(value)
+            self.assertEqual(caught.exception.diagnostics[0].code, "TYPCAST-IR-0002")
+
     def test_a_version_component_of_more_than_4300_digits_is_rejected(self) -> None:
         # The interpreter limits the conversion of a long digit string to an
         # integer, while the number domain of the IR is the binary64 domain.

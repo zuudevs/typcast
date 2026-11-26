@@ -35,8 +35,11 @@ SUPPORTED_SCHEMA_MINOR = 0
 # The pattern holds the ASCII digits only, and the match covers the whole
 # text. The `\d` of Python matches every Unicode decimal digit, and a `$`
 # matches before a final newline, so a version that the TypeScript SDK
-# rejects would pass here.
-_VERSION_PATTERN = re.compile(r"([0-9]+)\.([0-9]+)\.([0-9]+)")
+# rejects would pass here. A component holds no leading zero, because a
+# semantic version holds none.
+_VERSION_PATTERN = re.compile(
+    r"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)"
+)
 
 
 def _version_component(digits: str) -> float:
