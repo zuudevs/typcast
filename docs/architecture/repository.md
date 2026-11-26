@@ -179,14 +179,14 @@ Current targets include:
 | `//scripts/tests:link_tests` | Four external link check tests. |
 | `//scripts/tests:release_flow_tests` | Six release rehearsal tests. |
 | `//scripts/tests:release_tests` | Twenty release preparation tests. |
-| `//scripts/tests:repository_tests` | Forty-three repository structure check tests. |
+| `//scripts/tests:repository_tests` | Forty-seven repository structure check tests. |
 | `//specs/schemas:schema_bundle` | Six staged or generated schema files. |
 | `//specs/schemas:schema_manifest` | The names of the bundle files. |
 | `//specs/schemas:archive` | The deterministic archive of the bundle. |
 | `//specs/schemas:schema_tests` | Validates the built bundle against the schema contract. |
 | `//specs/schemas:release_tag_tests` | Validates the release tag pattern of the schema contract. |
 | `//packages/python:typcast` | Python SDK library with the immutable document model. |
-| `//packages/python/tests:model_tests` | Forty-five document model unit tests. |
+| `//packages/python/tests:model_tests` | One hundred twenty-four document model unit tests. |
 | `//packages/typescript:typcast` | TypeScript project with the immutable document model. |
 | `//packages/typescript:model_test_run` | Document model unit tests of the TypeScript SDK. |
 | `//tests/fixtures:documents` | The shared document IR fixtures. |

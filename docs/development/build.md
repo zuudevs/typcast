@@ -132,7 +132,7 @@ bazel-bin/specs/schemas/
 | `//scripts/tests:link_tests` | `py_test` | Four external link check tests. |
 | `//scripts/tests:release_flow_tests` | `py_test` | Six release rehearsal tests. |
 | `//scripts/tests:release_tests` | `py_test` | Twenty release preparation tests. |
-| `//scripts/tests:repository_tests` | `py_test` | Forty-three repository structure check tests. |
+| `//scripts/tests:repository_tests` | `py_test` | Forty-seven repository structure check tests. |
 | `//scripts/tests:version_tests` | `py_test` | Fifteen release version check tests. |
 | `//:docs_sources` | `filegroup` | The documents that the checks read. |
 | `//:release_manifests` | `filegroup` | The manifests and the schema sources that carry the release version. |
@@ -149,7 +149,7 @@ bazel-bin/specs/schemas/
 | `//specs/schemas/definitions:bound_schema` | `typcast_schema_copy` | Stage the bound schema. |
 | `//specs/schemas/definitions:node_schema` | `typcast_schema_copy` | Stage the node schema. |
 | `//packages/python:typcast` | `py_library` | Python SDK with the immutable document model. |
-| `//packages/python/tests:model_tests` | `py_test` | Forty-five document model unit tests. |
+| `//packages/python/tests:model_tests` | `py_test` | One hundred twenty-four document model unit tests. |
 | `//packages/typescript:typcast` | `ts_project` | TypeScript SDK with the immutable document model. |
 | `//packages/typescript:typcast_types` | `filegroup` | TypeScript declaration outputs. |
 | `//packages/typescript:model_test` | `ts_project` | Compiles the document model unit tests. |
