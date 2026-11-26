@@ -11,6 +11,7 @@ from typcast.diagnostics import (
     CODE_INVALID_ENUM,
     CODE_REQUIRED_FIELD,
     raise_validation,
+    safe_text,
     safe_value,
 )
 from typcast.models.base import (
@@ -80,7 +81,8 @@ class Length:
         if self.unit not in LENGTH_UNITS:
             raise_validation(
                 CODE_INVALID_LENGTH,
-                f"'/unit' must be one of {', '.join(LENGTH_UNITS)}, got {self.unit!r}.",
+                f"'/unit' must be one of {', '.join(LENGTH_UNITS)}, "
+                f"got '{safe_text(self.unit)}'.",
                 "/unit",
                 {"allowed": list(LENGTH_UNITS), "value": safe_value(self.unit)},
             )

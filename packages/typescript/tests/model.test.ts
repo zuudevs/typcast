@@ -338,6 +338,31 @@ function constructorTests(): void {
       );
     }
   }
+  try {
+    new Module(
+      "modules/report.typ",
+      Number.POSITIVE_INFINITY as unknown as string,
+    );
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      const text = JSON.stringify(error.diagnostics[0]?.details);
+      check(
+        text.includes('"value":"Infinity"'),
+        "the details of a diagnostic must hold no non-finite number",
+      );
+    }
+  }
+  try {
+    new Module("modules/report.typ", `1${"a".repeat(200)}`);
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      const message = error.diagnostics[0]?.message ?? "";
+      check(
+        message.length < 200 && message.includes("…"),
+        "a long identifier must be shortened in the message",
+      );
+    }
+  }
   expectCode(
     "TYPCAST-VAL-0009",
     () => new Module("modules/report.typ", "report", ["currency"]),

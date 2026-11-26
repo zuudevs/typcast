@@ -10,6 +10,7 @@ from typcast.diagnostics import (
     CODE_INVALID_MODULE_ALIAS,
     CODE_MODULE_ALIAS_AND_ITEMS,
     raise_validation,
+    safe_text,
     safe_value,
 )
 from typcast.models.base import require_sequence, require_string
@@ -60,7 +61,8 @@ class Module:
         ):
             raise_validation(
                 CODE_INVALID_MODULE_ALIAS,
-                f"'{path}' must match [A-Za-z_][A-Za-z0-9_]*, got {value!r}.",
+                f"'{path}' must match [A-Za-z_][A-Za-z0-9_]*, "
+                f"got '{safe_text(value)}'.",
                 path,
                 # The details of a diagnostic must be JSON-serializable, so a
                 # value of an unknown type is represented by its type name.

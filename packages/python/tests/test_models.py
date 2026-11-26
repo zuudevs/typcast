@@ -319,6 +319,23 @@ class ConstructorValidationTests(unittest.TestCase):
         text = json.dumps(diagnostic.to_dict(), allow_nan=False)
         self.assertIn('"value": "NaN"', text)
 
+    def test_an_oversized_integer_is_rejected_with_a_diagnostic(self) -> None:
+        # The interpreter limits the conversion of a long digit string to a
+        # string, so the diagnostic must not render the raw value.
+        with self.assertRaises(ValidationError) as caught:
+            Module(path="modules/report.typ", alias=10**5000)  # type: ignore[arg-type]
+        diagnostic = caught.exception.diagnostics[0]
+        self.assertEqual(diagnostic.code, "TYPCAST-VAL-0008")
+        text = json.dumps(diagnostic.to_dict())
+        self.assertIn('"value": "Infinity"', text)
+
+    def test_a_long_identifier_is_shortened_in_the_message(self) -> None:
+        with self.assertRaises(ValidationError) as caught:
+            Module(path="modules/report.typ", alias="1" + "a" * 200)
+        diagnostic = caught.exception.diagnostics[0]
+        self.assertLess(len(diagnostic.message), 200)
+        self.assertIn("…", diagnostic.message)
+
     def test_module_alias_and_items_are_exclusive(self) -> None:
         self.assert_code(
             "TYPCAST-VAL-0009",

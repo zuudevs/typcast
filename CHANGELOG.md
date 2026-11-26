@@ -257,6 +257,11 @@ No release has been published yet. Every change so far is listed under
   such as `01.0.0`, while a semantic version holds none. Both SDKs now reject
   such a version, and the negative fixture `version-leading-zero.json` records
   the rule.
+- The Python SDK rendered the rejected value of a module alias or of a length
+  unit in the message of a diagnostic, so an integer of more than 4300 digits
+  raised a raw error of the interpreter instead of a diagnostic. Both SDKs now
+  render the value in a bounded form, so the message stays readable and the
+  details of the diagnostic stay JSON-serializable.
 
 ### Known issues
 

@@ -3,6 +3,7 @@
 import {
   CODE_INVALID_MODULE_ALIAS,
   CODE_MODULE_ALIAS_AND_ITEMS,
+  safeText,
   safeValue,
   throwValidation,
 } from "../diagnostics.js";
@@ -66,7 +67,7 @@ function checkIdentifier(value: string, path: string): void {
   if (typeof value !== "string" || !IDENTIFIER_PATTERN.test(value)) {
     throwValidation(
       CODE_INVALID_MODULE_ALIAS,
-      `'${path}' must match [A-Za-z_][A-Za-z0-9_]*, got '${value}'.`,
+      `'${path}' must match [A-Za-z_][A-Za-z0-9_]*, got '${safeText(value)}'.`,
       path,
       // The details of a diagnostic must be JSON-serializable, so a value of
       // an unknown type is represented by its type name.

@@ -48,6 +48,10 @@ codes, field names, or supported version ranges. A value of a type that JSON
 cannot represent is replaced by the name of its type, and a number that is not
 finite is spelled in the form of ECMAScript.
 
+The `message` of a diagnostic is human-readable text. When it shows a rejected
+value, it shows at most 64 characters of that value, so that the message stays
+readable.
+
 ## Code families
 
 | Prefix | Family | Raised by |

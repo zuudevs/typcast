@@ -17,7 +17,9 @@ __all__ = [
     "TypcastError",
     "ValidationError",
     "SerializationError",
+    "safe_text",
     "safe_value",
+    "MAX_DIAGNOSTIC_VALUE_LENGTH",
     "SEVERITY_ERROR",
     "SEVERITY_WARNING",
     "SEVERITY_INFO",
@@ -57,6 +59,9 @@ PHASE_COMPILER = "compiler"
 PHASE_IO = "io"
 PHASE_CONFIG = "config"
 
+# The number of characters of a value that the message of a diagnostic shows.
+MAX_DIAGNOSTIC_VALUE_LENGTH = 64
+
 # Validation codes. The catalog lives in `docs/specifications/diagnostics.md`.
 CODE_REQUIRED_FIELD = "TYPCAST-VAL-0001"
 CODE_UNKNOWN_FIELD = "TYPCAST-VAL-0002"
@@ -83,6 +88,24 @@ def _freeze_mapping(value: Mapping[str, Any] | None) -> Mapping[str, Any] | None
     return MappingProxyType(dict(value))
 
 
+def _safe_integer(value: int) -> Any:
+    """Returns a JSON-serializable representation of an integer.
+
+    The interpreter limits the conversion of a long digit string to a string,
+    so the details of a diagnostic must not hold such an integer. A number of
+    the IR lives in the binary64 domain of ECMAScript, so an integer that the
+    domain cannot hold is represented by the infinity of that domain.
+    """
+    try:
+        str(value)
+    except ValueError:
+        try:
+            return float(value)
+        except OverflowError:
+            return "Infinity" if value > 0 else "-Infinity"
+    return value
+
+
 def safe_value(value: Any) -> Any:
     """Returns a JSON-serializable representation of a value.
 
@@ -91,8 +114,10 @@ def safe_value(value: Any) -> Any:
     not finite is represented by its spelling in the form of ECMAScript. The
     TypeScript SDK applies the same rule.
     """
-    if value is None or isinstance(value, (bool, int, str)):
+    if value is None or isinstance(value, (bool, str)):
         return value
+    if isinstance(value, int):
+        return _safe_integer(value)
     if isinstance(value, float):
         if math.isfinite(value):
             return value
@@ -104,6 +129,18 @@ def safe_value(value: Any) -> Any:
     if isinstance(value, (list, tuple)):
         return "array"
     return type(value).__name__
+
+
+def safe_text(value: Any) -> str:
+    """Returns a short, readable representation of a value.
+
+    The message of a diagnostic stays readable, so a long value is shortened.
+    The TypeScript SDK applies the same rule.
+    """
+    text = value if isinstance(value, str) else str(safe_value(value))
+    if len(text) <= MAX_DIAGNOSTIC_VALUE_LENGTH:
+        return text
+    return text[:MAX_DIAGNOSTIC_VALUE_LENGTH] + "…"
 
 
 @dataclass(frozen=True)

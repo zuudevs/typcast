@@ -68,6 +68,9 @@ export const CODE_UNSUPPORTED_VERSION = "TYPCAST-IR-0002";
 export const CODE_NOT_SERIALIZABLE = "TYPCAST-IR-0003";
 export const CODE_ROOT_SHAPE = "TYPCAST-IR-0004";
 
+/** The number of characters of a value that the message of a diagnostic shows. */
+export const MAX_DIAGNOSTIC_VALUE_LENGTH = 64;
+
 /**
  * Returns a JSON-serializable representation of a value.
  *
@@ -94,6 +97,19 @@ export function safeValue(value: unknown): unknown {
     return "object";
   }
   return kind;
+}
+
+/**
+ * Returns a short, readable representation of a value.
+ *
+ * The message of a diagnostic stays readable, so a long value is shortened.
+ * The Python SDK applies the same rule.
+ */
+export function safeText(value: unknown): string {
+  const text = typeof value === "string" ? value : String(safeValue(value));
+  return text.length <= MAX_DIAGNOSTIC_VALUE_LENGTH
+    ? text
+    : `${text.slice(0, MAX_DIAGNOSTIC_VALUE_LENGTH)}…`;
 }
 
 /** The base class of every error raised by Typcast. */

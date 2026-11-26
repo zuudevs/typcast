@@ -3,6 +3,7 @@
 import {
   CODE_INVALID_LENGTH,
   CODE_REQUIRED_FIELD,
+  safeText,
   safeValue,
   throwValidation,
 } from "../diagnostics.js";
@@ -52,7 +53,7 @@ export class Length {
     if (!LENGTH_UNITS.includes(unit)) {
       throwValidation(
         CODE_INVALID_LENGTH,
-        `'/unit' must be one of ${LENGTH_UNITS.join(", ")}, got '${unit}'.`,
+        `'/unit' must be one of ${LENGTH_UNITS.join(", ")}, got '${safeText(unit)}'.`,
         "/unit",
         // The details of a diagnostic must be JSON-serializable, so a value of
         // an unknown type is represented by its type name.
