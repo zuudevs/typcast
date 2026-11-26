@@ -290,7 +290,8 @@ collection. A single error may carry multiple diagnostics.
 ## Versioning and stability
 
 - `typcast.__version__` and the TypeScript `VERSION` export MUST match the
-  package version.
+  package version. The requirement `API-026` records the rule, and the
+  repository gate compares every export with its manifest.
 - The public API is stable from `1.0.0`.
 - Adding a method or optional argument is a minor change.
 - Removing or changing a public method, argument, field, or error code is a
@@ -337,6 +338,7 @@ collection. A single error may carry multiple diagnostics.
 | API-023 | `asset_root` MUST be required only for compilation that needs assets. | CONFIRMED | API test. |
 | API-024 | The builder MUST be documented as mutable, single-document, and not thread-safe. | CONFIRMED | API documentation review. |
 | API-025 | The npm package MUST be ESM-only for `1.0.0`; CommonJS support is DEFERRED. | CONFIRMED | Package and consumer tests. |
+| API-026 | The package root MUST export the version of the package, and the export MUST match the package manifest. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the version cases, and `//scripts:repository_checks` compares every export with its manifest. |
 
 ## Open questions
 

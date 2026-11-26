@@ -24,6 +24,7 @@ from check_repository import (
     check_scope_document,
     check_security_policy,
     check_sdk_isolation,
+    check_sdk_version,
     check_specs_dependencies,
     check_test_modules,
     check_toolchain,
@@ -177,11 +178,19 @@ def make_repository(root: Path) -> Path:
 
     write(root / "packages" / "python" / "pyproject.toml", PYPROJECT)
     write(root / "packages" / "python" / "src" / "typcast" / "__init__.py", "")
+    write(
+        root / "packages" / "python" / "src" / "typcast" / "version.py",
+        '__version__ = "0.1.0"\n',
+    )
     write_build(root / "packages" / "python" / "BUILD.bazel")
     write_json(root / "packages" / "typescript" / "package.json", SDK_MANIFEST)
     write(
         root / "packages" / "typescript" / "src" / "index.ts",
         "export const version = '0.1.0';\n",
+    )
+    write(
+        root / "packages" / "typescript" / "src" / "version.ts",
+        'export const VERSION = "0.1.0";\n',
     )
     write_build(root / "packages" / "typescript" / "BUILD.bazel")
 
@@ -261,6 +270,7 @@ class RepositoryCheckTests(unittest.TestCase):
         check_test_modules(self.root, report)
         check_toolchain(self.root, report)
         check_typescript_version(self.root, report)
+        check_sdk_version(self.root, report)
         check_python_import_path(self.root, report)
         check_decision_template(self.root, report)
         check_generated_artifacts(self.root, report)
@@ -547,6 +557,50 @@ class RepositoryCheckTests(unittest.TestCase):
 
         self.assertTrue(
             any("must read the compiler version" in error for error in report.errors)
+        )
+
+    def test_an_sdk_version_that_matches_the_manifest_is_accepted(self) -> None:
+        report = self.run_check(check_sdk_version)
+
+        self.assertEqual(report.errors, [])
+
+    def test_a_python_sdk_version_that_differs_is_reported(self) -> None:
+        write(
+            self.root / "packages" / "python" / "src" / "typcast" / "version.py",
+            '__version__ = "0.2.0"\n',
+        )
+
+        report = self.run_check(check_sdk_version)
+
+        self.assertTrue(
+            any("the Python SDK exports version 0.2.0" in error for error in report.errors)
+        )
+
+    def test_a_typescript_sdk_version_that_differs_is_reported(self) -> None:
+        write(
+            self.root / "packages" / "typescript" / "src" / "version.ts",
+            'export const VERSION = "0.2.0";\n',
+        )
+
+        report = self.run_check(check_sdk_version)
+
+        self.assertTrue(
+            any(
+                "the TypeScript SDK exports version 0.2.0" in error
+                for error in report.errors
+            )
+        )
+
+    def test_an_sdk_without_a_version_export_is_reported(self) -> None:
+        write(
+            self.root / "packages" / "typescript" / "src" / "version.ts",
+            "export const SCHEMA_VERSION = '1.0.0';\n",
+        )
+
+        report = self.run_check(check_sdk_version)
+
+        self.assertTrue(
+            any("does not export its version" in error for error in report.errors)
         )
 
     def test_a_wrong_python_project_name_is_reported(self) -> None:

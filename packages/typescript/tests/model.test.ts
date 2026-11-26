@@ -25,11 +25,13 @@ import {
   Paragraph,
   RawBlock,
   RawSpan,
+  SCHEMA_VERSION,
   Table,
   TableColumn,
   Text,
   TypcastError,
   ValidationError,
+  VERSION,
 } from "../lib/src/index.js";
 import type { Block } from "../lib/src/index.js";
 
@@ -778,11 +780,23 @@ function roundTripTests(): void {
   );
 }
 
+function versionTests(): void {
+  check(
+    /^\d+\.\d+\.\d+$/.test(String(VERSION)),
+    "the package version must be exported",
+  );
+  check(
+    String(VERSION) !== String(SCHEMA_VERSION),
+    "the package version must not be the schema version",
+  );
+}
+
 immutabilityTests();
 constructorTests();
 serializationTests();
 deserializationTests();
 roundTripTests();
+versionTests();
 
 if (failures.length > 0) {
   for (const failure of failures) {

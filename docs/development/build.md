@@ -71,7 +71,7 @@ root.
 | Check | Result |
 |---|---|
 | `bazel build //...` | Pass, 55 targets. |
-| `bazel test //...` | Pass, 17 of 17 test targets of the 19 test rules, because the two transitive type-check rules are tagged `manual`: 16 unittest cases, 45 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 43 repository structure cases, 4 release tag cases, 32 documentation gate cases, 4 link check cases, 1 documentation check, 1 schema bundle check, 83 document model cases, 6 contract fixture cases, and the TypeScript model, contract, and type-check targets. |
+| `bazel test //...` | Pass, 17 of 17 test targets of the 19 test rules, because the two transitive type-check rules are tagged `manual`: 16 unittest cases, 45 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 47 repository structure cases, 4 release tag cases, 32 documentation gate cases, 4 link check cases, 1 documentation check, 1 schema bundle check, 85 document model cases, 6 contract fixture cases, and the TypeScript model, contract, and type-check targets. |
 | `bazel build //specs/schemas:schema_bundle` | Pass, 6 schema files. |
 | `bazel build //specs/schemas:schema_manifest` | Pass, 6 paths. |
 | `bazel build //specs/schemas:archive` | Pass, 6 members, deterministic gzip tarball. |
@@ -81,12 +81,12 @@ root.
 | `bazel test //scripts/tests:version_tests` | Pass, 15 cases. |
 | `bazel test //scripts/tests:release_tests` | Pass, 20 cases. |
 | `bazel test //scripts/tests:release_flow_tests` | Pass, 6 cases. |
-| `bazel run //scripts:repository_checks` | Pass, 2 spec files, 27 SDK files, 13 gate files, 50 Python modules, 11 test modules, 2 toolchain files, 3 TypeScript files, 23 decision records, 73 Bazel package files, 0 errors. |
+| `bazel run //scripts:repository_checks` | Pass, 2 spec files, 27 SDK files, 13 gate files, 50 Python modules, 11 test modules, 2 toolchain files, 3 TypeScript files, 2 SDK versions, 23 decision records, 73 Bazel package files, 0 errors. |
 | `bazel test //scripts/tests:repository_tests` | Pass, 43 cases. |
 | `bazel test //scripts/tests:docs_tests` | Pass, 32 cases. |
 | `bazel test //scripts/tests:link_tests` | Pass, 4 cases. |
 | `bazel test //tools/publish/tests:publish_tests` | Pass, 45 publisher cases. |
-| `bazel test //packages/python/tests:model_tests` | Pass, 83 cases. |
+| `bazel test //packages/python/tests:model_tests` | Pass, 85 cases. |
 | `bazel test //packages/typescript:model_test_run` | Pass. |
 | `bazel test //tests/contract:contract_py` | Pass, 6 cases. |
 | `bazel test //tests/contract:contract_ts_test` | Pass. |
@@ -248,6 +248,8 @@ document must catch:
   Dependabot covers every dependency manifest.
 - Identity: the npm manifest of the TypeScript SDK is named `typcast`, and the
   scope document is published and linked from the root README.
+- Versions: the version that each SDK exports matches the manifest of its
+  package.
 
 The check reads the working tree, so it runs against the checkout and not
 against the runfiles tree:
@@ -404,6 +406,7 @@ The artifact requirements for the packaging targets are defined in
 | BUILD-019 | CI MUST cache Bazel outputs per operating system, keyed by the Bazel version, `MODULE.bazel.lock`, and build files. | IMPLEMENTED | The cache configuration of the workflows; the key holds the operating system, the architecture, the Bazel version, the lockfile, and the build files. |
 | BUILD-020 | Build logs MUST NOT contain secrets or document content. | CONFIRMED | Security review. |
 | BUILD-021 | The `//specs/schemas:archive` target MUST produce a deterministic gzip tarball: a fixed member order, fixed member metadata, no timestamp in the gzip header, and no dependency on the modification time of the files. | IMPLEMENTED | `//specs/schemas:archive`; `//tools/publish/tests:publish_tests` compares two archives byte for byte. |
+| BUILD-022 | The version that each SDK exports MUST match the manifest of its package. | IMPLEMENTED | `//scripts:repository_checks` reads the version of every manifest and the version that every SDK exports, and rejects a difference. |
 
 ## Open questions
 

@@ -15,6 +15,15 @@ export const SCHEMA_VERSION = "1.0.0";
 export const SUPPORTED_SCHEMA_MAJOR = 1;
 export const SUPPORTED_SCHEMA_MINOR = 0;
 
+/**
+ * The version of the TypeScript package.
+ *
+ * It matches the version of the package manifest, and the repository gate
+ * checks that the two agree. It is not the version of the schema, which the
+ * `SCHEMA_VERSION` export names.
+ */
+export const VERSION = "0.1.0";
+
 const VERSION_PATTERN = /^(\d+)\.(\d+)\.(\d+)$/;
 
 /** Returns the major, minor, and patch numbers of a version string. */

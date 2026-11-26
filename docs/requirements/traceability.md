@@ -21,13 +21,13 @@ change impact analysis.
 | Document IR | `specifications/document-ir.md` | `IR-001` to `IR-022` | Schema and contract tests. |
 | Nodes | `specifications/nodes.md` | `NODE-001` to `NODE-025` | Golden and emitter tests. |
 | Schema | `specifications/schema.md` | `SCH-001` to `SCH-021` | Schema lint and bundle tests. |
-| SDK API | `specifications/sdk-api.md` | `API-001` to `API-025` | API and parity tests. |
+| SDK API | `specifications/sdk-api.md` | `API-001` to `API-026` | API and parity tests. |
 | Emitter | `specifications/emitter.md` | `EMIT-001` to `EMIT-022` | Byte-level golden tests. |
 | Compiler | `specifications/compiler.md` | `COMP-001` to `COMP-022` | Compiler integration tests. |
 | Diagnostics | `specifications/diagnostics.md` | `DIAG-001` to `DIAG-014` | Negative and parity tests. |
 | Assets | `specifications/assets.md` | `ASSET-001` to `ASSET-020` | Path and workspace tests. |
 | Compatibility | `specifications/compatibility.md` | `COMPAT-001` to `COMPAT-019` | CI matrix. |
-| Build | `development/build.md` | `BUILD-001` to `BUILD-021` | Bazel commands. |
+| Build | `development/build.md` | `BUILD-001` to `BUILD-022` | Bazel commands. |
 | Testing | `development/testing.md` | `TEST-001` to `TEST-032` | Test inventory. |
 | Benchmarking | `development/benchmarking.md` | `PERF-001` to `PERF-015` | Benchmark job. |
 | CI/CD | `development/ci-cd.md` | `CI-001` to `CI-029` | Workflow review. |
@@ -132,6 +132,7 @@ a target for the MVP and is not yet verified in the repository.
 | `BUILD-019` | The Bazel cache is separated by operating system and keyed by the Bazel version, the lockfile, and the build files. | The cache configuration of the workflows. |
 | `BUILD-016` | `//specs/schemas/templates/api/types:schema_templates` and `//specs/catalogs/enums:enum_catalogs` were removed; `schema_bundle` remains the bundle entry point. | `bazel query "rdeps(//..., //specs/schemas:schema_bundle)"` and `bazel build //...`. |
 | `BUILD-021` | `//specs/schemas:archive` writes a deterministic gzip tarball: the member order, the member metadata, and the gzip header are fixed, and the bytes do not depend on the modification time of the files. | `//specs/schemas:archive`; `//tools/publish/tests:publish_tests` compares two archives byte for byte. |
+| `BUILD-022` | The version that each SDK exports matches the manifest of its package. | `//scripts:repository_checks`; the version cases of `//scripts/tests:repository_tests`. |
 | `SCH-011` | `read_csv_column` rejects an empty value in the selected column. | `test_empty_value_in_selected_column_reports_an_error` in `//tools/codegen/tests:unit_tests`. |
 | `SCH-012` | `read_csv_column` skips fully blank rows. | `test_fully_blank_rows_are_skipped` in `//tools/codegen/tests:unit_tests`. |
 | `SCH-001` | Every schema of the bundle declares the draft 2020-12 dialect. | `//specs/schemas:schema_tests`; the dialect rule. |
@@ -253,6 +254,7 @@ a target for the MVP and is not yet verified in the repository.
 | `API-015` | Every error of both SDKs inherits from `TypcastError` and exposes a diagnostic. | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the error cases. |
 | `API-016` | Both SDKs expose the same diagnostic fields, and the contract runners compare the code of every negative fixture. | `typcast.diagnostics`; `packages/typescript/src/diagnostics.ts`; `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`. |
 | `API-018` | Both package roots export the public API. | `//packages/python/tests:model_tests` imports every public type from `typcast`; `//packages/typescript:model_test_run` imports every public type from the package root. |
+| `API-026` | Both package roots export the version of the package, and every export matches the manifest of its package. | `//packages/python/tests:model_tests`; `//packages/typescript:model_test_run`; the version cases, and `//scripts:repository_checks`. |
 | `DIAG-001` | Both SDKs expose the documented diagnostic shape. | `typcast.diagnostics`; `packages/typescript/src/diagnostics.ts`; the diagnostic cases of the model tests. |
 | `DIAG-004` | Both SDKs expose the same diagnostic fields, and the contract runners compare the code of every negative fixture. | `typcast.diagnostics`; `packages/typescript/src/diagnostics.ts`; `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`. |
 | `DIAG-005` | `ValidationError` and `SerializationError` of both SDKs inherit from `TypcastError`. | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the error cases. |

@@ -40,7 +40,7 @@ import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from check_version import check_versions, module_version
+from check_version import check_versions, module_version, read_version
 
 # The directories that the checks never read.
 IGNORED_DIRECTORIES = {
@@ -79,6 +79,14 @@ ADR_DATE_RE = re.compile(r"^Date: (\d{4}-\d{2}-\d{2})$")
 
 # The version of a manifest that must be exact, not a range.
 EXACT_VERSION_RE = re.compile(r"^\d+\.\d+\.\d+([-+].+)?$")
+
+# The version constants that the SDKs export. The API of `docs/specifications/
+# sdk-api.md` names them, and each of them must match the version of the
+# manifest of its package.
+PYTHON_VERSION_RE = re.compile(r'^__version__\s*=\s*"([^"]+)"', re.M)
+TYPESCRIPT_VERSION_RE = re.compile(
+    r'export\s+const\s+VERSION\s*=\s*"([^"]+)"',
+)
 
 # The version of Bazel that `.bazelversion` holds.
 BAZEL_VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
@@ -588,6 +596,46 @@ def read_json(path: Path) -> dict | None:
     return document if isinstance(document, dict) else None
 
 
+def check_sdk_version(root: Path, report: Report) -> int:
+    """Checks that the version that each SDK exports matches its manifest."""
+    checked = 0
+    sources = (
+        (
+            root / "packages" / "python" / "src" / "typcast" / "version.py",
+            root / "packages" / "python" / "pyproject.toml",
+            PYTHON_VERSION_RE,
+            "the Python SDK",
+        ),
+        (
+            root / "packages" / "typescript" / "src" / "version.ts",
+            root / "packages" / "typescript" / "package.json",
+            TYPESCRIPT_VERSION_RE,
+            "the TypeScript SDK",
+        ),
+    )
+    for source, manifest, pattern, description in sources:
+        if not source.is_file() or not manifest.is_file():
+            report.error(f"{description} has no version source")
+            continue
+        checked += 1
+        expected = read_version(manifest)
+        found = pattern.search(source.read_text(encoding="utf-8"))
+        if expected is None:
+            report.error(f"cannot read the version of {description}")
+            continue
+        if found is None:
+            report.error(
+                f"{description} does not export its version: {source.name}"
+            )
+            continue
+        if found.group(1) != expected:
+            report.error(
+                f"{description} exports version {found.group(1)}, expected "
+                f"{expected}: {source.relative_to(root).as_posix()}"
+            )
+    return checked
+
+
 def check_python_import_path(root: Path, report: Report) -> int:
     """Checks that the Python import path of the SDK is `typcast`."""
     checked = 0
@@ -914,6 +962,7 @@ def main(argv: list[str] | None = None) -> int:
     tests = check_test_modules(root, report)
     toolchain = check_toolchain(root, report)
     typescript = check_typescript_version(root, report)
+    sdk_version = check_sdk_version(root, report)
     import_path = check_python_import_path(root, report)
     decisions = check_decision_template(root, report)
     artifacts = check_generated_artifacts(root, report)
@@ -932,6 +981,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"test modules checked: {tests}")
     print(f"toolchain files checked: {toolchain}")
     print(f"typescript files checked: {typescript}")
+    print(f"sdk versions checked: {sdk_version}")
     print(f"python import paths checked: {import_path}")
     print(f"decision records checked: {decisions}")
     print(f"generated schema files checked: {artifacts}")

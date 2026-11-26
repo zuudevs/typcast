@@ -37,7 +37,7 @@ from typcast.models import (
     TableColumn,
     Text,
 )
-from typcast.version import SCHEMA_VERSION
+from typcast.version import SCHEMA_VERSION, __version__
 
 __all__ = [
     "Block",
@@ -68,4 +68,5 @@ __all__ = [
     "Text",
     "TypcastError",
     "ValidationError",
+    "__version__",
 ]

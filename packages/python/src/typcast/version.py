@@ -19,9 +19,14 @@ __all__ = [
     "SCHEMA_VERSION",
     "SUPPORTED_SCHEMA_MAJOR",
     "SUPPORTED_SCHEMA_MINOR",
+    "__version__",
     "parse_schema_version",
     "check_schema_version",
 ]
+
+# The version of the Python package. It matches the version of the package
+# manifest, and the repository gate checks that the two agree.
+__version__ = "0.1.0"
 
 SCHEMA_VERSION = "1.0.0"
 SUPPORTED_SCHEMA_MAJOR = 1

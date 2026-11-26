@@ -35,12 +35,14 @@ from typcast import (
     Paragraph,
     RawBlock,
     RawSpan,
+    SCHEMA_VERSION,
     SerializationError,
     Table,
     TableColumn,
     Text,
     TypcastError,
     ValidationError,
+    __version__,
 )
 
 
@@ -107,6 +109,18 @@ class ImmutabilityTests(unittest.TestCase):
         module = Module(path="modules/format.typ", items=items)
         items.append("percent")
         self.assertEqual(module.items, ("currency",))
+
+
+class VersionTests(unittest.TestCase):
+    """Checks the version that the package exports."""
+
+    def test_the_package_version_is_exported(self) -> None:
+        self.assertRegex(__version__, r"^\d+\.\d+\.\d+$")
+
+    def test_the_package_version_is_not_the_schema_version(self) -> None:
+        # The version of the schema and the version of the package are two
+        # different numbers, and the package exports both of them.
+        self.assertNotEqual(__version__, SCHEMA_VERSION)
 
 
 class ConstructorValidationTests(unittest.TestCase):

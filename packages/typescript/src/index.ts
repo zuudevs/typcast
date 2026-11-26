@@ -68,4 +68,4 @@ export type {
   RawFormat,
   Span,
 } from "./models/index.js";
-export { SCHEMA_VERSION } from "./version.js";
+export { SCHEMA_VERSION, VERSION } from "./version.js";

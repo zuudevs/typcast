@@ -248,6 +248,11 @@ No release has been published yet. Every change so far is listed under
   value itself, so a property that the prototype of the value supplies was
   accepted as a discriminator. The Python SDK reads only the own keys of a
   mapping, so both SDKs now require an own discriminator.
+- Neither SDK exported the version of its package, although the API of
+  `docs/specifications/sdk-api.md` names `typcast.__version__` and the
+  TypeScript `VERSION` export. Both package roots now export the version of
+  the package, the requirement `API-026` records the rule, and the repository
+  gate compares every export with the manifest of its package.
 
 ### Known issues
 
