@@ -303,6 +303,12 @@ No release has been published yet. Every change so far is listed under
   accepted an object with a symbol key. Both SDKs now report the same
   details, `{"keyType": "non-string"}`, and the TypeScript SDK rejects such an
   object with the same diagnostic as the Python SDK.
+- The schema accepted an image whose width is zero, because the width of an
+  image referenced the shared length schema, whose lower bound of zero is the
+  bound of a margin, while the readers of the SDKs and the IR require a
+  positive width of an image. The width of an image now carries an exclusive
+  lower bound of zero, the length of a margin stays non-negative, and the
+  requirement `SCH-023` records the rule.
 - The shared fixtures held no case for a quoted value, a control character, a
   supplementary character, a long value, a version that ends with a newline, a
   number at the boundary of the binary64 domain, a lone surrogate, a key that

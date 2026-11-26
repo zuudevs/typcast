@@ -20,7 +20,7 @@ change impact analysis.
 | Repository | `architecture/repository.md` | `REPO-001` to `REPO-012` | Bazel build, dependency review. |
 | Document IR | `specifications/document-ir.md` | `IR-001` to `IR-024` | Schema and contract tests. |
 | Nodes | `specifications/nodes.md` | `NODE-001` to `NODE-025` | Golden and emitter tests. |
-| Schema | `specifications/schema.md` | `SCH-001` to `SCH-022` | Schema lint and bundle tests. |
+| Schema | `specifications/schema.md` | `SCH-001` to `SCH-023` | Schema lint and bundle tests. |
 | SDK API | `specifications/sdk-api.md` | `API-001` to `API-026` | API and parity tests. |
 | Emitter | `specifications/emitter.md` | `EMIT-001` to `EMIT-022` | Byte-level golden tests. |
 | Compiler | `specifications/compiler.md` | `COMP-001` to `COMP-022` | Compiler integration tests. |
@@ -143,9 +143,10 @@ a target for the MVP and is not yet verified in the repository.
 | `SCH-009` | The schema contract is validated against the built bundle, not against the source tree. | `//specs/schemas:schema_tests`; 6 bundle files checked, 0 violations. |
 | `SCH-020` | The ten prototype defects `SCH-D01` to `SCH-D10` are closed. | `specifications/schema.md`; the bundle test reports no violation. |
 | `SCH-022` | The pattern of `schemaVersion` is the one of a semantic version, and it matches the whole text. | `//specs/schemas:schema_tests`; the check of the pattern reads the pattern that `validator.schema.json` carries and rejects a leading zero, a Unicode digit, and a trailing newline or carriage return. |
+| `SCH-023` | The width of an image excludes zero in the schema, and the length of a margin stays non-negative. | `//specs/schemas:schema_tests`; the width rule reads the schemas of the built bundle and checks that the width of an image excludes zero and that the shared length schema keeps its lower bound of zero. |
 | `DOC-015` | The root `README.md` uses standard code fences and LF line endings. | Documentation validation script run on 2026-11-24. |
 | `DOC-016` | `.gitattributes` pins LF for text files and `.editorconfig` pins UTF-8, LF, final newline, and indentation. | Files present at the repository root. |
-| `DOC-021` | `scripts/validate_docs.py` validates the documents, the requirement index, the ADR index, and the schema references with the standard library only. | `//scripts:docs_checks`; 57 files, 473 requirements, and 3 workflows checked with 0 errors. |
+| `DOC-021` | `scripts/validate_docs.py` validates the documents, the requirement index, the ADR index, and the schema references with the standard library only. | `//scripts:docs_checks`; 57 files, 474 requirements, and 3 workflows checked with 0 errors. |
 | `DOC-012` | The documentation gate runs on pull requests. | The `Documentation gate` job of `.github/workflows/pr.yml`. |
 | `DOC-013` | The documentation gate runs on `main`. | The `Documentation gate` job of `.github/workflows/main.yml`. |
 | `DOC-022` | The repository gate validates the workflow files: pinned actions, declared permissions, no write access or secret in a pull request workflow, and no `pull_request_target`. | `//scripts:docs_checks`; 3 workflows checked. |
@@ -247,7 +248,7 @@ a target for the MVP and is not yet verified in the repository.
 | `IR-017` | The SDKs depend on no Typst compiler, and the model and the contract tests run without a Typst installation. | `//packages/python/tests:model_tests`; `//tests/contract:contract_py`; `//tests/contract:contract_ts_test`. |
 | `IR-018` | The shared fixtures are language-neutral JSON, and both SDKs read them. | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`; the fixtures under `tests/fixtures/documents/`. |
 | `IR-021` | Both SDKs hold the numbers of a document in the binary64 number domain of ECMAScript, so a value that the domain cannot hold is narrowed the same way and a value that overflows the domain is rejected. | `//packages/python/tests:model_tests`; `//packages/typescript:model_test_run`; the number-domain cases, and the fixture `large-number.json`. |
-| `IR-022` | Both SDKs reject an image whose width is zero, because the IR requires a positive width. | `//packages/python/tests:model_tests`; `//packages/typescript:model_test_run`; the image-width cases, and the fixture `invalid-image-width.json`. |
+| `IR-022` | Both SDKs reject an image whose width is zero, because the IR requires a positive width, and the schema states the same rule. | `//packages/python/tests:model_tests`; `//packages/typescript:model_test_run`; the image-width cases, the fixture `invalid-image-width.json`, and `//specs/schemas:schema_tests`; the width rule. |
 | `IR-023` | Both SDKs reject a JSON object that holds a key that is not a string. | `//packages/python/tests:model_tests`; `//packages/typescript:model_test_run`; the nested-key cases, and the fixture `non-string-key.json` of `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`. |
 | `IR-024` | Both SDKs reject a document that holds a character that UTF-8 cannot encode when they write it. | `//packages/python/tests:model_tests`; `//packages/typescript:model_test_run`; the encodability cases, and the fixture `unpaired-surrogate.json` of `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`. |
 | `API-004` | The constructors of both SDKs check the type, the enum literal, the range, and the emptiness of their arguments. | `//packages/python/tests:model_tests`; `//packages/typescript:model_test_run`; the constructor cases, including the text-length cases of the title and the author, and the negative fixture `invalid-title-length.json`. |

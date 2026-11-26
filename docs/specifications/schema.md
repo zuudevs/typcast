@@ -368,6 +368,7 @@ the public API to JSON Schema limitations.
 | SCH-020 | The prototype defects SCH-D01 to SCH-D10 MUST be resolved before 1.0.0. | IMPLEMENTED | The migration is complete; `//specs/schemas:schema_tests` reports no violation. |
 | SCH-021 | A published schema MUST be referenced by the versioned raw URL of its release tag, and a `main` URL MUST NOT be used as a stable reference. | CONFIRMED | Release check. |
 | SCH-022 | The pattern of `schemaVersion` MUST be the one of a semantic version, and it MUST match the whole text. | IMPLEMENTED | `//specs/schemas:schema_tests`; the check of the pattern reads the pattern that `validator.schema.json` carries and rejects a leading zero, a Unicode digit, and a trailing newline or carriage return. |
+| SCH-023 | The width of an image MUST carry an exclusive lower bound of zero, and the length of a margin MUST stay non-negative. | IMPLEMENTED | `//specs/schemas:schema_tests`; the width rule reads the schemas of the built bundle and checks that the width of an image excludes zero and that the shared length schema keeps its lower bound of zero. |
 
 ## Open questions
 

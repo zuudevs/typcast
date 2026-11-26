@@ -294,7 +294,17 @@
               }
             },
             "width": {
-              "$ref": "../api/types/length.schema.json"
+              "$ref": "../api/types/length.schema.json",
+              "properties": {
+                "value": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                }
+              },
+              "required": [
+                "value"
+              ],
+              "unevaluatedProperties": false
             }
           },
           "required": [

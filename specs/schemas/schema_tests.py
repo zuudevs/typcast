@@ -302,6 +302,75 @@ def check_version_pattern(bundle: Path) -> list[str]:
     return violations
 
 
+def check_image_width(bundle: Path) -> list[str]:
+    """Returns the violations of the rule of the width of an image.
+
+    The IR requires a positive width of an image, and the readers of both
+    SDKs reject a width of zero. The schema must reject it as well, so the
+    width of an image carries an exclusive lower bound of zero, while the
+    length of a margin stays non-negative.
+
+    The check reads the schemas of the built bundle and checks their
+    structure. It is not an instance validation of a document.
+    """
+    violations: list[str] = []
+    node = _read_json(bundle / "definitions" / "node.schema.json")
+    length = _read_json(bundle / "api" / "types" / "length.schema.json")
+    if node is None or length is None:
+        return ["width-schemas-unreadable"]
+    image = _branch_with_type(node, "image")
+    if image is None:
+        return ["width-image-missing"]
+    width = image.get("properties", {}).get("width")
+    if not isinstance(width, dict):
+        return ["width-image-missing"]
+    value = width.get("properties", {}).get("value")
+    if not isinstance(value, dict) or value.get("exclusiveMinimum") != 0:
+        violations.append("width-image-not-positive")
+    if width.get("required") != ["value"]:
+        violations.append("width-image-required")
+    # The length of a margin stays non-negative, so the shared length schema
+    # keeps its lower bound of zero.
+    margin_value = length.get("properties", {}).get("value")
+    if not isinstance(margin_value, dict) or margin_value.get("minimum") != 0:
+        violations.append("width-margin-not-non-negative")
+    if isinstance(margin_value, dict) and "exclusiveMinimum" in margin_value:
+        violations.append("width-margin-not-non-negative")
+    return violations
+
+
+def _read_json(path: Path) -> dict | None:
+    """Reads a JSON object of the bundle, or returns None."""
+    try:
+        document = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        return None
+    return document if isinstance(document, dict) else None
+
+
+def _branch_with_type(document: dict, name: str) -> dict | None:
+    """Returns the branch of the union whose discriminator is the name."""
+    definitions = document.get("$defs")
+    if not isinstance(definitions, dict):
+        return None
+    for definition in definitions.values():
+        if not isinstance(definition, dict):
+            continue
+        branches = definition.get("oneOf")
+        if not isinstance(branches, list):
+            continue
+        for branch in branches:
+            if not isinstance(branch, dict):
+                continue
+            properties = branch.get("properties")
+            if not isinstance(properties, dict):
+                continue
+            discriminator = properties.get("type")
+            if isinstance(discriminator, dict) and discriminator.get("const") == name:
+                return branch
+    return None
+
+
 def main() -> int:
     bundle = find_bundle_root()
     files = sorted(path for path in bundle.rglob("*.json") if path.is_file())
@@ -330,6 +399,7 @@ def main() -> int:
             violations.append(f"identity-unique:{identifier}")
 
     violations.extend(check_version_pattern(bundle))
+    violations.extend(check_image_width(bundle))
 
     violations.sort()
 
