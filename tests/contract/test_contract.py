@@ -5,7 +5,9 @@ truth of the contract. This runner reads the fixture manifest and checks that
 the Python SDK:
 
 - accepts every valid fixture and writes it back in the canonical form,
-- rejects every invalid fixture with the diagnostic code the manifest names,
+- rejects every invalid fixture with the diagnostic the manifest names,
+- rejects every unserializable fixture when it writes it,
+- rejects every invalid object fixture with the diagnostic the manifest names,
 - keeps the fixture set and the manifest in agreement.
 
 The TypeScript runner `tests/contract/contract.test.mts` reads the same
@@ -69,6 +71,25 @@ def load_manifest(root: Path) -> dict[str, Any]:
     return manifest
 
 
+def listed_files(manifest: dict[str, Any]) -> set[str]:
+    """Returns the names of every fixture that the manifest names."""
+    names: set[str] = set()
+    for section in ("valid", "invalid", "unserializable", "invalid_object"):
+        for entry in manifest[section]:
+            names.add(entry["file"])
+    return names
+
+
+def at_path(value: Any, path: str) -> Any:
+    """Returns the value that a JSON Pointer names."""
+    current = value
+    for token in path.split("/"):
+        if token == "":
+            continue
+        current = current[token]
+    return current
+
+
 class DocumentFixtureTests(unittest.TestCase):
     """Checks the shared fixtures against the Python SDK."""
 
@@ -77,15 +98,27 @@ class DocumentFixtureTests(unittest.TestCase):
         cls.root = find_fixture_root()
         cls.manifest = load_manifest(cls.root)
 
+    def assert_diagnostic(self, error: TypcastError, entry: dict[str, Any]) -> None:
+        """Checks a diagnostic against the expectation of the manifest."""
+        self.assertTrue(error.diagnostics, "the error must carry a diagnostic")
+        diagnostic = error.diagnostics[0]
+        self.assertEqual(diagnostic.code, entry["code"])
+        self.assertEqual(diagnostic.path, entry["path"])
+        self.assertEqual(diagnostic.message, entry["message"])
+        details = dict(diagnostic.details)
+        # The reason of the parser of the runtime belongs to no expectation of
+        # the contract, because the two parsers word their reason
+        # differently.
+        details.pop("reason", None)
+        self.assertEqual(details, entry["details"])
+
     def test_manifest_lists_every_fixture_file(self) -> None:
-        listed = {entry["file"] for entry in self.manifest["valid"]}
-        listed |= {entry["file"] for entry in self.manifest["invalid"]}
         present = {
             path.name for path in self.root.iterdir() if path.is_file()
         }
         present.discard(MANIFEST_NAME)
         self.assertEqual(
-            listed,
+            listed_files(self.manifest),
             present,
             "the manifest and the fixture directory must list the same files",
         )
@@ -141,6 +174,16 @@ class DocumentFixtureTests(unittest.TestCase):
                 self.assertTrue(error.diagnostics, "the error must carry a diagnostic")
                 self.assertEqual(error.diagnostics[0].code, entry["code"])
 
+    def test_invalid_fixtures_are_rejected_with_the_expected_path(self) -> None:
+        # The manifest names the path of every negative fixture, so that the
+        # two SDKs point at the same field.
+        for entry in self.manifest["invalid"]:
+            with self.subTest(fixture=entry["file"]):
+                source = (self.root / entry["file"]).read_text(encoding="utf-8")
+                with self.assertRaises(TypcastError) as caught:
+                    Document.from_json(source)
+                self.assertEqual(caught.exception.diagnostics[0].path, entry["path"])
+
     def test_invalid_fixtures_are_rejected_with_the_expected_message(self) -> None:
         # The manifest names the message of every negative fixture, so that
         # the two SDKs report an invalid input in the same words.
@@ -175,11 +218,53 @@ class DocumentFixtureTests(unittest.TestCase):
                 source = (self.root / entry["file"]).read_text(encoding="utf-8")
                 try:
                     value = json.loads(source)
-                except json.JSONDecodeError:
+                except ValueError:
+                    # The text is no JSON that the parser of the interpreter
+                    # can read, such as an integer token of more than the
+                    # limit of the interpreter.
                     continue
                 with self.assertRaises(TypcastError) as caught:
                     Document.from_dict(value)
                 self.assertEqual(caught.exception.diagnostics[0].code, entry["code"])
+
+    def test_unserializable_fixtures_are_rejected_by_the_writer(self) -> None:
+        # The reader accepts these fixtures, because their text is valid
+        # JSON, and the writer rejects them, because the canonical text of
+        # the IR is UTF-8.
+        for entry in self.manifest["unserializable"]:
+            with self.subTest(fixture=entry["file"]):
+                source = (self.root / entry["file"]).read_text(encoding="utf-8")
+                document = Document.from_json(source)
+                with self.assertRaises(TypcastError) as caught:
+                    document.to_json()
+                self.assertEqual(caught.exception.diagnostics[0].code, entry["code"])
+
+    def test_unserializable_fixtures_are_rejected_with_the_expected_diagnostic(
+        self,
+    ) -> None:
+        for entry in self.manifest["unserializable"]:
+            with self.subTest(fixture=entry["file"]):
+                source = (self.root / entry["file"]).read_text(encoding="utf-8")
+                document = Document.from_json(source)
+                with self.assertRaises(TypcastError) as caught:
+                    document.to_json()
+                self.assert_diagnostic(caught.exception, entry)
+
+    def test_invalid_object_fixtures_are_rejected_with_the_expected_diagnostic(
+        self,
+    ) -> None:
+        # The grammar of JSON holds no key that is not a string, so these
+        # fixtures name the value that the reader must receive.
+        for entry in self.manifest["invalid_object"]:
+            with self.subTest(fixture=entry["file"]):
+                fixture = json.loads(
+                    (self.root / entry["file"]).read_text(encoding="utf-8")
+                )
+                target = at_path(fixture["document"], entry["at"])
+                target[1] = target["title"]
+                with self.assertRaises(TypcastError) as caught:
+                    Document.from_dict(fixture["document"])
+                self.assert_diagnostic(caught.exception, entry)
 
 
 if __name__ == "__main__":

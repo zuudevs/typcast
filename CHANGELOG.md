@@ -303,6 +303,13 @@ No release has been published yet. Every change so far is listed under
   accepted an object with a symbol key. Both SDKs now report the same
   details, `{"keyType": "non-string"}`, and the TypeScript SDK rejects such an
   object with the same diagnostic as the Python SDK.
+- The shared fixtures held no case for a quoted value, a control character, a
+  supplementary character, a long value, a version that ends with a newline, a
+  number at the boundary of the binary64 domain, a lone surrogate, a key that
+  is not a string, and an integer token that the interpreter cannot convert.
+  The fixtures and the manifest of their expectations now cover these cases,
+  and both contract runners compare the code, the path, the message, and the
+  details of every one of them.
 
 ### Known issues
 
