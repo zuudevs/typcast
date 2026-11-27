@@ -17,6 +17,7 @@ __all__ = [
     "TypcastError",
     "ValidationError",
     "SerializationError",
+    "ConfigError",
     "safe_text",
     "safe_value",
     "MAX_DIAGNOSTIC_VALUE_LENGTH",
@@ -36,14 +37,19 @@ __all__ = [
     "CODE_INVALID_LENGTH",
     "CODE_INVALID_HEADING_LEVEL",
     "CODE_EMPTY_CONTENT",
+    "CODE_TABLE_SHAPE",
     "CODE_INVALID_MODULE_ALIAS",
     "CODE_MODULE_ALIAS_AND_ITEMS",
+    "CODE_RAW_TOO_LARGE",
     "CODE_INVALID_DATE",
     "CODE_STRING_TOO_LONG",
     "CODE_MALFORMED_JSON",
     "CODE_UNSUPPORTED_VERSION",
     "CODE_NOT_SERIALIZABLE",
     "CODE_ROOT_SHAPE",
+    "CODE_INVALID_RAW_LIMIT",
+    "config_diagnostic",
+    "raise_config",
 ]
 
 
@@ -69,8 +75,12 @@ CODE_INVALID_ENUM = "TYPCAST-VAL-0003"
 CODE_INVALID_LENGTH = "TYPCAST-VAL-0004"
 CODE_INVALID_HEADING_LEVEL = "TYPCAST-VAL-0005"
 CODE_EMPTY_CONTENT = "TYPCAST-VAL-0006"
+CODE_TABLE_SHAPE = "TYPCAST-VAL-0007"
+# The catalog assigns one code to a module alias that is invalid and to a
+# module alias that is duplicated, so the constant covers both cases.
 CODE_INVALID_MODULE_ALIAS = "TYPCAST-VAL-0008"
 CODE_MODULE_ALIAS_AND_ITEMS = "TYPCAST-VAL-0009"
+CODE_RAW_TOO_LARGE = "TYPCAST-VAL-0010"
 CODE_INVALID_DATE = "TYPCAST-VAL-0011"
 CODE_STRING_TOO_LONG = "TYPCAST-VAL-0013"
 
@@ -79,6 +89,9 @@ CODE_MALFORMED_JSON = "TYPCAST-IR-0001"
 CODE_UNSUPPORTED_VERSION = "TYPCAST-IR-0002"
 CODE_NOT_SERIALIZABLE = "TYPCAST-IR-0003"
 CODE_ROOT_SHAPE = "TYPCAST-IR-0004"
+
+# Configuration codes.
+CODE_INVALID_RAW_LIMIT = "TYPCAST-CONFIG-0004"
 
 
 def _freeze_mapping(value: Mapping[str, Any] | None) -> Mapping[str, Any] | None:
@@ -233,6 +246,10 @@ class SerializationError(TypcastError):
     """Raised when JSON cannot be parsed, serialized, or version-matched."""
 
 
+class ConfigError(TypcastError):
+    """Raised when a configuration value is invalid."""
+
+
 def validation_diagnostic(
     code: str,
     message: str,
@@ -264,6 +281,36 @@ def serialization_diagnostic(
         message=message,
         path=path,
         details=details or {},
+    )
+
+
+def config_diagnostic(
+    code: str,
+    message: str,
+    path: str | None = None,
+    details: Mapping[str, Any] | None = None,
+) -> Diagnostic:
+    """Builds the diagnostic of an invalid configuration value."""
+    return Diagnostic(
+        code=code,
+        severity=SEVERITY_ERROR,
+        phase=PHASE_CONFIG,
+        message=message,
+        path=path,
+        details=details or {},
+    )
+
+
+def raise_config(
+    code: str,
+    message: str,
+    path: str | None = None,
+    details: Mapping[str, Any] | None = None,
+) -> None:
+    """Raises a configuration error that carries a single diagnostic."""
+    raise ConfigError(
+        message,
+        (config_diagnostic(code, message, path, details),),
     )
 
 

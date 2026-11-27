@@ -1,0 +1,135 @@
+{
+  "version": 1,
+  "description": "Shared validation fixtures. Both SDKs read this manifest and the files it names. A fixture may name a raw size limit, and the runner validates the document with that limit instead of the default one. Every negative fixture names the diagnostics that the validation engine must report, in the order the engine reports them.",
+  "valid": [
+    {
+      "file": "valid/minimal.json"
+    },
+    {
+      "file": "valid/table.json"
+    },
+    {
+      "file": "valid/modules.json"
+    },
+    {
+      "file": "valid/raw-at-limit.json",
+      "maxRawBytes": 8
+    }
+  ],
+  "invalid": [
+    {
+      "file": "invalid/table-row-short.json",
+      "diagnostics": [
+        {
+          "code": "TYPCAST-VAL-0007",
+          "path": "/contents/0/rows/1",
+          "message": "'/contents/0/rows/1' must hold 2 cells, got 1.",
+          "details": {
+            "columns": 2,
+            "cells": 1
+          }
+        }
+      ]
+    },
+    {
+      "file": "invalid/table-row-long.json",
+      "diagnostics": [
+        {
+          "code": "TYPCAST-VAL-0007",
+          "path": "/contents/0/rows/0",
+          "message": "'/contents/0/rows/0' must hold 1 cells, got 2.",
+          "details": {
+            "columns": 1,
+            "cells": 2
+          }
+        }
+      ]
+    },
+    {
+      "file": "invalid/module-alias-duplicate.json",
+      "diagnostics": [
+        {
+          "code": "TYPCAST-VAL-0008",
+          "path": "/modules/1/alias",
+          "message": "'/modules/1/alias' is already used by the module at '/modules/0/alias'.",
+          "details": {
+            "alias": "report",
+            "duplicateOf": "/modules/0/alias"
+          }
+        }
+      ]
+    },
+    {
+      "file": "invalid/raw-block-over-limit.json",
+      "maxRawBytes": 8,
+      "diagnostics": [
+        {
+          "code": "TYPCAST-VAL-0010",
+          "path": "/contents/0/value",
+          "message": "'/contents/0/value' must not hold more than 8 bytes, got 9.",
+          "details": {
+            "maxBytes": 8,
+            "bytes": 9
+          }
+        }
+      ]
+    },
+    {
+      "file": "invalid/raw-span-over-limit.json",
+      "maxRawBytes": 8,
+      "diagnostics": [
+        {
+          "code": "TYPCAST-VAL-0010",
+          "path": "/contents/0/content/0/value",
+          "message": "'/contents/0/content/0/value' must not hold more than 8 bytes, got 9.",
+          "details": {
+            "maxBytes": 8,
+            "bytes": 9
+          }
+        }
+      ]
+    },
+    {
+      "file": "invalid/multiple-problems.json",
+      "maxRawBytes": 8,
+      "diagnostics": [
+        {
+          "code": "TYPCAST-VAL-0007",
+          "path": "/contents/0/rows/1",
+          "message": "'/contents/0/rows/1' must hold 2 cells, got 1.",
+          "details": {
+            "columns": 2,
+            "cells": 1
+          }
+        },
+        {
+          "code": "TYPCAST-VAL-0007",
+          "path": "/contents/0/rows/2",
+          "message": "'/contents/0/rows/2' must hold 2 cells, got 3.",
+          "details": {
+            "columns": 2,
+            "cells": 3
+          }
+        },
+        {
+          "code": "TYPCAST-VAL-0010",
+          "path": "/contents/1/content/0/value",
+          "message": "'/contents/1/content/0/value' must not hold more than 8 bytes, got 9.",
+          "details": {
+            "maxBytes": 8,
+            "bytes": 9
+          }
+        },
+        {
+          "code": "TYPCAST-VAL-0008",
+          "path": "/modules/1/alias",
+          "message": "'/modules/1/alias' is already used by the module at '/modules/0/alias'.",
+          "details": {
+            "alias": "report",
+            "duplicateOf": "/modules/0/alias"
+          }
+        }
+      ]
+    }
+  ]
+}

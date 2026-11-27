@@ -20,8 +20,11 @@ import {
   throwValidation,
   withPath,
 } from "../diagnostics.js";
+import type { Diagnostic } from "../diagnostics.js";
 import { canonicalJson } from "../json_writer.js";
 import { checkSchemaVersion, SCHEMA_VERSION } from "../version.js";
+import { validateDocument } from "../validations/engine.js";
+import type { TypcastOptions } from "../validations/config.js";
 import { requireInstance } from "./base.js";
 import {
   Heading,
@@ -113,6 +116,17 @@ export class Document {
   /** Returns the canonical JSON text of the document. */
   toJSONString(): string {
     return canonicalJson(this.toJSON()) + "\n";
+  }
+
+  /**
+   * Returns the diagnostics of the semantic rules of the document.
+   *
+   * The method reports every problem it finds and throws no error for a
+   * semantic problem, so that a caller can show all of them at once. An
+   * invalid configuration raises a configuration error.
+   */
+  validate(options?: TypcastOptions): readonly Diagnostic[] {
+    return validateDocument(this, options);
   }
 
   /** Builds a document from a JSON value. */

@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "1.0.0",
+  "metadata": {
+    "title": "Duplicate module alias"
+  },
+  "page": {
+    "paper": "a4",
+    "orientation": "portrait",
+    "margin": {
+      "top": {
+        "value": 2,
+        "unit": "cm"
+      },
+      "right": {
+        "value": 2,
+        "unit": "cm"
+      },
+      "bottom": {
+        "value": 2,
+        "unit": "cm"
+      },
+      "left": {
+        "value": 2,
+        "unit": "cm"
+      }
+    }
+  },
+  "contents": [
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "value": "A document with a duplicated module alias."
+        }
+      ]
+    }
+  ],
+  "modules": [
+    {
+      "path": "modules/report.typ",
+      "alias": "report"
+    },
+    {
+      "path": "modules/summary.typ",
+      "alias": "report"
+    }
+  ]
+}

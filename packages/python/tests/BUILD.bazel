@@ -16,3 +16,16 @@ py_test(
         "//packages/python:typcast",
     ],
 )
+
+# The unit tests of the validation engine.
+py_test(
+    name = "validation_tests",
+    size = "small",
+    srcs = [
+        "test_validation.py",
+    ],
+    main = "test_validation.py",
+    deps = [
+        "//packages/python:typcast",
+    ],
+)

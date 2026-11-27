@@ -4,8 +4,9 @@ Typcast is a cross-language bridge for generating Typst documents from Python an
 the JavaScript/TypeScript ecosystem.
 
 The repository is managed as a Bazel monorepo. The current implementation is an
-early foundation: it includes a CSV-backed JSON template generator and build
-targets for the Python and TypeScript packages.
+early foundation: it includes a CSV-backed JSON template generator, the
+immutable document model and the semantic validation engine of the Python and
+TypeScript SDKs, and build targets for the two packages.
 
 ## Repository layout
 
@@ -162,9 +163,11 @@ The product, architecture, contract, and engineering documentation is in
 [documentation index](docs/README.md) and the
 [vision and scope](docs/product/vision-and-scope.md).
 
-The documents describe the approved MVP baseline. The SDK, emitter, compiler
-adapter, and packaging are not implemented yet. The continuous integration
-workflows and the release tooling are.
+The documents describe the approved MVP baseline. The SDK exposes the immutable
+document model, the JSON serialization, and the semantic validation engine. The
+builder, the emitter, the compiler adapter, and the packaging are not
+implemented yet. The continuous integration workflows and the release tooling
+are.
 
 ## Contributing
 

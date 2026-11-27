@@ -2,7 +2,7 @@
 
 Status: PROPOSED
 Scope: Normative
-Last updated: 2026-11-25
+Last updated: 2026-11-27
 
 ## Purpose
 
@@ -15,8 +15,8 @@ compiler integration, and package installation.
 
 | Area | Current state |
 |---|---|
-| Test targets | Fifteen hand-written test targets: `//tools/codegen/tests:unit_tests`, `//tools/publish/tests:publish_tests`, `//scripts/tests:version_tests`, `//scripts/tests:release_tests`, `//scripts/tests:release_flow_tests`, `//scripts/tests:repository_tests`, `//scripts/tests:docs_tests`, `//scripts/tests:link_tests`, `//scripts:docs_checks`, `//specs/schemas:schema_tests`, `//specs/schemas:release_tag_tests`, `//packages/python/tests:model_tests`, `//packages/typescript:model_test_run`, `//tests/contract:contract_py`, and `//tests/contract:contract_ts_test`. The TypeScript toolchain adds two generated type-check targets. |
-| Test cases | Sixteen generator cases, 45 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 47 repository structure cases, 4 release tag cases, 32 documentation gate cases, 4 link check cases, one documentation check, one schema bundle check, 125 document model cases, and 12 contract fixture cases. |
+| Test targets | Nineteen hand-written test targets: `//tools/codegen/tests:unit_tests`, `//tools/publish/tests:publish_tests`, `//scripts/tests:version_tests`, `//scripts/tests:release_tests`, `//scripts/tests:release_flow_tests`, `//scripts/tests:repository_tests`, `//scripts/tests:docs_tests`, `//scripts/tests:link_tests`, `//scripts:docs_checks`, `//specs/schemas:schema_tests`, `//specs/schemas:release_tag_tests`, `//packages/python/tests:model_tests`, `//packages/python/tests:validation_tests`, `//packages/typescript:model_test_run`, `//packages/typescript:validation_test_run`, `//tests/contract:contract_py`, `//tests/contract:contract_ts_test`, `//tests/contract:validation_py`, and `//tests/contract:validation_ts_test`. The TypeScript toolchain adds four generated type-check targets. |
+| Test cases | Sixteen generator cases, 45 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 47 repository structure cases, 4 release tag cases, 32 documentation gate cases, 4 link check cases, one documentation check, one schema bundle check, 125 document model cases, 12 contract fixture cases, 28 validation cases, and 6 validation contract fixture cases. |
 | Schema tests | `//specs/schemas:schema_tests` validates the built bundle. Meta-schema and instance validation are missing. |
 | Release tag tests | `//specs/schemas:release_tag_tests` covers the release tag pattern of the contract, so that the contract and the publisher agree on what a release tag is. |
 | Publisher tests | `//tools/publish/tests:publish_tests` covers the publisher, the published identity of the built bundle, the resolution of the versioned raw URLs, and the deterministic archive. |
@@ -26,9 +26,11 @@ compiler integration, and package installation.
 | Repository structure tests | `//scripts/tests:repository_tests` covers the rules of the repository structure checks against a synthetic repository, so that a rule cannot pass because of the state of the checkout. |
 | Gate tests | `//scripts/tests:docs_tests` and `//scripts/tests:link_tests` cover the rules of the repository gate and of the external link check, including the encoding and the text hygiene rules. |
 | Model tests | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run` cover the immutability, the constructor checks, the canonical JSON form, the reader, and the round trip of the document model. |
+| Validation tests | `//packages/python/tests:validation_tests` and `//packages/typescript:validation_test_run` cover the semantic rules, the configuration of the raw size limit, and the order of the diagnostics. |
 | Contract tests | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test` read the same shared fixtures and the same manifest, so a drift in either SDK fails one of the two targets. |
+| Validation contract tests | `//tests/contract:validation_py` and `//tests/contract:validation_ts_test` read the same validation fixtures and the same manifest, so a drift in the diagnostics of either SDK fails one of the two targets. |
 | Golden `.typ` tests | None. |
-| Parity tests | The serialization parity of the document IR is covered by the contract runners. The `.typ` parity is not implemented. |
+| Parity tests | The serialization parity of the document IR and the diagnostic parity of the validation engine are covered by the contract runners. The `.typ` parity is not implemented. |
 | Compiler integration | None. |
 | Install tests | None. |
 | CI | The pull request and main lanes run the build, the test lane, the clean checkout build, and the documentation gate on Windows and Linux. |
@@ -150,11 +152,27 @@ tests/
       invalid-date.json
       invalid-title-length.json
       invalid-type.json
+    validation/
+      manifest.json
+      valid/
+        minimal.json
+        table.json
+        modules.json
+        raw-at-limit.json
+      invalid/
+        table-row-short.json
+        table-row-long.json
+        module-alias-duplicate.json
+        raw-block-over-limit.json
+        raw-span-over-limit.json
+        multiple-problems.json
   contract/
     BUILD.bazel
     contract.test.mts
     node_shims.d.ts
     test_contract.py
+    validation.test.mts
+    test_validation.py
 ```
 
 The `expected/` directory and the `integration/` directory are reserved for
@@ -199,6 +217,13 @@ Rules:
   because the two parsers word their reason differently.
 - A fixture change requires a review of expected output.
 
+The validation fixtures live in their own directory, `tests/fixtures/validation/`,
+because their manifest describes a different contract: a valid fixture must
+report no diagnostic, and a negative fixture must report exactly the
+diagnostics that the manifest names, in the order the engine reports them. A
+fixture may name a raw size limit through `maxRawBytes`, so that the suite
+covers the limit of a call without committing a file of one MiB.
+
 The fixtures carry the paths of the document IR, such as `modules/report.typ`.
 The rules of the path normalization and of the Windows path input belong to the
 asset layer, which is not implemented yet.
@@ -233,7 +258,12 @@ The document IR part of the rule is implemented. `//tests/contract:contract_py`
 and `//tests/contract:contract_ts_test` read the same fixtures and the same
 manifest, write every valid fixture back byte for byte, and compare the
 diagnostic code, the diagnostic message, and the diagnostic details of every
-negative fixture. The `.typ` part waits for the emitter.
+negative fixture. The validation part of the rule is implemented as well:
+`//tests/contract:validation_py` and `//tests/contract:validation_ts_test`
+read the same validation fixtures and the same manifest, and compare the
+diagnostic code, the diagnostic path, the diagnostic message, and the
+diagnostic details of every negative fixture. The `.typ` part waits for the
+emitter.
 
 ## Compiler integration
 
@@ -262,6 +292,8 @@ Post-MVP unless a dependency-free check is available.
 | Invalid heading level | `TYPCAST-VAL-0005` |
 | Table shape mismatch | `TYPCAST-VAL-0007` |
 | Duplicate module alias | `TYPCAST-VAL-0008` |
+| Raw content over the size limit | `TYPCAST-VAL-0010` |
+| Invalid raw size limit | `TYPCAST-CONFIG-0004` |
 | Absolute asset path | `TYPCAST-VAL-0012` or `TYPCAST-IO-0003` |
 | Path traversal | `TYPCAST-IO-0002` |
 | Missing asset | `TYPCAST-IO-0001` |
@@ -345,6 +377,7 @@ threshold may be added in a later minor version once the suite stabilizes.
 | TEST-030 | The rules of the repository gate and of the external link check MUST be covered by unit tests, including the encoding and the text hygiene rules. | IMPLEMENTED | `//scripts/tests:docs_tests`; `//scripts/tests:link_tests`. |
 | TEST-031 | The release preparation MUST be covered by unit tests for the version bump, the publication, the verification, and the cleanup. | IMPLEMENTED | `//scripts/tests:release_tests`; 20 cases. |
 | TEST-032 | The release preparation MUST be rehearsed end to end with the manifests, the schema sources, and the bundle of the build, so that the path of the release lane runs in the test lane. | IMPLEMENTED | `//scripts/tests:release_flow_tests`; 6 cases. |
+| TEST-033 | The validation fixtures MUST be shared by both SDKs, and the validation contract runners MUST compare the diagnostics of every negative validation fixture, in the order the engine reports them. | IMPLEMENTED | `//tests/contract:validation_py` and `//tests/contract:validation_ts_test`; the fixtures under `tests/fixtures/validation/` and the manifest that names the diagnostics of every negative fixture. |
 
 ## Open questions
 

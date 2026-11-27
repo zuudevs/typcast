@@ -24,6 +24,24 @@ js_library(
     ],
 )
 
+# The shared validation fixtures. Both SDKs read the same files, so the
+# manifest and the documents it names are the single source of truth of the
+# cross-language validation contract tests.
+filegroup(
+    name = "validation_documents",
+    srcs = glob([
+        "validation/**/*.json",
+    ]),
+)
+
+js_library(
+    name = "validation_fixtures",
+    srcs = [
+        ":validation_documents",
+    ],
+)
+
 exports_files([
     "documents/manifest.json",
+    "validation/manifest.json",
 ])
