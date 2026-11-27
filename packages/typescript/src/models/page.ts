@@ -68,6 +68,17 @@ export class Length {
   toJSON(): Record<string, unknown> {
     return { value: this.value, unit: this.unit };
   }
+
+  /**
+   * Returns a length in centimeters.
+   *
+   * The factory is the one of the examples of the SDK API. Every other unit
+   * is written with the constructor, because the contract names no factory
+   * for it.
+   */
+  static cm(value: number): Length {
+    return new Length(value, "cm");
+  }
 }
 
 /** The four margins of a page. */

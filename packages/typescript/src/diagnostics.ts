@@ -50,6 +50,10 @@ export const PHASE_COMPILER: Phase = "compiler";
 export const PHASE_IO: Phase = "io";
 export const PHASE_CONFIG: Phase = "config";
 
+// Public API codes. The catalog lives in `docs/specifications/diagnostics.md`.
+export const CODE_INVALID_ARGUMENT = "TYPCAST-API-0001";
+export const CODE_INVALID_STATE = "TYPCAST-API-0002";
+
 // Validation codes. The catalog lives in `docs/specifications/diagnostics.md`.
 export const CODE_REQUIRED_FIELD = "TYPCAST-VAL-0001";
 export const CODE_UNKNOWN_FIELD = "TYPCAST-VAL-0002";
@@ -179,6 +183,13 @@ export class TypcastError extends Error {
   }
 }
 
+/** Raised when a public API is used with an invalid argument or state. */
+export class ApiUsageError extends TypcastError {
+  constructor(message: string, diagnostics: readonly Diagnostic[] = []) {
+    super(message, diagnostics, "ApiUsageError");
+  }
+}
+
 /** Raised when a value violates the schema or the semantic rules. */
 export class ValidationError extends TypcastError {
   constructor(message: string, diagnostics: readonly Diagnostic[] = []) {
@@ -198,6 +209,25 @@ export class ConfigError extends TypcastError {
   constructor(message: string, diagnostics: readonly Diagnostic[] = []) {
     super(message, diagnostics, "ConfigError");
   }
+}
+
+/** Builds the diagnostic of a misuse of the public API. */
+export function apiDiagnostic(
+  code: string,
+  message: string,
+  path: string | null = null,
+  details: Readonly<Record<string, unknown>> = {},
+): Diagnostic {
+  return Object.freeze({
+    code,
+    severity: SEVERITY_ERROR,
+    phase: PHASE_API,
+    message,
+    path,
+    location: null,
+    details: Object.freeze({ ...details }),
+    cause: null,
+  });
 }
 
 /** Builds the diagnostic of a validation failure. */
@@ -236,6 +266,18 @@ export function serializationDiagnostic(
     details: Object.freeze({ ...details }),
     cause: null,
   });
+}
+
+/** Raises a public API error that carries a single diagnostic. */
+export function throwApi(
+  code: string,
+  message: string,
+  path: string | null = null,
+  details: Readonly<Record<string, unknown>> = {},
+): never {
+  throw new ApiUsageError(message, [
+    apiDiagnostic(code, message, path, details),
+  ]);
 }
 
 /** Raises a validation error that carries a single diagnostic. */
