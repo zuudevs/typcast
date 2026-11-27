@@ -20,6 +20,7 @@ import {
   Metadata,
   Module,
   Monospace,
+  PAPER_VARIANTS,
   Page,
   PageBreak,
   Paragraph,
@@ -1241,6 +1242,58 @@ function versionTests(): void {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Paper catalog
+// ---------------------------------------------------------------------------
+
+function paperCatalogTests(): void {
+  // The catalog of the paper variants lives in the contract layer, and the
+  // values reach the SDK through a generated source file, so the SDK holds no
+  // hand-written copy of the catalog that could drift.
+  check(
+    PAPER_VARIANTS.includes("a4"),
+    "the package must export the variants of the paper catalog",
+  );
+  checkEqual(
+    new Set(PAPER_VARIANTS).size,
+    PAPER_VARIANTS.length,
+    "the variants of the paper catalog must be unique",
+  );
+  checkEqual(
+    PAPER_VARIANTS[0],
+    "a0",
+    "the first variant of the paper catalog must be the first of the catalog",
+  );
+  checkEqual(
+    PAPER_VARIANTS[PAPER_VARIANTS.length - 1],
+    "presentation-4-3",
+    "the last variant of the paper catalog must be the last of the catalog",
+  );
+  checkEqual(
+    new Page("a4", "portrait", margin()).paper,
+    "a4",
+    "a variant of the paper catalog must be accepted",
+  );
+  expectDiagnostic(
+    "TYPCAST-VAL-0003",
+    "/paper",
+    "'/paper' must be a variant of the paper catalog, got 'a4x'.",
+    { allowed: [...PAPER_VARIANTS], value: "a4x" },
+    () => new Page("a4x", "portrait", margin()),
+    "a paper that is not a variant of the catalog must be rejected",
+  );
+  const badPaper = buildDocument().toJSON() as Record<string, unknown>;
+  (badPaper["page"] as Record<string, unknown>)["paper"] = "a4x";
+  expectDiagnostic(
+    "TYPCAST-VAL-0003",
+    "/page/paper",
+    "'/paper' must be a variant of the paper catalog, got 'a4x'.",
+    { allowed: [...PAPER_VARIANTS], value: "a4x" },
+    () => Document.fromJSON(badPaper),
+    "the reader must reject a paper that is not a variant of the catalog",
+  );
+}
+
 immutabilityTests();
 constructorTests();
 rejectedValueTests();
@@ -1251,6 +1304,7 @@ serializationTests();
 deserializationTests();
 roundTripTests();
 versionTests();
+paperCatalogTests();
 
 if (failures.length > 0) {
   for (const failure of failures) {

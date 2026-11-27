@@ -29,6 +29,7 @@ export {
   Length,
   Margin,
   ORIENTATIONS,
+  PAPER_VARIANTS,
   Page,
 } from "./page.js";
 export type { LengthUnit, Orientation } from "./page.js";

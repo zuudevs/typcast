@@ -15,7 +15,7 @@ No release has been published yet. Every change so far is listed under
 ### Added
 
 - The product, architecture, specification, engineering, and governance
-  document set, with the requirement index and 24 architecture decision
+  document set, with the requirement index and 25 architecture decision
   records.
 - A JSON Schema generator that expands CSV catalog placeholders in templates,
   with unit tests. The generator rejects a placeholder whose catalog is not
@@ -147,6 +147,17 @@ No release has been published yet. Every change so far is listed under
   `//packages/typescript:validation_test_run`, which cover the semantic rules,
   the configuration, the order of the diagnostics, and the measurement of the
   size of a text.
+- An enum generator, `//tools/enumgen:typcast_enumgen`, that expands a column
+  of a CSV catalog into a constant of the source of an SDK, with unit tests. The
+  catalog is the only input of the rule `typcast_enum_source`, so the values of
+  a catalog reach an SDK without a hand-written copy that could drift. The
+  generated file is a build output and is never committed.
+- The check of the paper catalog in the model of a page, in both SDKs. A
+  `paper` value that the catalog `specs/catalogs/enums/paper-variants.csv`
+  does not name is rejected with `TYPCAST-VAL-0003`, the phase `validation`, and
+  the path `/paper`. The values of the catalog reach the SDKs through the
+  generated source file of the enum generator, and both SDKs export them as
+  `PAPER_VARIANTS`.
 
 ### Changed
 
@@ -179,6 +190,9 @@ No release has been published yet. Every change so far is listed under
 
 ### Fixed
 
+- The model of a page accepted every string as a paper value, so a document
+  could name a paper that the catalog of the paper variants does not hold. The
+  model of both SDKs now rejects such a value with `TYPCAST-VAL-0003`.
 - The generator rejects the constants `NaN`, `Infinity`, and `-Infinity`, which
   Python accepts by default and which the JSON specification does not define.
   The generator reported success and wrote a file that every standard JSON

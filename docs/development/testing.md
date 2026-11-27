@@ -15,8 +15,8 @@ compiler integration, and package installation.
 
 | Area | Current state |
 |---|---|
-| Test targets | Nineteen hand-written test targets: `//tools/codegen/tests:unit_tests`, `//tools/publish/tests:publish_tests`, `//scripts/tests:version_tests`, `//scripts/tests:release_tests`, `//scripts/tests:release_flow_tests`, `//scripts/tests:repository_tests`, `//scripts/tests:docs_tests`, `//scripts/tests:link_tests`, `//scripts:docs_checks`, `//specs/schemas:schema_tests`, `//specs/schemas:release_tag_tests`, `//packages/python/tests:model_tests`, `//packages/python/tests:validation_tests`, `//packages/typescript:model_test_run`, `//packages/typescript:validation_test_run`, `//tests/contract:contract_py`, `//tests/contract:contract_ts_test`, `//tests/contract:validation_py`, and `//tests/contract:validation_ts_test`. The TypeScript toolchain adds four generated type-check targets. |
-| Test cases | Sixteen generator cases, 45 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 47 repository structure cases, 4 release tag cases, 32 documentation gate cases, 4 link check cases, one documentation check, one schema bundle check, 125 document model cases, 12 contract fixture cases, 28 validation cases, and 6 validation contract fixture cases. |
+| Test targets | Twenty hand-written test targets: `//tools/codegen/tests:unit_tests`, `//tools/enumgen/tests:unit_tests`, `//tools/publish/tests:publish_tests`, `//scripts/tests:version_tests`, `//scripts/tests:release_tests`, `//scripts/tests:release_flow_tests`, `//scripts/tests:repository_tests`, `//scripts/tests:docs_tests`, `//scripts/tests:link_tests`, `//scripts:docs_checks`, `//specs/schemas:schema_tests`, `//specs/schemas:release_tag_tests`, `//packages/python/tests:model_tests`, `//packages/python/tests:validation_tests`, `//packages/typescript:model_test_run`, `//packages/typescript:validation_test_run`, `//tests/contract:contract_py`, `//tests/contract:contract_ts_test`, `//tests/contract:validation_py`, and `//tests/contract:validation_ts_test`. The TypeScript toolchain adds four generated type-check targets. |
+| Test cases | Sixteen generator cases, twenty enum expansion cases, 45 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 47 repository structure cases, 4 release tag cases, 32 documentation gate cases, 4 link check cases, one documentation check, one schema bundle check, 131 document model cases, 12 contract fixture cases, 28 validation cases, and 6 validation contract fixture cases. |
 | Schema tests | `//specs/schemas:schema_tests` validates the built bundle. Meta-schema and instance validation are missing. |
 | Release tag tests | `//specs/schemas:release_tag_tests` covers the release tag pattern of the contract, so that the contract and the publisher agree on what a release tag is. |
 | Publisher tests | `//tools/publish/tests:publish_tests` covers the publisher, the published identity of the built bundle, the resolution of the versioned raw URLs, and the deterministic archive. |
@@ -25,7 +25,7 @@ compiler integration, and package installation.
 | Release rehearsal | `//scripts/tests:release_flow_tests` rehearses the release commit with the manifests, the schema sources, and the bundle of the build, so that the path of the release lane runs in every test lane. |
 | Repository structure tests | `//scripts/tests:repository_tests` covers the rules of the repository structure checks against a synthetic repository, so that a rule cannot pass because of the state of the checkout. |
 | Gate tests | `//scripts/tests:docs_tests` and `//scripts/tests:link_tests` cover the rules of the repository gate and of the external link check, including the encoding and the text hygiene rules. |
-| Model tests | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run` cover the immutability, the constructor checks, the canonical JSON form, the reader, and the round trip of the document model. |
+| Model tests | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run` cover the immutability, the constructor checks, the canonical JSON form, the reader, the round trip of the document model, and the paper catalog that the model of a page checks its value against. |
 | Validation tests | `//packages/python/tests:validation_tests` and `//packages/typescript:validation_test_run` cover the semantic rules, the configuration of the raw size limit, and the order of the diagnostics. |
 | Contract tests | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test` read the same shared fixtures and the same manifest, so a drift in either SDK fails one of the two targets. |
 | Validation contract tests | `//tests/contract:validation_py` and `//tests/contract:validation_ts_test` read the same validation fixtures and the same manifest, so a drift in the diagnostics of either SDK fails one of the two targets. |
@@ -143,6 +143,7 @@ tests/
       unknown-discriminator.json
       inherited-discriminator.json
       invalid-orientation.json
+      invalid-paper.json
       invalid-length.json
       invalid-heading-level.json
       empty-content.json

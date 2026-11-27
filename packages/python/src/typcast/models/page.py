@@ -20,11 +20,13 @@ from typcast.models.base import (
     require_string,
     to_binary64,
 )
+from typcast.models.paper_variants_generated import PAPER_VARIANTS
 from typcast.numbers import format_number
 
 __all__ = [
     "Length",
     "Margin",
+    "PAGE_VARIANTS",
     "Page",
     "LENGTH_UNITS",
     "ORIENTATIONS",
@@ -129,14 +131,33 @@ class Margin:
         }
 
 
+def require_paper(value: str, path: str) -> str:
+    """Returns a paper value after checking that it belongs to the catalog.
+
+    The catalog of the paper variants lives in the contract layer, and the
+    values reach the SDK through a generated source file, so the SDK holds no
+    hand-written copy of the catalog that could drift. The values keep the
+    order of the catalog, and the diagnostic names them in that order too.
+    """
+    if value not in PAPER_VARIANTS:
+        raise_validation(
+            CODE_INVALID_ENUM,
+            f"'{path}' must be a variant of the paper catalog, "
+            f"got '{safe_text(value)}'.",
+            path,
+            {"allowed": list(PAPER_VARIANTS), "value": safe_value(value)},
+        )
+    return value
+
+
 @dataclass(frozen=True)
 class Page:
     """The paper, the orientation, and the margin of a document.
 
     The paper value belongs to the catalog in
     `specs/catalogs/enums/paper-variants.csv`. The catalog is owned by the
-    contract layer, so the model checks the type of the value and leaves the
-    catalog check to the validation layer.
+    contract layer, and its values reach the SDK through a generated source
+    file, so the model checks the value against the catalog itself.
     """
 
     paper: str
@@ -144,7 +165,8 @@ class Page:
     margin: Margin
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "paper", require_string(self.paper, "/paper"))
+        paper = require_string(self.paper, "/paper")
+        object.__setattr__(self, "paper", require_paper(paper, "/paper"))
         object.__setattr__(
             self,
             "orientation",

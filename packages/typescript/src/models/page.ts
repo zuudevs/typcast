@@ -1,6 +1,7 @@
 /** The page description of the document IR. */
 
 import {
+  CODE_INVALID_ENUM,
   CODE_INVALID_LENGTH,
   CODE_REQUIRED_FIELD,
   safeText,
@@ -8,6 +9,9 @@ import {
   throwValidation,
 } from "../diagnostics.js";
 import { requireEnum, requireInstance, requireString } from "./base.js";
+import { PAPER_VARIANTS } from "./paper-variants.generated.js";
+
+export { PAPER_VARIANTS } from "./paper-variants.generated.js";
 
 /** The units of a length. */
 export const LENGTH_UNITS = ["pt", "mm", "cm", "in", "em"] as const;
@@ -96,12 +100,32 @@ export class Margin {
 }
 
 /**
+ * Returns a paper value after checking that it belongs to the catalog.
+ *
+ * The catalog of the paper variants lives in the contract layer, and the
+ * values reach the SDK through a generated source file, so the SDK holds no
+ * hand-written copy of the catalog that could drift. The values keep the
+ * order of the catalog, and the diagnostic names them in that order too.
+ */
+function requirePaper(value: string, path: string): string {
+  if (!PAPER_VARIANTS.includes(value)) {
+    throwValidation(
+      CODE_INVALID_ENUM,
+      `'${path}' must be a variant of the paper catalog, got '${safeText(value)}'.`,
+      path,
+      { allowed: [...PAPER_VARIANTS], value: safeValue(value) },
+    );
+  }
+  return value;
+}
+
+/**
  * The paper, the orientation, and the margin of a document.
  *
  * The paper value belongs to the catalog in
  * `specs/catalogs/enums/paper-variants.csv`. The catalog is owned by the
- * contract layer, so the model checks the type of the value and leaves the
- * catalog check to the validation layer.
+ * contract layer, and its values reach the SDK through a generated source
+ * file, so the model checks the value against the catalog itself.
  */
 export class Page {
   readonly paper: string;
@@ -109,7 +133,7 @@ export class Page {
   readonly margin: Margin;
 
   constructor(paper: string, orientation: Orientation, margin: Margin) {
-    this.paper = requireString(paper, "/paper");
+    this.paper = requirePaper(requireString(paper, "/paper"), "/paper");
     this.orientation = requireEnum(orientation, ORIENTATIONS, "/orientation");
     this.margin = requireInstance(margin, Margin, "/margin");
     Object.freeze(this);

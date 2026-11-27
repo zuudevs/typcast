@@ -4,7 +4,7 @@
     "title": "Nested"
   },
   "page": {
-    "paper": "letter",
+    "paper": "us-letter",
     "orientation": "portrait",
     "margin": {
       "top": {
