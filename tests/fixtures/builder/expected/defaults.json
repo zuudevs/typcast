@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0.0",
+  "metadata": {
+    "title": "Defaults"
+  },
+  "page": {
+    "paper": "a4",
+    "orientation": "portrait",
+    "margin": {
+      "top": {
+        "value": 2.5,
+        "unit": "cm"
+      },
+      "right": {
+        "value": 2.5,
+        "unit": "cm"
+      },
+      "bottom": {
+        "value": 2.5,
+        "unit": "cm"
+      },
+      "left": {
+        "value": 2.5,
+        "unit": "cm"
+      }
+    }
+  },
+  "contents": [
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "value": "The defaults of the node catalog."
+        }
+      ]
+    }
+  ],
+  "modules": []
+}

@@ -101,7 +101,7 @@ The Python distribution named `typcast`. The modules of the first release are:
 | `typcast.numbers` | The binary64 number domain of the IR and the canonical number text. |
 | `typcast.canonical` | The canonical JSON Pointer escaping and the encodability check. |
 | `typcast.validations` | The semantic validation engine, its configuration, and the measurement of the size of a text. Implemented. |
-| `typcast.builder` | Fluent builder. Not implemented. |
+| `typcast.builder` | Fluent builder, its span helpers, and its table helpers. Implemented. |
 | `typcast.typst` | Typst emitter and escaping. Not implemented. |
 | `typcast.compiler` | Typst CLI adapter. Not implemented. |
 | `typcast.config` | Compile and asset configuration. Not implemented. |
@@ -116,9 +116,10 @@ responsibilities: `src/models/` holds the immutable model types, `src/diagnostic
 holds the diagnostic types and the code catalog, `src/serialization.ts` holds the
 JSON IR serialization and deserialization, `src/version.ts` holds the schema
 version and the version rules, `src/canonical.ts` holds the canonical JSON
-Pointer escaping and the encodability check, and `src/validations/` holds the
+Pointer escaping and the encodability check, `src/validations/` holds the
 semantic validation engine, its configuration, and the measurement of the size
-of a text. The package MUST expose ESM entry points, type
+of a text, and `src/builder/` holds the fluent builder, its span helpers, and
+its table helpers. The package MUST expose ESM entry points, type
 declarations, and compiled JavaScript. The current `package.json` name is
 `typcast`, and the repository checks reject a different name. The manifest is
 still `private`, and that must change before publication.
@@ -155,6 +156,13 @@ tests/
         raw-block-over-limit.json
         raw-span-over-limit.json
         multiple-problems.json
+    builder/
+      manifest.json
+      expected/
+        full-example.json
+        defaults.json
+        span-helpers.json
+        modules-and-image.json
   contract/
     BUILD.bazel
     contract.test.mts
@@ -162,6 +170,8 @@ tests/
     test_contract.py
     validation.test.mts
     test_validation.py
+    builder.test.mts
+    test_builder.py
 ```
 
 Fixtures are language-neutral JSON documents. Expected `.typ` files are shared
@@ -171,7 +181,10 @@ fixture and every negative fixture with the diagnostic code, the diagnostic
 message, and the diagnostic details that the fixture must produce, so both SDKs
 check the same expectation. The manifest of the validation directory names the
 diagnostics of every negative validation fixture in the order the validation
-engine reports them, and it may name the raw size limit of a fixture.
+engine reports them, and it may name the raw size limit of a fixture. The
+manifest of the builder directory names the scenarios of the builder and the
+operations of every scenario, and every scenario names the canonical JSON that
+the builder must produce.
 
 ### `bazel/`
 
@@ -205,18 +218,23 @@ Current targets include:
 | `//specs/schemas:archive` | The deterministic archive of the bundle. |
 | `//specs/schemas:schema_tests` | Validates the built bundle against the schema contract. |
 | `//specs/schemas:release_tag_tests` | Validates the release tag pattern of the schema contract. |
-| `//packages/python:typcast` | Python SDK library with the immutable document model and the validation engine. |
+| `//packages/python:typcast` | Python SDK library with the immutable document model, the validation engine, and the fluent builder. |
 | `//packages/python/tests:model_tests` | One hundred twenty-five document model unit tests. |
 | `//packages/python/tests:validation_tests` | Twenty-eight validation engine unit tests. |
-| `//packages/typescript:typcast` | TypeScript project with the immutable document model and the validation engine. |
+| `//packages/python/tests:builder_tests` | Sixty-four fluent builder unit tests. |
+| `//packages/typescript:typcast` | TypeScript project with the immutable document model, the validation engine, and the fluent builder. |
 | `//packages/typescript:model_test_run` | Document model unit tests of the TypeScript SDK. |
 | `//packages/typescript:validation_test_run` | Validation engine unit tests of the TypeScript SDK. |
+| `//packages/typescript:builder_test_run` | Fluent builder unit tests of the TypeScript SDK. |
 | `//tests/fixtures:documents` | The shared document IR fixtures. |
 | `//tests/fixtures:validation_documents` | The shared validation fixtures. |
+| `//tests/fixtures:builder_documents` | The shared builder fixtures. |
 | `//tests/contract:contract_py` | The Python contract runner. |
 | `//tests/contract:contract_ts_test` | The TypeScript contract runner. |
 | `//tests/contract:validation_py` | The Python validation contract runner. |
 | `//tests/contract:validation_ts_test` | The TypeScript validation contract runner. |
+| `//tests/contract:builder_py` | The Python builder contract runner. |
+| `//tests/contract:builder_ts_test` | The TypeScript builder contract runner. |
 
 The MVP must add packaging targets for the Python wheel and sdist and for the
 npm tarball. The schema archive target exists. Target names are specified in
@@ -255,7 +273,6 @@ npm tarball. The schema archive target exists. Target names are specified in
 
 | Gap | Impact | Owner |
 |---|---|---|
-| No builder API | The SDKs expose the model but no fluent construction surface. | SDK |
 | No emitter and no compiler adapter | A document cannot be turned into Typst or into a PDF. | SDK |
 | No packaging targets | Release cannot produce artifacts. | Release |
 | No golden `.typ` fixtures | The emitter output cannot be compared byte for byte. | Testing |

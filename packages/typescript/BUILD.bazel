@@ -112,3 +112,42 @@ js_test(
         ":typcast",
     ],
 )
+
+# The unit tests of the fluent builder. The manifest is an input for the
+# same reason as in the project above.
+ts_project(
+    name = "builder_test",
+    srcs = [
+        "tests/builder.test.ts",
+        "package.json",
+    ],
+    tsconfig = {
+        "compilerOptions": {
+            "target": "ES2022",
+            "module": "NodeNext",
+            "moduleResolution": "NodeNext",
+            "strict": True,
+            "noImplicitOverride": True,
+            "noUncheckedIndexedAccess": True,
+            "exactOptionalPropertyTypes": True,
+            "forceConsistentCasingInFileNames": True,
+            "verbatimModuleSyntax": True,
+            "skipLibCheck": True,
+            "declaration": False,
+            "types": [],
+        },
+    },
+    transpiler = "tsc",
+    deps = [
+        ":typcast",
+    ],
+)
+
+js_test(
+    name = "builder_test_run",
+    entry_point = ":builder_test",
+    data = [
+        ":package.json",
+        ":typcast",
+    ],
+)

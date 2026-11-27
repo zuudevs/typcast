@@ -1,0 +1,187 @@
+{
+  "schemaVersion": "1.0.0",
+  "metadata": {
+    "title": "Span helpers"
+  },
+  "page": {
+    "paper": "a4",
+    "orientation": "portrait",
+    "margin": {
+      "top": {
+        "value": 2.5,
+        "unit": "cm"
+      },
+      "right": {
+        "value": 2.5,
+        "unit": "cm"
+      },
+      "bottom": {
+        "value": 2.5,
+        "unit": "cm"
+      },
+      "left": {
+        "value": 2.5,
+        "unit": "cm"
+      }
+    }
+  },
+  "contents": [
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "value": "Plain"
+        },
+        {
+          "type": "bold",
+          "content": [
+            {
+              "type": "text",
+              "value": "Bold"
+            }
+          ]
+        },
+        {
+          "type": "italic",
+          "content": [
+            {
+              "type": "text",
+              "value": "Italic"
+            }
+          ]
+        },
+        {
+          "type": "monospace",
+          "content": [
+            {
+              "type": "text",
+              "value": "Monospace"
+            }
+          ]
+        },
+        {
+          "type": "link",
+          "href": "https://example.com",
+          "content": [
+            {
+              "type": "text",
+              "value": "Example"
+            }
+          ]
+        },
+        {
+          "type": "lineBreak"
+        },
+        {
+          "type": "raw",
+          "format": "code",
+          "value": "x^2"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "bold",
+          "content": [
+            {
+              "type": "text",
+              "value": "Outer "
+            },
+            {
+              "type": "italic",
+              "content": [
+                {
+                  "type": "text",
+                  "value": "Inner"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        [
+          {
+            "type": "text",
+            "value": "Plain item"
+          }
+        ],
+        [
+          {
+            "type": "text",
+            "value": "Mixed "
+          },
+          {
+            "type": "bold",
+            "content": [
+              {
+                "type": "text",
+                "value": "bold"
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "columns": [
+        {
+          "header": [
+            {
+              "type": "text",
+              "value": "Metric"
+            }
+          ],
+          "align": "left"
+        },
+        {
+          "header": [
+            {
+              "type": "text",
+              "value": "Value"
+            }
+          ],
+          "align": "center"
+        }
+      ],
+      "rows": [
+        [
+          [
+            {
+              "type": "text",
+              "value": "Revenue"
+            },
+            {
+              "type": "bold",
+              "content": [
+                {
+                  "type": "text",
+                  "value": "12%"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "text",
+              "value": "1,200"
+            }
+          ]
+        ],
+        [
+          [],
+          []
+        ]
+      ]
+    }
+  ],
+  "modules": []
+}

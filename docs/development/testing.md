@@ -15,8 +15,8 @@ compiler integration, and package installation.
 
 | Area | Current state |
 |---|---|
-| Test targets | Nineteen hand-written test targets: `//tools/codegen/tests:unit_tests`, `//tools/publish/tests:publish_tests`, `//scripts/tests:version_tests`, `//scripts/tests:release_tests`, `//scripts/tests:release_flow_tests`, `//scripts/tests:repository_tests`, `//scripts/tests:docs_tests`, `//scripts/tests:link_tests`, `//scripts:docs_checks`, `//specs/schemas:schema_tests`, `//specs/schemas:release_tag_tests`, `//packages/python/tests:model_tests`, `//packages/python/tests:validation_tests`, `//packages/typescript:model_test_run`, `//packages/typescript:validation_test_run`, `//tests/contract:contract_py`, `//tests/contract:contract_ts_test`, `//tests/contract:validation_py`, and `//tests/contract:validation_ts_test`. The TypeScript toolchain adds four generated type-check targets. |
-| Test cases | Sixteen generator cases, 45 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 47 repository structure cases, 4 release tag cases, 32 documentation gate cases, 4 link check cases, one documentation check, one schema bundle check, 125 document model cases, 12 contract fixture cases, 28 validation cases, and 6 validation contract fixture cases. |
+| Test targets | Twenty-three hand-written test targets: `//tools/codegen/tests:unit_tests`, `//tools/publish/tests:publish_tests`, `//scripts/tests:version_tests`, `//scripts/tests:release_tests`, `//scripts/tests:release_flow_tests`, `//scripts/tests:repository_tests`, `//scripts/tests:docs_tests`, `//scripts/tests:link_tests`, `//scripts:docs_checks`, `//specs/schemas:schema_tests`, `//specs/schemas:release_tag_tests`, `//packages/python/tests:model_tests`, `//packages/python/tests:validation_tests`, `//packages/python/tests:builder_tests`, `//packages/typescript:model_test_run`, `//packages/typescript:validation_test_run`, `//packages/typescript:builder_test_run`, `//tests/contract:contract_py`, `//tests/contract:contract_ts_test`, `//tests/contract:validation_py`, `//tests/contract:validation_ts_test`, `//tests/contract:builder_py`, and `//tests/contract:builder_ts_test`. The TypeScript toolchain adds six generated type-check targets. |
+| Test cases | Sixteen generator cases, 45 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 47 repository structure cases, 4 release tag cases, 32 documentation gate cases, 4 link check cases, one documentation check, one schema bundle check, 125 document model cases, 12 contract fixture cases, 28 validation cases, 6 validation contract fixture cases, 64 builder cases, and 4 builder contract fixture cases. |
 | Schema tests | `//specs/schemas:schema_tests` validates the built bundle. Meta-schema and instance validation are missing. |
 | Release tag tests | `//specs/schemas:release_tag_tests` covers the release tag pattern of the contract, so that the contract and the publisher agree on what a release tag is. |
 | Publisher tests | `//tools/publish/tests:publish_tests` covers the publisher, the published identity of the built bundle, the resolution of the versioned raw URLs, and the deterministic archive. |
@@ -27,8 +27,10 @@ compiler integration, and package installation.
 | Gate tests | `//scripts/tests:docs_tests` and `//scripts/tests:link_tests` cover the rules of the repository gate and of the external link check, including the encoding and the text hygiene rules. |
 | Model tests | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run` cover the immutability, the constructor checks, the canonical JSON form, the reader, and the round trip of the document model. |
 | Validation tests | `//packages/python/tests:validation_tests` and `//packages/typescript:validation_test_run` cover the semantic rules, the configuration of the raw size limit, and the order of the diagnostics. |
+| Builder tests | `//packages/python/tests:builder_tests` and `//packages/typescript:builder_test_run` cover the surface of the builder, the chaining of its methods, the normalization of the content, the defaults of the node catalog, the errors of the diagnostic taxonomy, the validation of the options objects of the TypeScript builder, and the immutability of the snapshot that `build()` returns. |
 | Contract tests | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test` read the same shared fixtures and the same manifest, so a drift in either SDK fails one of the two targets. |
 | Validation contract tests | `//tests/contract:validation_py` and `//tests/contract:validation_ts_test` read the same validation fixtures and the same manifest, so a drift in the diagnostics of either SDK fails one of the two targets. |
+| Builder contract tests | `//tests/contract:builder_py` and `//tests/contract:builder_ts_test` read the same builder fixtures and the same manifest, and every scenario names the canonical JSON that the builder must produce, so a drift in the builder of either SDK fails one of the two targets. |
 | Golden `.typ` tests | None. |
 | Parity tests | The serialization parity of the document IR and the diagnostic parity of the validation engine are covered by the contract runners. The `.typ` parity is not implemented. |
 | Compiler integration | None. |
@@ -262,7 +264,11 @@ negative fixture. The validation part of the rule is implemented as well:
 `//tests/contract:validation_py` and `//tests/contract:validation_ts_test`
 read the same validation fixtures and the same manifest, and compare the
 diagnostic code, the diagnostic path, the diagnostic message, and the
-diagnostic details of every negative fixture. The `.typ` part waits for the
+diagnostic details of every negative fixture. The builder part of the rule is
+implemented as well: `//tests/contract:builder_py` and
+`//tests/contract:builder_ts_test` read the same builder fixtures and the same
+manifest, build every scenario with the builder of their own SDK, and compare
+the canonical JSON of the document byte for byte. The `.typ` part waits for the
 emitter.
 
 ## Compiler integration

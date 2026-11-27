@@ -96,6 +96,16 @@ class Length:
             value = int(value)
         return {"value": value, "unit": self.unit}
 
+    @staticmethod
+    def cm(value: float) -> "Length":
+        """Returns a length in centimeters.
+
+        The factory is the one of the examples of the SDK API. Every other
+        unit is written with the constructor, because the contract names no
+        factory for it.
+        """
+        return Length(value, "cm")
+
 
 @dataclass(frozen=True)
 class Margin:

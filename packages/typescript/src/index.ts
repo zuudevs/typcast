@@ -3,18 +3,21 @@
  *
  * The package exposes the immutable document model of the IR. The model
  * serializes to the language-neutral document IR and reads it back, and the
- * validation engine checks the semantic rules of a document. The builder, the
- * emitter, and the compiler adapter are not part of this release.
+ * validation engine checks the semantic rules of a document. The fluent
+ * builder is the primary API of the SDK. The emitter and the compiler
+ * adapter are not part of this release.
  */
 
 export {
   CODE_EMPTY_CONTENT,
+  CODE_INVALID_ARGUMENT,
   CODE_INVALID_DATE,
   CODE_INVALID_ENUM,
   CODE_INVALID_HEADING_LEVEL,
   CODE_INVALID_LENGTH,
   CODE_INVALID_MODULE_ALIAS,
   CODE_INVALID_RAW_LIMIT,
+  CODE_INVALID_STATE,
   CODE_MALFORMED_JSON,
   CODE_MODULE_ALIAS_AND_ITEMS,
   CODE_NOT_SERIALIZABLE,
@@ -25,6 +28,7 @@ export {
   CODE_TABLE_SHAPE,
   CODE_UNKNOWN_FIELD,
   CODE_UNSUPPORTED_VERSION,
+  ApiUsageError,
   ConfigError,
   PHASE_API,
   PHASE_COMPILER,
@@ -41,6 +45,26 @@ export {
   ValidationError,
 } from "./diagnostics.js";
 export type { Diagnostic, SourceLocation } from "./diagnostics.js";
+export {
+  DocumentBuilder,
+  bold,
+  cell,
+  column,
+  italic,
+  lineBreak,
+  link,
+  monospace,
+  rawInline,
+  text,
+} from "./builder/index.js";
+export type {
+  Content,
+  ContentGroup,
+  ImageOptions,
+  ModuleOptions,
+  PageOptions,
+  TableOptions,
+} from "./builder/index.js";
 export {
   Bold,
   Document,

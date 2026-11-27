@@ -15,6 +15,7 @@ from typing import Any, Iterable, Mapping, Sequence
 __all__ = [
     "Diagnostic",
     "TypcastError",
+    "ApiUsageError",
     "ValidationError",
     "SerializationError",
     "ConfigError",
@@ -31,6 +32,8 @@ __all__ = [
     "PHASE_COMPILER",
     "PHASE_IO",
     "PHASE_CONFIG",
+    "CODE_INVALID_ARGUMENT",
+    "CODE_INVALID_STATE",
     "CODE_REQUIRED_FIELD",
     "CODE_UNKNOWN_FIELD",
     "CODE_INVALID_ENUM",
@@ -48,7 +51,9 @@ __all__ = [
     "CODE_NOT_SERIALIZABLE",
     "CODE_ROOT_SHAPE",
     "CODE_INVALID_RAW_LIMIT",
+    "api_diagnostic",
     "config_diagnostic",
+    "raise_api",
     "raise_config",
 ]
 
@@ -67,6 +72,10 @@ PHASE_CONFIG = "config"
 
 # The number of characters of a value that the message of a diagnostic shows.
 MAX_DIAGNOSTIC_VALUE_LENGTH = 64
+
+# Public API codes. The catalog lives in `docs/specifications/diagnostics.md`.
+CODE_INVALID_ARGUMENT = "TYPCAST-API-0001"
+CODE_INVALID_STATE = "TYPCAST-API-0002"
 
 # Validation codes. The catalog lives in `docs/specifications/diagnostics.md`.
 CODE_REQUIRED_FIELD = "TYPCAST-VAL-0001"
@@ -238,6 +247,10 @@ class TypcastError(Exception):
         self.diagnostics: tuple[Diagnostic, ...] = tuple(diagnostics)
 
 
+class ApiUsageError(TypcastError):
+    """Raised when a public API is used with an invalid argument or state."""
+
+
 class ValidationError(TypcastError):
     """Raised when a value violates the schema or the semantic rules."""
 
@@ -248,6 +261,23 @@ class SerializationError(TypcastError):
 
 class ConfigError(TypcastError):
     """Raised when a configuration value is invalid."""
+
+
+def api_diagnostic(
+    code: str,
+    message: str,
+    path: str | None = None,
+    details: Mapping[str, Any] | None = None,
+) -> Diagnostic:
+    """Builds the diagnostic of a misuse of the public API."""
+    return Diagnostic(
+        code=code,
+        severity=SEVERITY_ERROR,
+        phase=PHASE_API,
+        message=message,
+        path=path,
+        details=details or {},
+    )
 
 
 def validation_diagnostic(
@@ -298,6 +328,19 @@ def config_diagnostic(
         message=message,
         path=path,
         details=details or {},
+    )
+
+
+def raise_api(
+    code: str,
+    message: str,
+    path: str | None = None,
+    details: Mapping[str, Any] | None = None,
+) -> None:
+    """Raises a public API error that carries a single diagnostic."""
+    raise ApiUsageError(
+        message,
+        (api_diagnostic(code, message, path, details),),
     )
 
 

@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0.0",
+  "metadata": {
+    "title": "Modules and image"
+  },
+  "page": {
+    "paper": "a4",
+    "orientation": "portrait",
+    "margin": {
+      "top": {
+        "value": 2.5,
+        "unit": "cm"
+      },
+      "right": {
+        "value": 2.5,
+        "unit": "cm"
+      },
+      "bottom": {
+        "value": 2.5,
+        "unit": "cm"
+      },
+      "left": {
+        "value": 2.5,
+        "unit": "cm"
+      }
+    }
+  },
+  "contents": [
+    {
+      "type": "image",
+      "path": "figures/cover.png",
+      "alt": "Cover"
+    }
+  ],
+  "modules": [
+    {
+      "path": "modules/a.typ",
+      "alias": "a"
+    },
+    {
+      "path": "modules/b.typ",
+      "items": [
+        "currency",
+        "date"
+      ]
+    }
+  ]
+}

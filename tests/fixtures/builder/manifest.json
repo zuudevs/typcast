@@ -1,0 +1,131 @@
+{
+  "scenarios": [
+    {
+      "name": "full-example",
+      "file": "expected/full-example.json",
+      "operations": [
+        { "op": "title", "value": "Quarterly Report" },
+        { "op": "author", "value": "Example Corp" },
+        { "op": "date", "value": "2026-11-24" },
+        {
+          "op": "page",
+          "paper": "a4",
+          "orientation": "portrait",
+          "margin": { "value": 2, "unit": "cm" }
+        },
+        { "op": "heading", "level": 1, "content": ["Quarterly Report"] },
+        {
+          "op": "heading",
+          "level": 3,
+          "content": ["Section", { "span": "italic", "content": ["detail"] }]
+        },
+        {
+          "op": "paragraph",
+          "content": [
+            "Revenue grew by ",
+            { "span": "bold", "content": ["12%"] },
+            "."
+          ]
+        },
+        { "op": "bullet_list", "items": [["Revenue"], ["Cost"]] },
+        { "op": "numbered_list", "items": [["First"], ["Second"]] },
+        {
+          "op": "table",
+          "columns": [
+            { "header": ["Metric"], "align": "left" },
+            { "header": ["Value"], "align": "right" }
+          ],
+          "rows": [
+            [["Revenue"], ["1,200"]],
+            [["Cost"], ["800"]]
+          ]
+        },
+        {
+          "op": "image",
+          "path": "figures/revenue.png",
+          "alt": "Revenue chart",
+          "caption": ["Figure 1"]
+        },
+        { "op": "page_break" },
+        {
+          "op": "raw",
+          "value": "#figure(image(\"logo.png\"), caption: [Logo])",
+          "format": "markup"
+        },
+        { "op": "module", "path": "modules/format.typ", "items": ["currency"] }
+      ]
+    },
+    {
+      "name": "defaults",
+      "file": "expected/defaults.json",
+      "operations": [
+        { "op": "title", "value": "Defaults" },
+        { "op": "paragraph", "content": ["The defaults of the node catalog."] }
+      ]
+    },
+    {
+      "name": "span-helpers",
+      "file": "expected/span-helpers.json",
+      "operations": [
+        { "op": "title", "value": "Span helpers" },
+        {
+          "op": "paragraph",
+          "content": [
+            { "span": "text", "value": "Plain" },
+            { "span": "bold", "content": ["Bold"] },
+            { "span": "italic", "content": ["Italic"] },
+            { "span": "monospace", "content": ["Monospace"] },
+            {
+              "span": "link",
+              "href": "https://example.com",
+              "content": ["Example"]
+            },
+            { "span": "line_break" },
+            { "span": "raw_inline", "value": "x^2", "format": "code" }
+          ]
+        },
+        {
+          "op": "paragraph",
+          "content": [
+            {
+              "span": "bold",
+              "content": ["Outer ", { "span": "italic", "content": ["Inner"] }]
+            }
+          ]
+        },
+        {
+          "op": "bullet_list",
+          "items": [
+            ["Plain item"],
+            ["Mixed ", { "span": "bold", "content": ["bold"] }]
+          ]
+        },
+        {
+          "op": "table",
+          "columns": [
+            { "header": ["Metric"], "align": "left" },
+            { "header": ["Value"], "align": "center" }
+          ],
+          "rows": [
+            [["Revenue", { "span": "bold", "content": ["12%"] }], ["1,200"]],
+            [[], []]
+          ]
+        }
+      ]
+    },
+    {
+      "name": "modules-and-image",
+      "file": "expected/modules-and-image.json",
+      "operations": [
+        { "op": "title", "value": "Modules and image" },
+        {
+          "op": "image",
+          "path": "figures/cover.png",
+          "alt": "Cover"
+        },
+        { "op": "module", "path": "modules/a.typ", "alias": "a" },
+        { "op": "module", "path": "modules/b.typ", "items": ["currency", "date"] }
+      ]
+    }
+  ]
+}

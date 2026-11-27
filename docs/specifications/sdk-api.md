@@ -35,7 +35,7 @@ JSON field names are defined by the IR and do not change between languages.
 | `Metadata` | Title, author, and date. |
 | `Page` | Paper, orientation, and margin. |
 | `Margin` | Top, right, bottom, and left lengths. |
-| `Length` | Numeric value and unit. The value lives in the binary64 number domain of ECMAScript. |
+| `Length` | Numeric value and unit. The value lives in the binary64 number domain of ECMAScript. `Length.cm(value)` returns a length in centimeters. |
 | `Heading` | Heading block. |
 | `Paragraph` | Paragraph block. |
 | `ListBlock` | Ordered or unordered list block. |
@@ -191,6 +191,39 @@ image captions, and link content.
 A table row is a sequence of cells. A cell is a sequence of strings or spans. A
 row with the wrong number of cells is rejected at build time.
 
+### Builder behavior
+
+- Every mutating method returns the builder, so a document is one chain of
+  calls.
+- The builder is mutable, one builder produces one document at a time, and a
+  builder must not be shared across threads. `build()` returns an immutable
+  snapshot, and a later call of the builder does not change a document that was
+  already built.
+- The builder copies the collections that it receives, so a caller cannot
+  change a document with a list that the caller keeps.
+- The builder applies the defaults of the node catalog before it creates the
+  model: the paper `a4`, the orientation `portrait`, a margin of 2.5 cm on
+  every side, an unordered bullet list, no module, and no caption and no width
+  for an image.
+- A string that is passed as content becomes a `Text` span, and a span is kept
+  as it is. Two strings are never merged, because a merge would change the
+  structure of the content.
+- `Length.cm(value)` returns a length in centimeters. Every other unit is
+  written with the constructor, because the contract names no factory for it.
+- A single `Length` on `margin` is the margin of every side of the page, and a
+  `Margin` names every side itself.
+- The builder checks the type of its arguments itself and raises
+  `ApiUsageError` with `TYPCAST-API-0001` and the phase `api`. The rules of a
+  node stay with the constructors of the model and raise `ValidationError`
+  with a code of the `TYPCAST-VAL-*` family.
+- `build()` runs the validation engine and raises `ValidationError` when the
+  engine reports an error. The error carries every error diagnostic of the
+  document, in the order of the document, and its message is the message of the
+  first diagnostic.
+- The raw size limit of a build is the default limit of the engine, because the
+  configuration of the engine is passed per call and `build()` takes no
+  configuration.
+
 ## Document methods
 
 | Operation | Python | TypeScript |
@@ -212,9 +245,10 @@ the serialization of a built model writes the document as it is, because
 ADR-0005 keeps the validation in the build step and in the reader.
 
 The current release implements the model types of the list above, the
-serialization rows of this table, `validate()`, and the error hierarchy. The
-builder, `to_typst()`, `compile_pdf()`, and `write_pdf()` are part of the
-contract and are not implemented yet.
+serialization rows of this table, `validate()`, the error hierarchy, and the
+fluent builder with its span helpers and its table helpers. `to_typst()`,
+`compile_pdf()`, and `write_pdf()` are part of the contract and are not
+implemented yet.
 
 ## Validation
 
@@ -345,12 +379,12 @@ collection. A single error may carry multiple diagnostics.
 
 | ID | Requirement | Status | Verification |
 |---|---|---|---|
-| API-001 | The SDK MUST expose an immutable document model and a fluent builder. | CONFIRMED | API review and tests. |
-| API-002 | Builder methods MUST return the builder for chaining. | CONFIRMED | API test. |
-| API-003 | `build()` MUST return an immutable snapshot. | CONFIRMED | Mutation test. |
+| API-001 | The SDK MUST expose an immutable document model and a fluent builder. | IMPLEMENTED | `//packages/python/tests:builder_tests` and `//packages/typescript:builder_test_run`; the surface cases of both SDKs, and the builder cases of `//tests/contract:builder_py` and `//tests/contract:builder_ts_test`. |
+| API-002 | Builder methods MUST return the builder for chaining. | IMPLEMENTED | `//packages/python/tests:builder_tests` and `//packages/typescript:builder_test_run`; the chaining cases of both SDKs. |
+| API-003 | `build()` MUST return an immutable snapshot. | IMPLEMENTED | `//packages/python/tests:builder_tests` and `//packages/typescript:builder_test_run`; the snapshot cases of both SDKs, which build a document, change the builder, and compare the canonical JSON. |
 | API-004 | Model constructors MUST validate their inputs. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the constructor cases. |
-| API-005 | Strings passed as content MUST be normalized to text spans. | CONFIRMED | Builder test. |
-| API-006 | `build()` MUST raise `ValidationError` on error diagnostics. | CONFIRMED | Negative test. |
+| API-005 | Strings passed as content MUST be normalized to text spans. | IMPLEMENTED | `//packages/python/tests:builder_tests` and `//packages/typescript:builder_test_run`; the normalization cases of both SDKs, and the fixtures of `//tests/contract:builder_py` and `//tests/contract:builder_ts_test`. |
+| API-006 | `build()` MUST raise `ValidationError` on error diagnostics. | IMPLEMENTED | `//packages/python/tests:builder_tests` and `//packages/typescript:builder_test_run`; the negative cases of both SDKs, and the fixtures of `//tests/contract:builder_py` and `//tests/contract:builder_ts_test`. |
 | API-007 | `validate()` MUST return diagnostics without raising for validation errors. | IMPLEMENTED | `//packages/python/tests:validation_tests` and `//packages/typescript:validation_test_run`; the validation cases of both SDKs, and the fixtures of `//tests/contract:validation_py` and `//tests/contract:validation_ts_test`. |
 | API-008 | `to_typst()` and `compile_pdf()` MUST validate again before use. | CONFIRMED | Validation test. |
 | API-009 | `to_json()` MUST produce canonical JSON. | IMPLEMENTED | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`; every shared fixture is written back byte for byte. |
@@ -368,7 +402,7 @@ collection. A single error may carry multiple diagnostics.
 | API-021 | Deprecations MUST be documented for at least one minor release. | CONFIRMED | Release review. |
 | API-022 | Internal modules MUST NOT be documented as public API. | CONFIRMED | API review. |
 | API-023 | `asset_root` MUST be required only for compilation that needs assets. | CONFIRMED | API test. |
-| API-024 | The builder MUST be documented as mutable, single-document, and not thread-safe. | CONFIRMED | API documentation review. |
+| API-024 | The builder MUST be documented as mutable, single-document, and not thread-safe. | IMPLEMENTED | The builder sections of this document, and `//packages/python/tests:builder_tests` and `//packages/typescript:builder_test_run`; the snapshot cases of both SDKs. |
 | API-025 | The npm package MUST be ESM-only for `1.0.0`; CommonJS support is DEFERRED. | CONFIRMED | Package and consumer tests. |
 | API-026 | The package root MUST export the version of the package, and the export MUST match the package manifest. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the version cases, and `//scripts:repository_checks` compares every export with its manifest. |
 | API-027 | The validation configuration MUST be passed per call and MUST NOT be stored in the document; in this release it MUST hold the raw size limit only, and an invalid limit MUST raise `ConfigError` with `TYPCAST-CONFIG-0004`. | IMPLEMENTED | `//packages/python/tests:validation_tests` and `//packages/typescript:validation_test_run`; the configuration cases of both SDKs, and the `ConfigError` case of both SDKs. |

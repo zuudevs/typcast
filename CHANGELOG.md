@@ -147,6 +147,38 @@ No release has been published yet. Every change so far is listed under
   `//packages/typescript:validation_test_run`, which cover the semantic rules,
   the configuration, the order of the diagnostics, and the measurement of the
   size of a text.
+- The fluent builder of the Python SDK and of the TypeScript SDK:
+  `DocumentBuilder` with `title()`, `author()`, `date()`, `page()`, `heading()`,
+  `paragraph()`, `bullet_list()`, `numbered_list()`, `table()`, `image()`,
+  `page_break()`, `raw()`, `module()`, and `build()`, with the span helpers
+  `text()`, `bold()`, `italic()`, `monospace()`, `link()`, `line_break()`, and
+  `raw_inline()`, and with the table helpers `column()` and `cell()`. The
+  builder is mutable and is not thread-safe, and `build()` returns an
+  immutable snapshot that a later call of the builder does not change.
+- The normalization of the content of the builder. A string that is passed as
+  content becomes a `Text` span, a span is kept as it is, and two strings are
+  never merged, because a merge would change the structure of the content.
+- The defaults of the builder, which the node catalog names: the paper `a4`,
+  the orientation `portrait`, a margin of 2.5 cm on every side, an unordered
+  bullet list, no module, and no caption and no width for an image.
+- `Length.cm(value)` in both SDKs, which returns a length in centimeters, as
+  the examples of the SDK API use it.
+- `ApiUsageError` with the codes `TYPCAST-API-0001` and `TYPCAST-API-0002` in
+  both SDKs. The builder raises `ApiUsageError` when an argument has a type
+  that the method cannot use, and the rules of a node stay with the
+  constructors of the model.
+- Unit tests for the builder, `//packages/python/tests:builder_tests` and
+  `//packages/typescript:builder_test_run`, which cover the surface of the
+  builder, the chaining of its methods, the normalization of the content, the
+  defaults, the errors of the diagnostic taxonomy, and the immutability of the
+  snapshot that `build()` returns.
+- Shared builder fixtures under `tests/fixtures/builder/`, with a manifest that
+  names the scenarios of the builder and the operations of every scenario, and
+  with the canonical JSON that every scenario must produce.
+- Cross-language builder contract runners, `//tests/contract:builder_py` and
+  `//tests/contract:builder_ts_test`, which read the same builder fixtures and
+  the same manifest, so a drift in the builder of either SDK fails one of the
+  two targets.
 
 ### Changed
 
@@ -169,6 +201,16 @@ No release has been published yet. Every change so far is listed under
 - The requirements `IR-006`, `IR-010`, `IR-019`, `API-007`, `API-027`,
   `DIAG-018`, `NODE-008`, and `TEST-033` that the semantic validation engine
   proves are marked `IMPLEMENTED`.
+- The requirements `API-001`, `API-002`, `API-003`, `API-005`, `API-006`,
+  `API-024`, and `NODE-023` that the fluent builder proves are marked
+  `IMPLEMENTED`.
+- The SDK API document names the behavior of the builder: the chaining of its
+  methods, the normalization of the content, the defaults of the node catalog,
+  the split between the errors of the public API and the errors of the model,
+  and the validation that `build()` runs. The builder is documented as
+  mutable, single-document, and not thread-safe.
+- The diagnostics document names the code `TYPCAST-API-0002` and states that
+  no path of the builder raises it.
 - The SDK API document names the behavior of `validate()`, the configuration of
   the validation engine, and the details of the diagnostics of the engine. The
   configuration holds the raw size limit only, because the asset root, the
@@ -365,6 +407,17 @@ No release has been published yet. Every change so far is listed under
   typed error. ADR-0005 decided that the serialization of a built model does
   not validate again, so the prose is corrected, and the decision itself is
   unchanged.
+- The builder of the TypeScript SDK read the fields of its options objects
+  before it checked the objects themselves. A caller in JavaScript, or a
+  caller in TypeScript with a cast, therefore got a native `TypeError` for an
+  options object that was `null`, and the defaults of the node catalog for an
+  options object that was a string or another primitive. The builder now
+  checks the options of `page`, `table`, `image`, `raw`, and `module` before
+  it reads a field of them, so a wrong options object raises the documented
+  `ApiUsageError` with `TYPCAST-API-0001` and the phase `api`. A failed check
+  changes no state of the builder, so the builder stays usable. The rules of a
+  node stay with the model, so an invalid enum inside a well-typed options
+  object still raises a `ValidationError` of the `TYPCAST-VAL-*` family.
 
 ### Known issues
 
