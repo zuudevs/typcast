@@ -1,3 +1,4 @@
+load("//bazel:enumgen.bzl", "typcast_enum_source")
 load("@rules_python//python:defs.bzl", "py_library")
 
 package(
@@ -9,11 +10,26 @@ exports_files([
     "pyproject.toml",
 ])
 
+# The paper variants of the catalog are expanded into the source of the SDK,
+# so the model of a page can reject a value that is not a variant of the
+# catalog without a hand-written copy of the catalog in the SDK.
+typcast_enum_source(
+    name = "paper_variants",
+    catalog = "//specs/catalogs/enums:paper-variants.csv",
+    column = "Variant",
+    constant = "PAPER_VARIANTS",
+    language = "python",
+    label = "specs/catalogs/enums/paper-variants.csv",
+    output = "src/typcast/models/paper_variants_generated.py",
+)
+
 py_library(
     name = "typcast",
     srcs = glob([
         "src/typcast/**/*.py",
-    ]),
+    ]) + [
+        ":paper_variants",
+    ],
     imports = [
         "src",
     ],

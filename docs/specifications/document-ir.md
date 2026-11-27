@@ -93,6 +93,13 @@ are Post-MVP.
 The page object is not nested inside another page object. The current prototype
 that produces `page.paper.paper` is not normative.
 
+The paper value belongs to the catalog in
+`specs/catalogs/enums/paper-variants.csv`. The catalog is owned by the
+contract layer, and its values reach the SDKs through a generated source
+file, so neither SDK holds a hand-written copy of the catalog that could
+drift. The model of a page rejects a value that the catalog does not name,
+with `TYPCAST-VAL-0003`.
+
 ### Length
 
 ```json
@@ -425,6 +432,7 @@ engine is called through `Document.validate()`; see the SDK API contract.
 | IR-022 | The width of an image MUST be a positive length. | IMPLEMENTED | The constructor of both SDKs rejects a width of zero with `TYPCAST-VAL-0004`; the negative fixture `invalid-image-width.json`. The schema states the same rule, because the width of an image carries an exclusive lower bound of zero while a margin length stays non-negative; `//specs/schemas:schema_tests` reads the schemas of the built bundle. |
 | IR-023 | The reader MUST reject a JSON object that holds a key that is not a string. | IMPLEMENTED | The reader of both SDKs rejects such a value with `TYPCAST-IR-0004`; the negative fixture `non-string-key.json` and the nested-key cases of both SDKs. |
 | IR-024 | The canonical JSON text of a document MUST be UTF-8, so a document that holds a character that UTF-8 cannot encode MUST be rejected when it is written. | IMPLEMENTED | The writer of both SDKs rejects such a document with `TYPCAST-IR-0003`; the negative fixture `unpaired-surrogate.json` and the encodability cases of both SDKs. |
+| IR-025 | The `paper` value MUST be one of the variants of `specs/catalogs/enums/paper-variants.csv`. | IMPLEMENTED | The constructor of both SDKs rejects a value that the catalog does not name with `TYPCAST-VAL-0003`; the catalog is expanded into the source of the SDKs by `//tools/enumgen:typcast_enumgen`, and the negative fixture `invalid-paper.json` of `//tests/contract:contract_py` and `//tests/contract:contract_ts_test` names the diagnostic. |
 
 ## Open questions
 
@@ -441,3 +449,4 @@ engine is called through `Document.validate()`; see the SDK API contract.
 - [Assets and modules](assets.md)
 - [ADR-0017](../decisions/ADR-0017-resource-limits.md)
 - [ADR-0024](../decisions/ADR-0024-semantic-validation-engine-and-configuration.md)
+- [ADR-0025](../decisions/ADR-0025-catalog-driven-enum-constants-in-the-sdks.md)

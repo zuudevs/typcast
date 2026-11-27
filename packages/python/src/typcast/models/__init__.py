@@ -19,7 +19,7 @@ from typcast.models.blocks import (
 from typcast.models.document import Document
 from typcast.models.metadata import Metadata
 from typcast.models.module import Module
-from typcast.models.page import Length, Margin, Page
+from typcast.models.page import PAPER_VARIANTS, Length, Margin, Page
 from typcast.models.spans import (
     Bold,
     Italic,
@@ -46,6 +46,7 @@ __all__ = [
     "Metadata",
     "Module",
     "Monospace",
+    "PAPER_VARIANTS",
     "Page",
     "PageBreak",
     "Paragraph",

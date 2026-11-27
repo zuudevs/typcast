@@ -56,6 +56,12 @@ JSON field names are defined by the IR and do not change between languages.
 | `CompileResult` | PDF bytes or path, diagnostics, and compiler metadata. |
 | `TypcastConfig` | Configuration of the validation engine. The compilation fields arrive with the compiler adapter. |
 
+The package root also exports the constants of the public enums. The
+`PAPER_VARIANTS` constant holds the variants of the paper catalog that the
+model of a page checks its value against, and its values come from the
+generated source file of the enum generator, so they never drift from the
+catalog.
+
 ## Immutability
 
 - `Document` and all model types are immutable.

@@ -19,8 +19,9 @@ creating circular dependencies.
 | `specs/catalogs/` | Language-independent CSV catalogs for enums. | Implemented. |
 | `specs/schemas/` | Static schemas, schema templates, and the bundle validation test. | The bundle implements the document IR and passes the contract test. |
 | `tools/codegen/` | Python generator for template and CSV expansion. | Implemented with seven unit tests. |
+| `tools/enumgen/` | Python generator that expands a CSV catalog into a source file of an SDK. | Implemented with twenty unit tests. |
 | `tools/publish/` | Python publisher for the released schema bundle. | Implemented with 23 unit tests. |
-| `bazel/` | Reusable Starlark rules. | Schema and publication rules implemented. |
+| `bazel/` | Reusable Starlark rules. | Schema, enum expansion, and publication rules implemented. |
 | `packages/python/` | Python SDK. | Implemented: the immutable document model, the diagnostics, the JSON serialization, and the semantic validation engine. |
 | `packages/typescript/` | TypeScript and JavaScript SDK. | Implemented: the immutable document model, the diagnostics, the JSON serialization, and the semantic validation engine. The manifest is named `typcast` and is still private. |
 | `tests/contract/` | Cross-language contract tests. | Implemented: the Python and the TypeScript runners read the shared fixtures, and the validation runners read the shared validation fixtures. |
@@ -87,6 +88,16 @@ validates JSON syntax, not JSON Schema semantics or `$ref` resolution, and it
 rejects the constants that JSON does not define, such as `NaN` and `Infinity`.
 It must remain independent of the SDKs so that schema generation can run
 before either SDK exists.
+
+### `tools/enumgen/`
+
+A standalone Python package that expands a column of a CSV catalog into a
+constant of the source of an SDK. It writes the values in the order of the
+catalog, so a catalog that an SDK enforces at runtime reaches that SDK without
+a hand-written copy that could drift. The generated file is a build output
+that stays under `bazel-bin/`, because `BUILD-009` forbids a committed
+generated artifact. It must remain independent of the SDKs, like
+`tools/codegen/`.
 
 ### `packages/python/`
 
@@ -225,6 +236,7 @@ npm tarball. The schema archive target exists. Target names are specified in
 ## Generated artifacts
 
 - Generated schemas are written under `bazel-bin/specs/schemas/`.
+- Generated SDK sources are written under `bazel-bin/packages/`.
 - Generated artifacts MUST NOT be committed to the development branch.
 - The published schema bundle is the only exception. The release commit
   publishes it under `specs/schemas/` so that the versioned raw URLs resolve,
@@ -250,6 +262,7 @@ npm tarball. The schema archive target exists. Target names are specified in
 | REPO-010 | Documentation checks MUST NOT require SDK installation. | IMPLEMENTED | `//scripts:repository_checks` rejects a module of `scripts/` that imports the SDK package. |
 | REPO-011 | New Python package directories MUST contain `__init__.py`. | IMPLEMENTED | `//scripts:repository_checks` rejects a package directory that holds Python modules but no `__init__.py`. |
 | REPO-012 | TypeScript compiler version MUST come from the root `package.json`. | IMPLEMENTED | `//scripts:repository_checks` reads the root manifest, the SDK manifest, and the module file of Bazel. |
+| REPO-013 | The values of a CSV catalog that an SDK enforces at runtime MUST reach the SDK through a generated source file, so that the SDK holds no hand-written copy of the catalog. | IMPLEMENTED | The rule `typcast_enum_source` in `bazel/enumgen.bzl` expands the catalog into the source of the SDK, and the generated file stays under `bazel-bin/`; `//tools/enumgen/tests:unit_tests` covers the reader, the renderers, and the command line. |
 
 ## Current gaps
 
@@ -274,3 +287,4 @@ npm tarball. The schema archive target exists. Target names are specified in
 - [Build](../development/build.md)
 - [Testing](../development/testing.md)
 - [Release](../development/release.md)
+- [ADR-0025](../decisions/ADR-0025-catalog-driven-enum-constants-in-the-sdks.md)

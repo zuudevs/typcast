@@ -55,6 +55,7 @@ export {
   Metadata,
   Module,
   Monospace,
+  PAPER_VARIANTS,
   Page,
   PageBreak,
   Paragraph,

@@ -17,6 +17,7 @@ import unittest
 from typing import Any
 
 from typcast import (
+    PAPER_VARIANTS,
     Bold,
     Document,
     Heading,
@@ -478,6 +479,58 @@ class ConstructorValidationTests(unittest.TestCase):
         with self.assertRaises(SerializationError) as caught:
             document(schema_version="2.0.0")
         self.assertEqual(caught.exception.diagnostics[0].code, "TYPCAST-IR-0002")
+
+
+class PaperCatalogTests(unittest.TestCase):
+    """Checks that the model accepts only the variants of the paper catalog.
+
+    The catalog of the paper variants lives in the contract layer, and the
+    values reach the SDK through a generated source file, so the SDK holds no
+    hand-written copy of the catalog that could drift.
+    """
+
+    def test_the_package_exports_the_variants_of_the_catalog(self) -> None:
+        self.assertIn("a4", PAPER_VARIANTS)
+        self.assertEqual(len(set(PAPER_VARIANTS)), len(PAPER_VARIANTS))
+        self.assertEqual(PAPER_VARIANTS[0], "a0")
+        self.assertEqual(PAPER_VARIANTS[-1], "presentation-4-3")
+
+    def test_a_variant_of_the_catalog_is_accepted(self) -> None:
+        page = Page(paper="a4", orientation="portrait", margin=margin())
+        self.assertEqual(page.paper, "a4")
+
+    def test_a_paper_that_is_not_a_variant_of_the_catalog_is_rejected(self) -> None:
+        with self.assertRaises(ValidationError) as caught:
+            Page(paper="a4x", orientation="portrait", margin=margin())
+        diagnostic = caught.exception.diagnostics[0]
+        self.assertEqual(diagnostic.code, "TYPCAST-VAL-0003")
+        self.assertEqual(diagnostic.path, "/paper")
+
+    def test_the_message_of_a_rejected_paper_names_the_catalog(self) -> None:
+        # The TypeScript SDK writes the same message.
+        with self.assertRaises(ValidationError) as caught:
+            Page(paper="a4x", orientation="portrait", margin=margin())
+        self.assertEqual(
+            caught.exception.diagnostics[0].message,
+            "'/paper' must be a variant of the paper catalog, got 'a4x'.",
+        )
+
+    def test_the_details_of_a_rejected_paper_name_the_allowed_variants(self) -> None:
+        # The TypeScript SDK writes the same details.
+        with self.assertRaises(ValidationError) as caught:
+            Page(paper="a4x", orientation="portrait", margin=margin())
+        details = dict(caught.exception.diagnostics[0].details)
+        self.assertEqual(details["value"], "a4x")
+        self.assertEqual(details["allowed"], list(PAPER_VARIANTS))
+
+    def test_the_reader_rejects_a_paper_that_is_not_a_variant(self) -> None:
+        value = document().to_dict()
+        value["page"]["paper"] = "a4x"
+        with self.assertRaises(ValidationError) as caught:
+            Document.from_dict(value)
+        diagnostic = caught.exception.diagnostics[0]
+        self.assertEqual(diagnostic.code, "TYPCAST-VAL-0003")
+        self.assertEqual(diagnostic.path, "/page/paper")
 
 
 class RejectedValueTests(unittest.TestCase):

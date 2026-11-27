@@ -70,23 +70,24 @@ root.
 
 | Check | Result |
 |---|---|
-| `bazel build //...` | Pass, 71 targets. |
-| `bazel test //...` | Pass, 23 of 23 test targets of the 27 test rules, because the four transitive type-check rules are tagged `manual`: 16 unittest cases, 45 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 47 repository structure cases, 4 release tag cases, 32 documentation gate cases, 4 link check cases, 1 documentation check, 1 schema bundle check, 125 document model cases, 12 contract fixture cases, 28 validation cases, 6 validation contract fixture cases, and the TypeScript model, validation, contract, and type-check targets. |
+| `bazel build //...` | Pass, 76 targets. |
+| `bazel test //...` | Pass, 24 of 24 test targets of the 28 test rules, because the four transitive type-check rules are tagged `manual`: 16 unittest cases, 20 enum expansion cases, 45 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 47 repository structure cases, 4 release tag cases, 32 documentation gate cases, 4 link check cases, 1 documentation check, 1 schema bundle check, 131 document model cases, 12 contract fixture cases, 28 validation cases, 6 validation contract fixture cases, and the TypeScript model, validation, contract, and type-check targets. |
 | `bazel build //specs/schemas:schema_bundle` | Pass, 6 schema files. |
 | `bazel build //specs/schemas:schema_manifest` | Pass, 6 paths. |
 | `bazel build //specs/schemas:archive` | Pass, 6 members, deterministic gzip tarball. |
 | `bazel test //specs/schemas:schema_tests` | Pass, 6 bundle files, 0 violations. |
 | `bazel test //specs/schemas:release_tag_tests` | Pass, 4 cases. |
-| `bazel test //scripts:docs_checks` | Pass, 58 files, 477 requirements, and 3 workflows checked, 0 errors. |
+| `bazel test //scripts:docs_checks` | Pass, 59 files, 480 requirements, and 3 workflows checked, 0 errors. |
 | `bazel test //scripts/tests:version_tests` | Pass, 15 cases. |
 | `bazel test //scripts/tests:release_tests` | Pass, 20 cases. |
 | `bazel test //scripts/tests:release_flow_tests` | Pass, 6 cases. |
-| `bazel run //scripts:repository_checks` | Pass, 2 spec files, 40 SDK files, 13 gate files, 58 Python modules, 13 test modules, 2 toolchain files, 3 TypeScript files, 2 SDK versions, 24 decision records, 87 Bazel package files, 0 errors. |
+| `bazel run //scripts:repository_checks` | Pass, 2 spec files, 40 SDK files, 13 gate files, 65 Python modules, 14 test modules, 2 toolchain files, 3 TypeScript files, 2 SDK versions, 25 decision records, 95 Bazel package files, 0 errors. |
 | `bazel test //scripts/tests:repository_tests` | Pass, 47 cases. |
 | `bazel test //scripts/tests:docs_tests` | Pass, 32 cases. |
 | `bazel test //scripts/tests:link_tests` | Pass, 4 cases. |
 | `bazel test //tools/publish/tests:publish_tests` | Pass, 45 publisher cases. |
-| `bazel test //packages/python/tests:model_tests` | Pass, 125 cases. |
+| `bazel test //tools/enumgen/tests:unit_tests` | Pass, 20 cases. |
+| `bazel test //packages/python/tests:model_tests` | Pass, 131 cases. |
 | `bazel test //packages/python/tests:validation_tests` | Pass, 28 cases. |
 | `bazel test //packages/typescript:model_test_run` | Pass. |
 | `bazel test //packages/typescript:validation_test_run` | Pass. |
@@ -95,7 +96,7 @@ root.
 | `bazel test //tests/contract:validation_py` | Pass, 6 cases. |
 | `bazel test //tests/contract:validation_ts_test` | Pass, 4 valid fixtures and 6 invalid fixtures. |
 | `bazel run //scripts:check_links` | Pass, 4 external links checked, 0 unreachable. |
-| `bazel query "kind(rule, //...)"` | 79 rules; 27 test targets. |
+| `bazel query "kind(rule, //...)"` | 84 rules; 28 test targets. |
 | `--test_filter` on the unittest target | Ignored; all 16 cases run. |
 
 The schema bundle contains:
@@ -112,13 +113,16 @@ bazel-bin/specs/schemas/
 
 ## Current targets
 
-`bazel query "kind(rule, //...)"` reports 79 rules. All of them:
+`bazel query "kind(rule, //...)"` reports 84 rules. All of them:
 
 | Target | Kind | Purpose |
 |---|---|---|
 | `//tools/codegen:typcast_codegen` | `py_binary` | Generator CLI. |
 | `//tools/codegen:typcast_codegen_lib` | `py_library` | Generator library. |
 | `//tools/codegen/tests:unit_tests` | `py_test` | Sixteen generator tests. |
+| `//tools/enumgen:typcast_enumgen` | `py_binary` | Enum expansion CLI. |
+| `//tools/enumgen:typcast_enumgen_lib` | `py_library` | Enum expansion library. |
+| `//tools/enumgen/tests:unit_tests` | `py_test` | Twenty enum expansion tests. |
 | `//tools/publish:publish_schemas` | `py_binary` | Publisher CLI. |
 | `//tools/publish:publish_schemas_lib` | `py_library` | Publisher library. |
 | `//tools/publish/tests:publish_tests` | `py_test` | Publisher tests. |
@@ -153,9 +157,11 @@ bazel-bin/specs/schemas/
 | `//specs/schemas/definitions:bound_schema` | `typcast_schema_copy` | Stage the bound schema. |
 | `//specs/schemas/definitions:node_schema` | `typcast_schema_copy` | Stage the node schema. |
 | `//packages/python:typcast` | `py_library` | Python SDK with the immutable document model and the validation engine. |
-| `//packages/python/tests:model_tests` | `py_test` | One hundred twenty-five document model unit tests. |
+| `//packages/python:paper_variants` | `typcast_enum_source` | Expand the paper variants of the catalog into the source of the SDK. |
+| `//packages/python/tests:model_tests` | `py_test` | One hundred thirty-one document model unit tests. |
 | `//packages/python/tests:validation_tests` | `py_test` | Twenty-eight validation engine unit tests. |
 | `//packages/typescript:typcast` | `ts_project` | TypeScript SDK with the immutable document model and the validation engine. |
+| `//packages/typescript:paper_variants` | `typcast_enum_source` | Expand the paper variants of the catalog into the source of the SDK. |
 | `//packages/typescript:typcast_types` | `filegroup` | TypeScript declaration outputs. |
 | `//packages/typescript:model_test` | `ts_project` | Compiles the document model unit tests. |
 | `//packages/typescript:model_test_run` | `js_test` | Runs the document model unit tests. |
@@ -210,6 +216,47 @@ The generator:
 
 The generator does not validate JSON Schema semantics or resolve `$ref` values.
 Those checks belong to the schema test layer.
+
+## Enum expansion pipeline
+
+```mermaid
+flowchart LR
+  C["CSV catalog"] --> E["Enum expansion"]
+  E --> T["TypeScript source"]
+  E --> P["Python source"]
+  T --> S["SDK source"]
+  P --> S
+```
+
+The enum expansion turns a column of a CSV catalog into a constant of the
+source of an SDK:
+
+```shell
+bazel run //tools/enumgen:typcast_enumgen -- --catalog "$PWD/specs/catalogs/enums/paper-variants.csv" --column Variant --name PAPER_VARIANTS --language typescript --output "$PWD/out/paper-variants.ts"
+```
+
+The rule `typcast_enum_source` in `bazel/enumgen.bzl` calls the tool. The
+catalog is the only input of the rule, so the values of the catalog reach the
+SDK without a hand-written copy that could drift. The rule writes its output
+under `bazel-bin/`, and the generated file is never committed, because
+`BUILD-009` forbids a committed generated artifact.
+
+The tool:
+
+- Reads UTF-8 CSV with an optional BOM.
+- Requires a header row.
+- Rejects an empty value in the selected column.
+- Skips fully blank rows.
+- Rejects a duplicated value, because a duplicate would change the public
+  enum of the SDK.
+- Writes the values in the order of the catalog, as JSON string literals, so
+  that a value that holds a quote, a backslash, or a control character never
+  breaks the generated file.
+- Writes UTF-8 without a byte order mark and LF line endings.
+
+The `paper_variants` target of each SDK expands
+`specs/catalogs/enums/paper-variants.csv` into the constant that the model of
+a page checks its value against.
 
 ## Adding a schema
 
@@ -419,6 +466,7 @@ The artifact requirements for the packaging targets are defined in
 | BUILD-020 | Build logs MUST NOT contain secrets or document content. | CONFIRMED | Security review. |
 | BUILD-021 | The `//specs/schemas:archive` target MUST produce a deterministic gzip tarball: a fixed member order, fixed member metadata, no timestamp in the gzip header, and no dependency on the modification time of the files. | IMPLEMENTED | `//specs/schemas:archive`; `//tools/publish/tests:publish_tests` compares two archives byte for byte. |
 | BUILD-022 | The version that each SDK exports MUST match the manifest of its package. | IMPLEMENTED | `//scripts:repository_checks` reads the version of every manifest and the version that every SDK exports, and rejects a difference. |
+| BUILD-023 | The values of a CSV catalog that an SDK enforces at runtime MUST reach the SDK through a generated source file, so that the SDK holds no hand-written copy of the catalog. | IMPLEMENTED | The rule `typcast_enum_source` in `bazel/enumgen.bzl` expands the catalog into the source of the SDK, and the generated file stays under `bazel-bin/`; `//tools/enumgen/tests:unit_tests` covers the reader, the renderers, and the command line. |
 
 ## Open questions
 
@@ -435,3 +483,4 @@ The artifact requirements for the packaging targets are defined in
 - [ADR-0018](../decisions/ADR-0018-toolchain-and-ci-matrix.md)
 - [ADR-0022](../decisions/ADR-0022-release-artifacts-schema-distribution-and-response-policy.md)
 - [ADR-0023](../decisions/ADR-0023-schema-bundle-validation.md)
+- [ADR-0025](../decisions/ADR-0025-catalog-driven-enum-constants-in-the-sdks.md)

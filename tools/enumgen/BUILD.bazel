@@ -1,0 +1,25 @@
+load("@rules_python//python:defs.bzl", "py_binary", "py_library")
+
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+py_library(
+    name = "typcast_enumgen_lib",
+    srcs = glob(
+        ["src/typcast_enumgen/**/*.py"],
+        exclude = ["src/typcast_enumgen/__main__.py"],
+    ),
+    imports = ["src"],
+)
+
+py_binary(
+    name = "typcast_enumgen",
+    srcs = [
+        "src/typcast_enumgen/__main__.py",
+    ],
+    main = "src/typcast_enumgen/__main__.py",
+    deps = [
+        ":typcast_enumgen_lib",
+    ],
+)

@@ -14,6 +14,7 @@ from typcast.diagnostics import (
     ValidationError,
 )
 from typcast.models import (
+    PAPER_VARIANTS,
     Block,
     Bold,
     Document,
@@ -63,6 +64,7 @@ __all__ = [
     "Metadata",
     "Module",
     "Monospace",
+    "PAPER_VARIANTS",
     "Page",
     "PageBreak",
     "Paragraph",

@@ -17,8 +17,8 @@ change impact analysis.
 | Product | `product/vision-and-scope.md` | `PRD-001` to `PRD-017` | Release review, integration tests. |
 | Use cases | `product/use-cases.md` | Journey IDs `UC-001` to `UC-004`; acceptance criteria `AC-001` to `AC-018`; requirements `UCR-001` to `UCR-007` | Example and integration tests. |
 | Architecture | `architecture/overview.md` | `ARC-001` to `ARC-015` | Design review, parity tests. |
-| Repository | `architecture/repository.md` | `REPO-001` to `REPO-012` | Bazel build, dependency review. |
-| Document IR | `specifications/document-ir.md` | `IR-001` to `IR-024` | Schema and contract tests. |
+| Repository | `architecture/repository.md` | `REPO-001` to `REPO-013` | Bazel build, dependency review. |
+| Document IR | `specifications/document-ir.md` | `IR-001` to `IR-025` | Schema and contract tests. |
 | Nodes | `specifications/nodes.md` | `NODE-001` to `NODE-025` | Golden and emitter tests. |
 | Schema | `specifications/schema.md` | `SCH-001` to `SCH-023` | Schema lint and bundle tests. |
 | SDK API | `specifications/sdk-api.md` | `API-001` to `API-027` | API and parity tests. |
@@ -27,7 +27,7 @@ change impact analysis.
 | Diagnostics | `specifications/diagnostics.md` | `DIAG-001` to `DIAG-018` | Negative and parity tests. |
 | Assets | `specifications/assets.md` | `ASSET-001` to `ASSET-020` | Path and workspace tests. |
 | Compatibility | `specifications/compatibility.md` | `COMPAT-001` to `COMPAT-019` | CI matrix. |
-| Build | `development/build.md` | `BUILD-001` to `BUILD-022` | Bazel commands. |
+| Build | `development/build.md` | `BUILD-001` to `BUILD-023` | Bazel commands. |
 | Testing | `development/testing.md` | `TEST-001` to `TEST-033` | Test inventory. |
 | Benchmarking | `development/benchmarking.md` | `PERF-001` to `PERF-015` | Benchmark job. |
 | CI/CD | `development/ci-cd.md` | `CI-001` to `CI-029` | Workflow review. |
@@ -146,7 +146,7 @@ a target for the MVP and is not yet verified in the repository.
 | `SCH-023` | The width of an image excludes zero in the schema, and the length of a margin stays non-negative. | `//specs/schemas:schema_tests`; the width rule reads the schemas of the built bundle and checks that the width of an image excludes zero and that the shared length schema keeps its lower bound of zero. |
 | `DOC-015` | The root `README.md` uses standard code fences and LF line endings. | Documentation validation script run on 2026-11-24. |
 | `DOC-016` | `.gitattributes` pins LF for text files and `.editorconfig` pins UTF-8, LF, final newline, and indentation. | Files present at the repository root. |
-| `DOC-021` | `scripts/validate_docs.py` validates the documents, the requirement index, the ADR index, and the schema references with the standard library only. | `//scripts:docs_checks`; 58 files, 477 requirements, and 3 workflows checked with 0 errors. |
+| `DOC-021` | `scripts/validate_docs.py` validates the documents, the requirement index, the ADR index, and the schema references with the standard library only. | `//scripts:docs_checks`; 59 files, 480 requirements, and 3 workflows checked with 0 errors. |
 | `DOC-012` | The documentation gate runs on pull requests. | The `Documentation gate` job of `.github/workflows/pr.yml`. |
 | `DOC-013` | The documentation gate runs on `main`. | The `Documentation gate` job of `.github/workflows/main.yml`. |
 | `DOC-022` | The repository gate validates the workflow files: pinned actions, declared permissions, no write access or secret in a pull request workflow, and no `pull_request_target`. | `//scripts:docs_checks`; 3 workflows checked. |
@@ -252,6 +252,9 @@ a target for the MVP and is not yet verified in the repository.
 | `IR-022` | Both SDKs reject an image whose width is zero, because the IR requires a positive width, and the schema states the same rule. | `//packages/python/tests:model_tests`; `//packages/typescript:model_test_run`; the image-width cases, the fixture `invalid-image-width.json`, and `//specs/schemas:schema_tests`; the width rule. |
 | `IR-023` | Both SDKs reject a JSON object that holds a key that is not a string. | `//packages/python/tests:model_tests`; `//packages/typescript:model_test_run`; the nested-key cases, and the fixture `non-string-key.json` of `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`. |
 | `IR-024` | Both SDKs reject a document that holds a character that UTF-8 cannot encode when they write it. | `//packages/python/tests:model_tests`; `//packages/typescript:model_test_run`; the encodability cases, and the fixture `unpaired-surrogate.json` of `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`. |
+| `IR-025` | Both SDKs reject a paper value that the catalog of the paper variants does not name, and the values of the catalog reach the SDKs through a generated source file, so neither SDK holds a hand-written copy of the catalog. | `//packages/python/tests:model_tests`; `//packages/typescript:model_test_run`; the paper-catalog cases of both SDKs, and the fixture `invalid-paper.json` of `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`. |
+| `BUILD-023` | The values of a CSV catalog that an SDK enforces at runtime reach the SDK through a generated source file, so that the SDK holds no hand-written copy of the catalog. | `//tools/enumgen:typcast_enumgen`; `//tools/enumgen/tests:unit_tests`; the reader, the renderers, and the command-line cases, and the target `//packages/python:paper_variants` and `//packages/typescript:paper_variants`. |
+| `REPO-013` | The values of a CSV catalog that an SDK enforces at runtime reach the SDK through a generated source file, so that the SDK holds no hand-written copy of the catalog. | `//tools/enumgen:typcast_enumgen`; `//tools/enumgen/tests:unit_tests`; the reader, the renderers, and the command-line cases, and the target `//packages/python:paper_variants` and `//packages/typescript:paper_variants`. |
 | `IR-006` | Both SDKs report every table row whose cell count differs from the column count of its table, with `TYPCAST-VAL-0007`. | `//packages/python/tests:validation_tests`; `//packages/typescript:validation_test_run`; the table-shape cases of both SDKs, and the fixtures `table-row-short.json` and `table-row-long.json` of `//tests/contract:validation_py` and `//tests/contract:validation_ts_test`. |
 | `IR-010` | Both SDKs report every module alias that a module of the document uses already, with `TYPCAST-VAL-0008`. | `//packages/python/tests:validation_tests`; `//packages/typescript:validation_test_run`; the module-alias cases of both SDKs, and the fixture `module-alias-duplicate.json` of `//tests/contract:validation_py` and `//tests/contract:validation_ts_test`. |
 | `IR-019` | Both SDKs limit every raw node to 1 MiB by default, count the bytes of the UTF-8 encoding of the value, and accept another limit through the configuration of the call. | `//packages/python/tests:validation_tests`; `//packages/typescript:validation_test_run`; the raw-size cases of both SDKs, and the fixtures `raw-at-limit.json`, `raw-block-over-limit.json`, and `raw-span-over-limit.json` of `//tests/contract:validation_py` and `//tests/contract:validation_ts_test`. |
