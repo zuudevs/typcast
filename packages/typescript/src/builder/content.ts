@@ -81,6 +81,26 @@ export function requireApiArray(
   return value;
 }
 
+/**
+ * Returns an options object after checking its type.
+ *
+ * An options argument is a container that the builder reads its fields from,
+ * so the check runs before the builder reads a field of it. A missing value,
+ * a null value, a primitive, an array, and a function are not options
+ * objects. The check names no prototype and no class, because the contract
+ * requires an options object and nothing more.
+ */
+export function requireApiOptions<T extends object>(
+  value: unknown,
+  path: string,
+  expected: string,
+): T {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    rejectApiArgument(path, expected);
+  }
+  return value as T;
+}
+
 /** Returns the span of a content value. */
 export function normalizeSpan(value: unknown, path: string): Span {
   if (typeof value === "string") {

@@ -34,7 +34,16 @@ import {
   rawInline,
   text,
 } from "../lib/src/index.js";
-import type { Alignment, Block, Diagnostic } from "../lib/src/index.js";
+import type {
+  Alignment,
+  Block,
+  Diagnostic,
+  ImageOptions,
+  ModuleOptions,
+  PageOptions,
+  RawFormat,
+  TableOptions,
+} from "../lib/src/index.js";
 
 const failures: string[] = [];
 
@@ -666,6 +675,328 @@ function apiErrorTests(): void {
   }
 }
 
+/** Returns the error that a call raises, or undefined when it raises none. */
+function raised(factory: () => unknown): unknown {
+  try {
+    factory();
+  } catch (error) {
+    return error;
+  }
+  return undefined;
+}
+
+/**
+ * Checks that a call with a wrong options object raises the documented error.
+ *
+ * The check proves that the error is an `ApiUsageError` of the API family,
+ * that it carries one diagnostic of the `api` phase, and that the diagnostic
+ * names the path of the options and the shape that the options must have. A
+ * native `TypeError` fails the first check, and a call that returns without
+ * an error fails the second one.
+ */
+function checkOptionsError(
+  method: string,
+  path: string,
+  expected: string,
+  factory: () => unknown,
+): void {
+  const error = raised(factory);
+  check(
+    error instanceof ApiUsageError,
+    `${method} must raise an ApiUsageError for a wrong options object`,
+  );
+  check(
+    !(error instanceof TypeError),
+    `${method} must not raise a native TypeError for a wrong options object`,
+  );
+  if (!(error instanceof ApiUsageError)) {
+    return;
+  }
+  checkEqual(
+    error.diagnostics.length,
+    1,
+    `${method} must raise one diagnostic for a wrong options object`,
+  );
+  const diagnostic = error.diagnostics[0] as Diagnostic;
+  checkEqual(diagnostic.code, "TYPCAST-API-0001", "the code must match");
+  checkEqual(diagnostic.severity, "error", "the severity must be an error");
+  checkEqual(diagnostic.phase, "api", "the phase must match");
+  checkEqual(diagnostic.path, path, "the path must match");
+  checkEqual(
+    diagnostic.details["expected"],
+    expected,
+    "the details must name the expected options",
+  );
+  checkEqual(
+    error.message,
+    diagnostic.message,
+    "the message must name the first diagnostic",
+  );
+}
+
+/**
+ * Tests that every method that takes an options object checks the options.
+ *
+ * A caller in JavaScript, or a caller in TypeScript with a cast, can pass a
+ * value that is not an options object. Every such value must raise the
+ * documented API diagnostic, and no value may fall back to the defaults
+ * silently.
+ */
+function optionsValidationTests(): void {
+  const page = (value: unknown): void => {
+    checkOptionsError(
+      "page",
+      "/page",
+      "a PageOptions object",
+      () => new DocumentBuilder().page(value as PageOptions),
+    );
+  };
+  const table = (value: unknown): void => {
+    checkOptionsError(
+      "table",
+      "/contents/0",
+      "a TableOptions object",
+      () => new DocumentBuilder().table(value as TableOptions),
+    );
+  };
+  const image = (value: unknown): void => {
+    checkOptionsError(
+      "image",
+      "/contents/0",
+      "an ImageOptions object",
+      () => new DocumentBuilder().image("a.png", value as ImageOptions),
+    );
+  };
+  const raw = (value: unknown): void => {
+    checkOptionsError(
+      "raw",
+      "/contents/0",
+      "an object with an optional 'format' property",
+      () =>
+        new DocumentBuilder().raw(
+          "value",
+          value as { readonly format?: RawFormat },
+        ),
+    );
+  };
+  const moduleOptions = (value: unknown): void => {
+    checkOptionsError(
+      "module",
+      "/modules/0",
+      "a ModuleOptions object",
+      () => new DocumentBuilder().module("a.typ", value as ModuleOptions),
+    );
+  };
+
+  for (const value of [null, "landscape", 42, true, [], ["paper"]]) {
+    page(value);
+    table(value);
+    image(value);
+    raw(value);
+    moduleOptions(value);
+  }
+
+  // The options of `table` and `image` are required, so a call without them
+  // raises the same diagnostic as a call with a wrong options object. The
+  // options of `page`, `raw`, and `module` are optional, so an explicit
+  // `undefined` keeps the documented defaults.
+  checkOptionsError(
+    "table",
+    "/contents/0",
+    "a TableOptions object",
+    () =>
+      new DocumentBuilder().table(undefined as unknown as TableOptions),
+  );
+  checkOptionsError(
+    "image",
+    "/contents/0",
+    "an ImageOptions object",
+    () =>
+      new DocumentBuilder().image(
+        "a.png",
+        undefined as unknown as ImageOptions,
+      ),
+  );
+
+  // A wrong options object changes no state of the builder, so the builder
+  // stays usable and a later call still applies its own values.
+  const builder = new DocumentBuilder().title("Title").paragraph("Body");
+  for (const value of [null, "landscape", 42, true, []]) {
+    page(value);
+    table(value);
+    image(value);
+    raw(value);
+    moduleOptions(value);
+  }
+  const document = builder
+    .page({ paper: "a5", orientation: "landscape" })
+    .module("module.typ")
+    .build();
+  checkEqual(
+    document.contents.length,
+    1,
+    "a failed call must not add a block to the builder",
+  );
+  checkEqual(
+    document.modules.length,
+    1,
+    "a failed call must not add a module to the builder",
+  );
+  checkEqual(
+    document.page.paper,
+    "a5",
+    "a failed call must not change the page of the builder",
+  );
+  checkEqual(
+    document.page.orientation,
+    "landscape",
+    "a failed call must not change the orientation of the builder",
+  );
+}
+
+/**
+ * Tests that the omission of the options keeps the documented defaults.
+ *
+ * An omitted options object and an options object that is explicitly
+ * `undefined` are the same thing, and they are not the same thing as an
+ * options object that is explicitly `null`.
+ */
+function optionsDefaultsTests(): void {
+  const omitted = new DocumentBuilder()
+    .title("Title")
+    .paragraph("Body")
+    .page()
+    .build();
+  checkEqual(
+    omitted.page.paper,
+    "a4",
+    "an omitted page must use the paper a4",
+  );
+  checkEqual(
+    omitted.page.orientation,
+    "portrait",
+    "an omitted page must use the orientation portrait",
+  );
+  checkEqual(
+    omitted.page.margin.top.value,
+    2.5,
+    "an omitted page must use the default margin",
+  );
+
+  const undefinedPage = new DocumentBuilder()
+    .title("Title")
+    .paragraph("Body")
+    .page(undefined)
+    .build();
+  checkEqual(
+    undefinedPage.page.paper,
+    "a4",
+    "an undefined page must use the paper a4",
+  );
+  checkEqual(
+    undefinedPage.page.orientation,
+    "portrait",
+    "an undefined page must use the orientation portrait",
+  );
+
+  const raw = new DocumentBuilder().title("Title").raw("value").build()
+    .contents[0];
+  check(
+    raw !== undefined && raw.type === "raw" && raw.format === "markup",
+    "an omitted raw options must use the format markup",
+  );
+
+  const rawUndefined = new DocumentBuilder()
+    .title("Title")
+    .raw("value", undefined)
+    .build().contents[0];
+  check(
+    rawUndefined !== undefined &&
+      rawUndefined.type === "raw" &&
+      rawUndefined.format === "markup",
+    "an undefined raw options must use the format markup",
+  );
+
+  const moduleOptions = new DocumentBuilder()
+    .title("Title")
+    .paragraph("Body")
+    .module("module.typ")
+    .build();
+  checkEqual(
+    moduleOptions.modules.length,
+    1,
+    "the document must hold one module",
+  );
+  checkEqual(
+    moduleOptions.modules[0]?.alias,
+    null,
+    "an omitted module must name no alias",
+  );
+  checkEqual(
+    moduleOptions.modules[0]?.items,
+    null,
+    "an omitted module must name no item",
+  );
+
+  const moduleUndefined = new DocumentBuilder()
+    .title("Title")
+    .paragraph("Body")
+    .module("module.typ", undefined)
+    .build();
+  checkEqual(
+    moduleUndefined.modules[0]?.alias,
+    null,
+    "an undefined module must name no alias",
+  );
+  checkEqual(
+    moduleUndefined.modules[0]?.items,
+    null,
+    "an undefined module must name no item",
+  );
+
+  const table = new DocumentBuilder()
+    .title("Title")
+    .table({ columns: [column("Metric")], rows: [[["1,200"]]] })
+    .build().contents[0];
+  check(
+    table !== undefined && table.type === "table",
+    "a table must be added to the document",
+  );
+  checkEqual(
+    table?.type === "table" ? table.columns.length : 0,
+    1,
+    "the table must hold one column",
+  );
+  checkEqual(
+    table?.type === "table" ? table.rows.length : 0,
+    1,
+    "the table must hold one row",
+  );
+
+  const image = new DocumentBuilder()
+    .title("Title")
+    .image("figures/revenue.png", { alt: "Revenue chart", caption: "Figure 1" })
+    .build().contents[0];
+  check(
+    image !== undefined && image.type === "image",
+    "an image must be added to the document",
+  );
+  checkEqual(
+    image?.type === "image" ? image.alt : "",
+    "Revenue chart",
+    "the image must hold the alternative text",
+  );
+  checkEqual(
+    JSON.stringify(
+      image?.type === "image" && image.caption !== null
+        ? image.caption
+        : [],
+    ),
+    JSON.stringify([new Text("Figure 1")]),
+    "the image must hold the caption",
+  );
+}
+
 function diagnosticCollectionTests(): void {
   let thrown: unknown;
   try {
@@ -768,6 +1099,8 @@ contentNormalizationTests();
 defaultTests();
 validationTests();
 apiErrorTests();
+optionsValidationTests();
+optionsDefaultsTests();
 diagnosticCollectionTests();
 snapshotTests();
 

@@ -15,6 +15,7 @@ import {
   requireApiArray,
   requireApiInstance,
   requireApiNumber,
+  requireApiOptions,
   requireApiString,
 } from "./content.js";
 import type { Content, ContentGroup } from "./content.js";
@@ -161,17 +162,26 @@ export class DocumentBuilder {
    * A single length is the margin of every side of the page. A margin names
    * every side itself. The default is a margin of 2.5 centimeters on every
    * side.
+   *
+   * The method reads no field of the options before it checks the options
+   * themselves, and it changes no state of the builder before every value of
+   * the options is known to be valid.
    */
   page(options: PageOptions = {}): this {
-    this.paperValue = requireApiString(
-      options.paper ?? DEFAULT_PAPER,
-      "/page/paper",
+    const values = requireApiOptions<PageOptions>(
+      options,
+      "/page",
+      "a PageOptions object",
     );
-    this.orientationValue = requireApiString(
-      options.orientation ?? DEFAULT_ORIENTATION,
+    const paper = requireApiString(values.paper ?? DEFAULT_PAPER, "/page/paper");
+    const orientation = requireApiString(
+      values.orientation ?? DEFAULT_ORIENTATION,
       "/page/orientation",
     ) as Orientation;
-    this.marginValue = marginOf(options.margin, "/page/margin");
+    const margin = marginOf(values.margin, "/page/margin");
+    this.paperValue = paper;
+    this.orientationValue = orientation;
+    this.marginValue = margin;
     return this;
   }
 
@@ -228,8 +238,13 @@ export class DocumentBuilder {
    */
   table(options: TableOptions): this {
     const path = `/contents/${this.contents.length}`;
+    const values = requireApiOptions<TableOptions>(
+      options,
+      path,
+      "a TableOptions object",
+    );
     const columnValues = requireApiArray(
-      options.columns,
+      values.columns,
       `${path}/columns`,
       "an array of TableColumn values",
     );
@@ -242,7 +257,7 @@ export class DocumentBuilder {
       );
     });
     const rowValues = requireApiArray(
-      options.rows,
+      values.rows,
       `${path}/rows`,
       "an array of rows",
     );
@@ -278,16 +293,21 @@ export class DocumentBuilder {
   image(path: string, options: ImageOptions): this {
     const location = `/contents/${this.contents.length}`;
     const imagePath = requireApiString(path, `${location}/path`);
-    const imageAlt = requireApiString(options.alt, `${location}/alt`);
+    const values = requireApiOptions<ImageOptions>(
+      options,
+      location,
+      "an ImageOptions object",
+    );
+    const imageAlt = requireApiString(values.alt, `${location}/alt`);
     const caption =
-      options.caption === undefined
+      values.caption === undefined
         ? null
-        : normalizeContent(options.caption, `${location}/caption`);
+        : normalizeContent(values.caption, `${location}/caption`);
     const width =
-      options.width === undefined
+      values.width === undefined
         ? null
         : requireApiInstance(
-            options.width,
+            values.width,
             Length,
             `${location}/width`,
             "Length",
@@ -316,8 +336,13 @@ export class DocumentBuilder {
   raw(value: string, options: { readonly format?: RawFormat } = {}): this {
     const path = `/contents/${this.contents.length}`;
     const rawValue = requireApiString(value, `${path}/value`);
+    const values = requireApiOptions<{ readonly format?: RawFormat }>(
+      options,
+      path,
+      "an object with an optional 'format' property",
+    );
     const rawFormat = requireApiString(
-      options.format ?? "markup",
+      values.format ?? "markup",
       `${path}/format`,
     );
     this.contents.push(
@@ -336,11 +361,16 @@ export class DocumentBuilder {
   module(path: string, options: ModuleOptions = {}): this {
     const location = `/modules/${this.modules.length}`;
     const modulePath = requireApiString(path, `${location}/path`);
+    const values = requireApiOptions<ModuleOptions>(
+      options,
+      location,
+      "a ModuleOptions object",
+    );
     const alias =
-      options.alias === undefined
+      values.alias === undefined
         ? null
-        : requireApiString(options.alias, `${location}/alias`);
-    const items = this.items(options.items, `${location}/items`);
+        : requireApiString(values.alias, `${location}/alias`);
+    const items = this.items(values.items, `${location}/items`);
     this.modules.push(
       construct(() => new Module(modulePath, alias, items), location),
     );

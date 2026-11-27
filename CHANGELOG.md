@@ -407,6 +407,17 @@ No release has been published yet. Every change so far is listed under
   typed error. ADR-0005 decided that the serialization of a built model does
   not validate again, so the prose is corrected, and the decision itself is
   unchanged.
+- The builder of the TypeScript SDK read the fields of its options objects
+  before it checked the objects themselves. A caller in JavaScript, or a
+  caller in TypeScript with a cast, therefore got a native `TypeError` for an
+  options object that was `null`, and the defaults of the node catalog for an
+  options object that was a string or another primitive. The builder now
+  checks the options of `page`, `table`, `image`, `raw`, and `module` before
+  it reads a field of them, so a wrong options object raises the documented
+  `ApiUsageError` with `TYPCAST-API-0001` and the phase `api`. A failed check
+  changes no state of the builder, so the builder stays usable. The rules of a
+  node stay with the model, so an invalid enum inside a well-typed options
+  object still raises a `ValidationError` of the `TYPCAST-VAL-*` family.
 
 ### Known issues
 
