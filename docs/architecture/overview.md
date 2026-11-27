@@ -2,7 +2,7 @@
 
 Status: CONFIRMED
 Scope: Normative
-Last updated: 2026-11-24
+Last updated: 2026-11-27
 
 ## System context
 
@@ -40,12 +40,12 @@ compiler remains an external executable with an explicit compatibility range.
 
 | Component | Responsibility | Current state |
 |---|---|---|
-| Contract sources | JSON Schema templates, static schemas, CSV catalogs | Partial and inconsistent; see `specifications/schema.md`. |
+| Contract sources | JSON Schema templates, static schemas, CSV catalogs | Implemented; the bundle implements the document IR and passes the contract test. |
 | Code generator | Expand CSV placeholders into JSON Schema | Implemented in `tools/codegen/`. |
 | Bazel rules | Build schema artifacts and package targets | Schema rules implemented; packaging rules absent. |
-| Python SDK | Model, builder, validation, emitter, compiler adapter | Placeholder package. |
-| TypeScript SDK | Model, builder, validation, emitter, compiler adapter | Placeholder package. |
-| Shared fixtures | Cross-language documents and expected `.typ` output | Directory placeholders only. |
+| Python SDK | Model, builder, validation, emitter, compiler adapter | The model, the JSON serialization, and the semantic validation engine are implemented. The builder, the emitter, and the compiler adapter are not. |
+| TypeScript SDK | Model, builder, validation, emitter, compiler adapter | The model, the JSON serialization, and the semantic validation engine are implemented. The builder, the emitter, and the compiler adapter are not. |
+| Shared fixtures | Cross-language documents and expected `.typ` output | The document fixtures and the validation fixtures are implemented. The expected `.typ` output is not. |
 | Compiler adapter | Discover, validate, execute, and map Typst CLI results | Not implemented. |
 | Documentation | Product, contract, and engineering specifications | This document set. |
 
@@ -141,11 +141,11 @@ compiler in an additional sandbox.
 
 | Area | Current | Target |
 |---|---|---|
-| Contract | Prototype schemas with missing references and double nesting. | Coherent draft 2020-12 schemas generated from templates. |
-| SDK | Empty packages. | Immutable model, builder, validation, emitter, compiler adapter. |
+| Contract | Coherent draft 2020-12 schemas generated from templates. | The same schemas, published at a release tag. |
+| SDK | The immutable model, the JSON serialization, and the semantic validation engine. | The immutable model, the builder, the validation engine, the emitter, and the compiler adapter. |
 | Compiler | No integration. | Typst CLI adapter with version range and timeout. |
 | Packaging | No artifacts. | Wheel, sdist, npm tarball, schema archive, versioned raw schema URLs. |
-| CI | No workflows. | PR, main, and release workflows. |
+| CI | PR, main, and release workflows. | The same workflows, with the compiler and the install lanes. |
 
 ## Open questions
 

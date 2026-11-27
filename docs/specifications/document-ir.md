@@ -2,7 +2,7 @@
 
 Status: CONFIRMED
 Scope: Normative
-Last updated: 2026-11-25
+Last updated: 2026-11-27
 
 ## Purpose
 
@@ -257,7 +257,9 @@ No additional fields are allowed.
 | `value` | string | Yes | Non-empty, valid UTF-8, at most the configured raw size limit. |
 
 The value is opaque to Typcast and is emitted verbatim. The default raw size
-limit is 1 MiB and is configurable through `max_raw_bytes`.
+limit is 1 MiB and is configurable through `max_raw_bytes`. The limit applies
+to every raw node on its own, and it counts the bytes of the UTF-8 encoding of
+the value.
 
 ## Inline spans
 
@@ -339,8 +341,9 @@ Same constraints as the raw block. Raw inline is inserted verbatim.
 | `alias` | string | No | Identifier matching `^[A-Za-z_][A-Za-z0-9_]*$`. |
 | `items` | array of string | No | Non-empty identifiers. |
 
-`alias` and `items` are mutually exclusive. Module imports are emitted at the top
-of the document, in declaration order. Remote modules are not supported.
+`alias` and `items` are mutually exclusive. An alias must be unique within the
+document. Module imports are emitted at the top of the document, in declaration
+order. Remote modules are not supported.
 
 ## Serialization
 
@@ -383,8 +386,16 @@ first two layers only.
 | Layer | Rules | State |
 |---|---|---|
 | Model and reader | Required fields, closed objects, discriminator, table alignment, length, image width, number domain, text length, module alias, raw value, schema version. | Implemented. |
-| Validation engine | Table shape, module alias uniqueness, raw size. | Not implemented. |
+| Validation engine | Table shape, module alias uniqueness, raw size. | Implemented. |
 | Asset layer | Image path, module path. | Not implemented. |
+
+The validation engine is a pure function of a document and of its
+configuration. It reports every problem it finds and raises no error for a
+semantic problem, so a caller can show all of the problems at once. The
+diagnostics come in the order of the document: the blocks in the order of the
+contents, the spans in the order of their content, the rows of a table in the
+order of the table, and the modules in the order of their declaration. The
+engine is called through `Document.validate()`; see the SDK API contract.
 
 ## Requirements
 
@@ -395,11 +406,11 @@ first two layers only.
 | IR-003 | `contents` MUST be a non-empty array of typed blocks. | IMPLEMENTED | The constructor of both SDKs rejects empty contents, and the reader rejects a block without a supported discriminator. |
 | IR-004 | Every block and span MUST have a supported `type` discriminator. | IMPLEMENTED | The reader rejects an unknown discriminator with `TYPCAST-VAL-0003`; the negative fixture `unknown-discriminator.json`. |
 | IR-005 | Heading level MUST be an integer from 1 to 6. | IMPLEMENTED | The constructor of both SDKs rejects a level outside the range with `TYPCAST-VAL-0005`. |
-| IR-006 | Table rows MUST match the column count. | CONFIRMED | Semantic validation test. |
+| IR-006 | Table rows MUST match the column count. | IMPLEMENTED | `//packages/python/tests:validation_tests` and `//packages/typescript:validation_test_run`; the table-shape cases of both SDKs, and the fixtures `table-row-short.json` and `table-row-long.json` of `//tests/contract:validation_py` and `//tests/contract:validation_ts_test`. |
 | IR-007 | Table alignment MUST be `left`, `center`, or `right`. | IMPLEMENTED | The constructor of both SDKs rejects another value with `TYPCAST-VAL-0003`. |
 | IR-008 | Length units MUST be `pt`, `mm`, `cm`, `in`, or `em`. | IMPLEMENTED | The constructor of both SDKs rejects another unit with `TYPCAST-VAL-0004`. |
 | IR-009 | Image and module paths MUST be relative and traversal-safe. | CONFIRMED | Asset tests. |
-| IR-010 | Module aliases MUST be unique identifiers. | CONFIRMED | Semantic validation test. |
+| IR-010 | Module aliases MUST be unique identifiers. | IMPLEMENTED | `//packages/python/tests:validation_tests` and `//packages/typescript:validation_test_run`; the module-alias cases of both SDKs, and the fixture `module-alias-duplicate.json` of `//tests/contract:validation_py` and `//tests/contract:validation_ts_test`. |
 | IR-011 | Raw values MUST be non-empty and valid UTF-8. | IMPLEMENTED | The constructor of both SDKs rejects an empty raw value, and the raw value is a Unicode string in both SDKs. |
 | IR-012 | `schemaVersion` MUST be a semantic version. | IMPLEMENTED | The reader rejects a malformed or an unsupported version with `TYPCAST-IR-0002`; the negative fixtures `malformed-version.json`, `version-leading-zero.json`, and `unsupported-version.json`. |
 | IR-013 | `to_json` MUST be deterministic across Python and TypeScript. | IMPLEMENTED | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`; every shared fixture is written back byte for byte, including the fixture `large-number.json`. |
@@ -408,7 +419,7 @@ first two layers only.
 | IR-016 | The IR MUST NOT contain absolute paths or remote asset URLs. | CONFIRMED | Schema and asset tests. |
 | IR-017 | The IR MUST NOT require a Typst compiler to be constructed or validated. | IMPLEMENTED | The SDKs depend on no compiler; the model and the contract tests run without a Typst installation. |
 | IR-018 | The IR MUST remain language-neutral and contain no language-specific objects. | IMPLEMENTED | The shared fixtures under `tests/fixtures/documents/` are language-neutral JSON and are read by both SDKs. |
-| IR-019 | The raw size limit MUST default to 1 MiB, be configurable through `max_raw_bytes`, and be documented. | CONFIRMED | Validation test and configuration review. |
+| IR-019 | The raw size limit MUST default to 1 MiB, be configurable through `max_raw_bytes`, and be documented. | IMPLEMENTED | `//packages/python/tests:validation_tests` and `//packages/typescript:validation_test_run`; the raw-size cases of both SDKs, including the default limit and the limit of a call, and the fixtures `raw-at-limit.json`, `raw-block-over-limit.json`, and `raw-span-over-limit.json` of `//tests/contract:validation_py` and `//tests/contract:validation_ts_test`. |
 | IR-020 | The IR MUST reserve `schemaVersion` major compatibility rules for future evolution. | CONFIRMED | Compatibility review. |
 | IR-021 | Every number of the IR MUST live in the binary64 number domain of ECMAScript. | IMPLEMENTED | Both SDKs narrow a value to that domain and reject a value that overflows it; the number-domain cases of both SDKs and the fixture `large-number.json`. The constructor of a length narrows an integer that the domain cannot hold exactly, so the model holds the value that the canonical text holds, and the value never changes after the construction. An integer that overflows the domain becomes an infinity that keeps the sign of the integer, exactly as the conversion of a number of ECMAScript does, so the details of the two SDKs agree. |
 | IR-022 | The width of an image MUST be a positive length. | IMPLEMENTED | The constructor of both SDKs rejects a width of zero with `TYPCAST-VAL-0004`; the negative fixture `invalid-image-width.json`. The schema states the same rule, because the width of an image carries an exclusive lower bound of zero while a margin length stays non-negative; `//specs/schemas:schema_tests` reads the schemas of the built bundle. |
@@ -420,8 +431,6 @@ first two layers only.
 - Should `metadata.author` be a string or an array of authors?
 - Should `metadata.date` accept a full timestamp in addition to a calendar date?
 - Should table cells support row spans or column spans in a later minor version?
-- Should the raw size limit be configurable per document in addition to per
-  configuration?
 
 ## Related documents
 
@@ -431,3 +440,4 @@ first two layers only.
 - [Emitter](emitter.md)
 - [Assets and modules](assets.md)
 - [ADR-0017](../decisions/ADR-0017-resource-limits.md)
+- [ADR-0024](../decisions/ADR-0024-semantic-validation-engine-and-configuration.md)

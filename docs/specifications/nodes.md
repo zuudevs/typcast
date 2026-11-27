@@ -2,7 +2,7 @@
 
 Status: CONFIRMED
 Scope: Normative
-Last updated: 2026-11-25
+Last updated: 2026-11-27
 
 ## Purpose
 
@@ -170,8 +170,10 @@ Typst mapping:
 - A raw inline span is inserted at its position without surrounding newlines.
 - Empty raw content is invalid.
 - The default maximum size is 1 MiB per raw node, configurable through
-  `max_raw_bytes`. The limit is enforced during validation at `build()` and
-  again before emission.
+  `max_raw_bytes`. The limit counts the bytes of the UTF-8 encoding of the
+  value and applies to every raw node on its own. The validation engine
+  enforces the limit and reports it with `TYPCAST-VAL-0010`. The checks at
+  `build()` and before emission arrive with the builder and the emitter.
 
 ## Inline text semantics
 
@@ -237,7 +239,7 @@ list marker. The emitter is responsible for context-sensitive escaping.
 | NODE-005 | Lists MUST support ordered and unordered modes. | CONFIRMED | Emitter test. |
 | NODE-006 | Nested lists MUST be rejected in the MVP. | CONFIRMED | Negative test. |
 | NODE-007 | Tables MUST support header rows and per-column alignment. | CONFIRMED | Emitter test. |
-| NODE-008 | Table rows MUST match the column count. | CONFIRMED | Semantic validation test. |
+| NODE-008 | Table rows MUST match the column count. | IMPLEMENTED | `//packages/python/tests:validation_tests` and `//packages/typescript:validation_test_run`; the table-shape cases of both SDKs, and the fixtures `table-row-short.json` and `table-row-long.json` of `//tests/contract:validation_py` and `//tests/contract:validation_ts_test`. |
 | NODE-009 | Tables MUST NOT support merged cells in the MVP. | CONFIRMED | Schema review. |
 | NODE-010 | Images MUST require alt text. | IMPLEMENTED | The constructor of both SDKs requires a non-empty `alt` value. |
 | NODE-011 | Images MUST support an optional caption. | IMPLEMENTED | The model of both SDKs holds an optional caption, and the canonical JSON omits the field when it is absent. |
@@ -252,7 +254,7 @@ list marker. The emitter is responsible for context-sensitive escaping.
 | NODE-020 | The emitter MUST reject unknown node types. | CONFIRMED | Negative test. |
 | NODE-021 | The emitter MUST preserve block order. | CONFIRMED | Golden test. |
 | NODE-022 | The emitter MUST preserve span order. | CONFIRMED | Golden test. |
-| NODE-023 | The raw size limit MUST be enforced during validation at `build()` and again before emit. | CONFIRMED | Validation test. |
+| NODE-023 | The raw size limit MUST be enforced during validation at `build()` and again before emit. | CONFIRMED | The validation engine enforces the limit and reports it with `TYPCAST-VAL-0010`; `//packages/python/tests:validation_tests` and `//packages/typescript:validation_test_run`; the checks at `build()` and before emit wait for the builder and the emitter. |
 | NODE-024 | The node catalog MUST be extensible without changing existing node semantics. | CONFIRMED | Schema compatibility review. |
 | NODE-025 | The node catalog MUST NOT include math, citation, TOC, footnote, or header/footer nodes in the MVP. | CONFIRMED | Scope review. |
 
@@ -270,3 +272,4 @@ list marker. The emitter is responsible for context-sensitive escaping.
 - [Assets and modules](assets.md)
 - [Testing](../development/testing.md)
 - [ADR-0017](../decisions/ADR-0017-resource-limits.md)
+- [ADR-0024](../decisions/ADR-0024-semantic-validation-engine-and-configuration.md)

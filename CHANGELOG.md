@@ -15,7 +15,7 @@ No release has been published yet. Every change so far is listed under
 ### Added
 
 - The product, architecture, specification, engineering, and governance
-  document set, with the requirement index and 23 architecture decision
+  document set, with the requirement index and 24 architecture decision
   records.
 - A JSON Schema generator that expands CSV catalog placeholders in templates,
   with unit tests. The generator rejects a placeholder whose catalog is not
@@ -120,6 +120,33 @@ No release has been published yet. Every change so far is listed under
 - Unit tests for the document model, `//packages/python/tests:model_tests` and
   `//packages/typescript:model_test_run`, which cover the immutability, the
   constructor checks, the canonical JSON form, the reader, and the round trip.
+- The semantic validation engine of both SDKs. `Document.validate()` returns
+  the diagnostics of the rules that span more than one node and raises no error
+  for a semantic problem, so that a caller can show all of the problems at
+  once. The engine checks the shape of a table with `TYPCAST-VAL-0007`, the
+  uniqueness of a module alias with `TYPCAST-VAL-0008`, and the size of a raw
+  node with `TYPCAST-VAL-0010`. The diagnostics come in the order of the
+  document.
+- The configuration of the validation engine: `TypcastConfig` in Python and
+  `TypcastOptions` in TypeScript hold the raw size limit, which is passed per
+  call and is never stored in the document. A limit that is not an integer that
+  is finite and not negative raises `ConfigError` with `TYPCAST-CONFIG-0004`,
+  the phase `config`, and the path `/max_raw_bytes`.
+- The measurement of the size of a raw value in the bytes of the UTF-8
+  encoding of the value, implemented the same way in both SDKs, so that the
+  two SDKs count the same number of bytes for the same text.
+- Shared validation fixtures under `tests/fixtures/validation/`, with a
+  manifest that names the diagnostics of every negative fixture in the order
+  the engine reports them, and that may name the raw size limit of a fixture.
+- Cross-language validation contract runners,
+  `//tests/contract:validation_py` and `//tests/contract:validation_ts_test`,
+  which read the same validation fixtures and the same manifest, so a drift in
+  the diagnostics of either SDK fails one of the two targets.
+- Unit tests for the validation engine,
+  `//packages/python/tests:validation_tests` and
+  `//packages/typescript:validation_test_run`, which cover the semantic rules,
+  the configuration, the order of the diagnostics, and the measurement of the
+  size of a text.
 
 ### Changed
 
@@ -139,6 +166,16 @@ No release has been published yet. Every change so far is listed under
   diagnostics, the repository layout, and the testing layers that the new
   model, the new fixtures, and the new contract runners prove are marked
   `IMPLEMENTED`.
+- The requirements `IR-006`, `IR-010`, `IR-019`, `API-007`, `API-027`,
+  `DIAG-018`, `NODE-008`, and `TEST-033` that the semantic validation engine
+  proves are marked `IMPLEMENTED`.
+- The SDK API document names the behavior of `validate()`, the configuration of
+  the validation engine, and the details of the diagnostics of the engine. The
+  configuration holds the raw size limit only, because the asset root, the
+  compiler path, and the timeout belong to the asset layer and the compiler
+  adapter, which arrive later.
+- The diagnostics document names the details of the codes of the semantic
+  engine and the order in which the engine reports its diagnostics.
 
 ### Fixed
 
@@ -324,12 +361,15 @@ No release has been published yet. Every change so far is listed under
   The fixtures and the manifest of their expectations now cover these cases,
   and both contract runners compare the code, the path, the message, and the
   details of every one of them.
+- The SDK API document grouped `to_json()` with the operations that raise a
+  typed error. ADR-0005 decided that the serialization of a built model does
+  not validate again, so the prose is corrected, and the decision itself is
+  unchanged.
 
 ### Known issues
 
 - The project does not validate a document against the schema yet. That needs
   a JSON Schema implementation that the repository does not depend on.
-- The builder, the validation engine, the Typst emitter, the Typst compiler
-  adapter, the packaging targets for the wheel, the source distribution, and
-  the npm tarball, and the publishing jobs of the release workflow are not
-  implemented.
+- The builder, the Typst emitter, the Typst compiler adapter, the packaging
+  targets for the wheel, the source distribution, and the npm tarball, and the
+  publishing jobs of the release workflow are not implemented.

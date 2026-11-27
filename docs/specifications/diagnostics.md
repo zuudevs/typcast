@@ -2,7 +2,7 @@
 
 Status: CONFIRMED
 Scope: Normative
-Last updated: 2026-11-26
+Last updated: 2026-11-27
 
 ## Purpose
 
@@ -192,6 +192,26 @@ codes must not be renumbered or reused.
 | `TYPCAST-CONFIG-0003` | error | config | Compiler path is invalid. |
 | `TYPCAST-CONFIG-0004` | error | config | Raw size limit is invalid. |
 
+## Semantic diagnostics
+
+The validation engine reports the diagnostics of the rules that span more than
+one node. The details of every diagnostic of the engine name the numbers of
+the rule, so that a caller can act on them without reading the message.
+
+| Code | Path | Details | Message |
+|---|---|---|---|
+| `TYPCAST-VAL-0007` | The row of the table. | `columns` is the number of the columns of the table, and `cells` is the number of the cells of the row. | `'/contents/0/rows/1' must hold 2 cells, got 1.` |
+| `TYPCAST-VAL-0008` | The alias of the later module. | `alias` is the duplicated alias, and `duplicateOf` is the path of the module that uses the alias first. | `'/modules/1/alias' is already used by the module at '/modules/0/alias'.` |
+| `TYPCAST-VAL-0010` | The value of the raw node. | `maxBytes` is the limit of the call, and `bytes` is the number of the bytes of the UTF-8 encoding of the value. | `'/contents/0/value' must not hold more than 8 bytes, got 9.` |
+| `TYPCAST-CONFIG-0004` | `/max_raw_bytes`. | `value` is the rejected limit. | `'/max_raw_bytes' must not be negative, got '-1'.` |
+
+The engine reports every problem it finds and raises no error for a semantic
+problem. The diagnostics come in the order of the document: the blocks in the
+order of the contents, the spans in the order of their content, the rows of a
+table in the order of the table, and the modules in the order of their
+declaration. Two SDKs report the same diagnostics in the same order for the
+same document.
+
 ## Error classes
 
 | Python | TypeScript | Base | Typical codes |
@@ -289,6 +309,7 @@ parsers of the two runtimes word their reason differently.
 | DIAG-010 | Applications MUST be able to handle errors by code. | IMPLEMENTED | The `TYPCAST-*` code constants of both SDKs; the manifest of the shared fixtures names the expected code of every negative fixture. |
 | DIAG-011 | Warnings MUST follow the policy in this document: only the listed conditions warn, warnings never raise, and warnings never fail a release gate. | CONFIRMED | Warning-policy tests and release review. |
 | DIAG-012 | Diagnostic codes MUST be documented in a catalog. | CONFIRMED | This document. |
+| DIAG-018 | The semantic validation engine MUST report every problem it finds and MUST report the diagnostics in the order of the document. | IMPLEMENTED | `//packages/python/tests:validation_tests` and `//packages/typescript:validation_test_run`; the order cases of both SDKs, and the fixtures of `//tests/contract:validation_py` and `//tests/contract:validation_ts_test`. |
 
 ## Open questions
 
@@ -303,3 +324,4 @@ parsers of the two runtimes word their reason differently.
 - [Testing](../development/testing.md)
 - [ADR-0005](../decisions/ADR-0005-two-phase-validation-and-diagnostics.md)
 - [ADR-0014](../decisions/ADR-0014-diagnostic-warning-policy.md)
+- [ADR-0024](../decisions/ADR-0024-semantic-validation-engine-and-configuration.md)

@@ -2,7 +2,7 @@
 
 Status: IMPLEMENTED / OPEN
 Scope: Normative for build behavior
-Last updated: 2026-11-25
+Last updated: 2026-11-27
 
 ## Purpose
 
@@ -70,28 +70,32 @@ root.
 
 | Check | Result |
 |---|---|
-| `bazel build //...` | Pass, 55 targets. |
-| `bazel test //...` | Pass, 17 of 17 test targets of the 19 test rules, because the two transitive type-check rules are tagged `manual`: 16 unittest cases, 45 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 47 repository structure cases, 4 release tag cases, 32 documentation gate cases, 4 link check cases, 1 documentation check, 1 schema bundle check, 125 document model cases, 12 contract fixture cases, and the TypeScript model, contract, and type-check targets. |
+| `bazel build //...` | Pass, 71 targets. |
+| `bazel test //...` | Pass, 23 of 23 test targets of the 27 test rules, because the four transitive type-check rules are tagged `manual`: 16 unittest cases, 45 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 47 repository structure cases, 4 release tag cases, 32 documentation gate cases, 4 link check cases, 1 documentation check, 1 schema bundle check, 125 document model cases, 12 contract fixture cases, 28 validation cases, 6 validation contract fixture cases, and the TypeScript model, validation, contract, and type-check targets. |
 | `bazel build //specs/schemas:schema_bundle` | Pass, 6 schema files. |
 | `bazel build //specs/schemas:schema_manifest` | Pass, 6 paths. |
 | `bazel build //specs/schemas:archive` | Pass, 6 members, deterministic gzip tarball. |
 | `bazel test //specs/schemas:schema_tests` | Pass, 6 bundle files, 0 violations. |
 | `bazel test //specs/schemas:release_tag_tests` | Pass, 4 cases. |
-| `bazel test //scripts:docs_checks` | Pass, 57 files, 474 requirements, and 3 workflows checked, 0 errors. |
+| `bazel test //scripts:docs_checks` | Pass, 58 files, 477 requirements, and 3 workflows checked, 0 errors. |
 | `bazel test //scripts/tests:version_tests` | Pass, 15 cases. |
 | `bazel test //scripts/tests:release_tests` | Pass, 20 cases. |
 | `bazel test //scripts/tests:release_flow_tests` | Pass, 6 cases. |
-| `bazel run //scripts:repository_checks` | Pass, 2 spec files, 30 SDK files, 13 gate files, 52 Python modules, 11 test modules, 2 toolchain files, 3 TypeScript files, 2 SDK versions, 23 decision records, 76 Bazel package files, 0 errors. |
+| `bazel run //scripts:repository_checks` | Pass, 2 spec files, 40 SDK files, 13 gate files, 58 Python modules, 13 test modules, 2 toolchain files, 3 TypeScript files, 2 SDK versions, 24 decision records, 87 Bazel package files, 0 errors. |
 | `bazel test //scripts/tests:repository_tests` | Pass, 47 cases. |
 | `bazel test //scripts/tests:docs_tests` | Pass, 32 cases. |
 | `bazel test //scripts/tests:link_tests` | Pass, 4 cases. |
 | `bazel test //tools/publish/tests:publish_tests` | Pass, 45 publisher cases. |
 | `bazel test //packages/python/tests:model_tests` | Pass, 125 cases. |
+| `bazel test //packages/python/tests:validation_tests` | Pass, 28 cases. |
 | `bazel test //packages/typescript:model_test_run` | Pass. |
+| `bazel test //packages/typescript:validation_test_run` | Pass. |
 | `bazel test //tests/contract:contract_py` | Pass, 12 cases. |
 | `bazel test //tests/contract:contract_ts_test` | Pass. |
+| `bazel test //tests/contract:validation_py` | Pass, 6 cases. |
+| `bazel test //tests/contract:validation_ts_test` | Pass, 4 valid fixtures and 6 invalid fixtures. |
 | `bazel run //scripts:check_links` | Pass, 4 external links checked, 0 unreachable. |
-| `bazel query "kind(rule, //...)"` | 59 rules; 19 test targets. |
+| `bazel query "kind(rule, //...)"` | 79 rules; 27 test targets. |
 | `--test_filter` on the unittest target | Ignored; all 16 cases run. |
 
 The schema bundle contains:
@@ -108,7 +112,7 @@ bazel-bin/specs/schemas/
 
 ## Current targets
 
-`bazel query "kind(rule, //...)"` reports 59 rules. All of them:
+`bazel query "kind(rule, //...)"` reports 79 rules. All of them:
 
 | Target | Kind | Purpose |
 |---|---|---|
@@ -148,17 +152,25 @@ bazel-bin/specs/schemas/
 | `//specs/schemas:release_tag_tests` | `py_test` | Validate the release tag pattern of the contract. |
 | `//specs/schemas/definitions:bound_schema` | `typcast_schema_copy` | Stage the bound schema. |
 | `//specs/schemas/definitions:node_schema` | `typcast_schema_copy` | Stage the node schema. |
-| `//packages/python:typcast` | `py_library` | Python SDK with the immutable document model. |
+| `//packages/python:typcast` | `py_library` | Python SDK with the immutable document model and the validation engine. |
 | `//packages/python/tests:model_tests` | `py_test` | One hundred twenty-five document model unit tests. |
-| `//packages/typescript:typcast` | `ts_project` | TypeScript SDK with the immutable document model. |
+| `//packages/python/tests:validation_tests` | `py_test` | Twenty-eight validation engine unit tests. |
+| `//packages/typescript:typcast` | `ts_project` | TypeScript SDK with the immutable document model and the validation engine. |
 | `//packages/typescript:typcast_types` | `filegroup` | TypeScript declaration outputs. |
 | `//packages/typescript:model_test` | `ts_project` | Compiles the document model unit tests. |
 | `//packages/typescript:model_test_run` | `js_test` | Runs the document model unit tests. |
+| `//packages/typescript:validation_test` | `ts_project` | Compiles the validation engine unit tests. |
+| `//packages/typescript:validation_test_run` | `js_test` | Runs the validation engine unit tests. |
 | `//tests/fixtures:documents` | `filegroup` | The shared document IR fixtures. |
 | `//tests/fixtures:document_fixtures` | `js_library` | The fixtures for the JavaScript toolchain. |
+| `//tests/fixtures:validation_documents` | `filegroup` | The shared validation fixtures. |
+| `//tests/fixtures:validation_fixtures` | `js_library` | The validation fixtures for the JavaScript toolchain. |
 | `//tests/contract:contract_ts` | `ts_project` | Compiles the TypeScript contract runner. |
 | `//tests/contract:contract_ts_test` | `js_test` | Runs the TypeScript contract runner. |
 | `//tests/contract:contract_py` | `py_test` | Runs the Python contract runner. |
+| `//tests/contract:validation_ts` | `ts_project` | Compiles the TypeScript validation contract runner. |
+| `//tests/contract:validation_ts_test` | `js_test` | Runs the TypeScript validation contract runner. |
+| `//tests/contract:validation_py` | `py_test` | Runs the Python validation contract runner. |
 
 Two convenience filegroups, `//specs/schemas/templates/api/types:schema_templates`
 and `//specs/catalogs/enums:enum_catalogs`, were removed because no target

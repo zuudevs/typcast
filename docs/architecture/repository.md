@@ -2,7 +2,7 @@
 
 Status: CONFIRMED
 Scope: Normative
-Last updated: 2026-11-25
+Last updated: 2026-11-27
 
 ## Purpose
 
@@ -21,10 +21,10 @@ creating circular dependencies.
 | `tools/codegen/` | Python generator for template and CSV expansion. | Implemented with seven unit tests. |
 | `tools/publish/` | Python publisher for the released schema bundle. | Implemented with 23 unit tests. |
 | `bazel/` | Reusable Starlark rules. | Schema and publication rules implemented. |
-| `packages/python/` | Python SDK. | Implemented: the immutable document model, the diagnostics, and the JSON serialization. |
-| `packages/typescript/` | TypeScript and JavaScript SDK. | Implemented: the immutable document model, the diagnostics, and the JSON serialization. The manifest is named `typcast` and is still private. |
-| `tests/contract/` | Cross-language contract tests. | Implemented: the Python and the TypeScript runners read the shared fixtures. |
-| `tests/fixtures/` | Shared language-neutral fixtures. | Implemented: the document IR fixtures and their manifest. |
+| `packages/python/` | Python SDK. | Implemented: the immutable document model, the diagnostics, the JSON serialization, and the semantic validation engine. |
+| `packages/typescript/` | TypeScript and JavaScript SDK. | Implemented: the immutable document model, the diagnostics, the JSON serialization, and the semantic validation engine. The manifest is named `typcast` and is still private. |
+| `tests/contract/` | Cross-language contract tests. | Implemented: the Python and the TypeScript runners read the shared fixtures, and the validation runners read the shared validation fixtures. |
+| `tests/fixtures/` | Shared language-neutral fixtures. | Implemented: the document IR fixtures, the validation fixtures, and their manifests. |
 | `tests/integration/` | Compiler, filesystem, and install tests. | Placeholder directory. |
 | `examples/python/` | Python examples. | Placeholder directory. |
 | `examples/typescript/` | TypeScript examples. | Placeholder directory. |
@@ -100,8 +100,8 @@ The Python distribution named `typcast`. The modules of the first release are:
 | `typcast.version` | The schema version of the document IR and the version rules. |
 | `typcast.numbers` | The binary64 number domain of the IR and the canonical number text. |
 | `typcast.canonical` | The canonical JSON Pointer escaping and the encodability check. |
+| `typcast.validations` | The semantic validation engine, its configuration, and the measurement of the size of a text. Implemented. |
 | `typcast.builder` | Fluent builder. Not implemented. |
-| `typcast.validation` | Schema and semantic validation. Not implemented. |
 | `typcast.typst` | Typst emitter and escaping. Not implemented. |
 | `typcast.compiler` | Typst CLI adapter. Not implemented. |
 | `typcast.config` | Compile and asset configuration. Not implemented. |
@@ -115,8 +115,10 @@ The npm distribution named `typcast`. The source modules mirror the Python
 responsibilities: `src/models/` holds the immutable model types, `src/diagnostics.ts`
 holds the diagnostic types and the code catalog, `src/serialization.ts` holds the
 JSON IR serialization and deserialization, `src/version.ts` holds the schema
-version and the version rules, and `src/canonical.ts` holds the canonical JSON
-Pointer escaping and the encodability check. The package MUST expose ESM entry points, type
+version and the version rules, `src/canonical.ts` holds the canonical JSON
+Pointer escaping and the encodability check, and `src/validations/` holds the
+semantic validation engine, its configuration, and the measurement of the size
+of a text. The package MUST expose ESM entry points, type
 declarations, and compiled JavaScript. The current `package.json` name is
 `typcast`, and the repository checks reject a different name. The manifest is
 still `private`, and that must change before publication.
@@ -139,11 +141,27 @@ tests/
       unicode.json
       patch-version.json
       ...negative fixtures
+    validation/
+      manifest.json
+      valid/
+        minimal.json
+        table.json
+        modules.json
+        raw-at-limit.json
+      invalid/
+        table-row-short.json
+        table-row-long.json
+        module-alias-duplicate.json
+        raw-block-over-limit.json
+        raw-span-over-limit.json
+        multiple-problems.json
   contract/
     BUILD.bazel
     contract.test.mts
     node_shims.d.ts
     test_contract.py
+    validation.test.mts
+    test_validation.py
 ```
 
 Fixtures are language-neutral JSON documents. Expected `.typ` files are shared
@@ -151,7 +169,9 @@ by both SDKs. Test code may be language-specific, but the inputs and expected
 outputs are not. The `manifest.json` of the fixture directory names every valid
 fixture and every negative fixture with the diagnostic code, the diagnostic
 message, and the diagnostic details that the fixture must produce, so both SDKs
-check the same expectation.
+check the same expectation. The manifest of the validation directory names the
+diagnostics of every negative validation fixture in the order the validation
+engine reports them, and it may name the raw size limit of a fixture.
 
 ### `bazel/`
 
@@ -185,13 +205,18 @@ Current targets include:
 | `//specs/schemas:archive` | The deterministic archive of the bundle. |
 | `//specs/schemas:schema_tests` | Validates the built bundle against the schema contract. |
 | `//specs/schemas:release_tag_tests` | Validates the release tag pattern of the schema contract. |
-| `//packages/python:typcast` | Python SDK library with the immutable document model. |
+| `//packages/python:typcast` | Python SDK library with the immutable document model and the validation engine. |
 | `//packages/python/tests:model_tests` | One hundred twenty-five document model unit tests. |
-| `//packages/typescript:typcast` | TypeScript project with the immutable document model. |
+| `//packages/python/tests:validation_tests` | Twenty-eight validation engine unit tests. |
+| `//packages/typescript:typcast` | TypeScript project with the immutable document model and the validation engine. |
 | `//packages/typescript:model_test_run` | Document model unit tests of the TypeScript SDK. |
+| `//packages/typescript:validation_test_run` | Validation engine unit tests of the TypeScript SDK. |
 | `//tests/fixtures:documents` | The shared document IR fixtures. |
+| `//tests/fixtures:validation_documents` | The shared validation fixtures. |
 | `//tests/contract:contract_py` | The Python contract runner. |
 | `//tests/contract:contract_ts_test` | The TypeScript contract runner. |
+| `//tests/contract:validation_py` | The Python validation contract runner. |
+| `//tests/contract:validation_ts_test` | The TypeScript validation contract runner. |
 
 The MVP must add packaging targets for the Python wheel and sdist and for the
 npm tarball. The schema archive target exists. Target names are specified in

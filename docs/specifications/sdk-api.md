@@ -2,7 +2,7 @@
 
 Status: CONFIRMED
 Scope: Normative
-Last updated: 2026-11-25
+Last updated: 2026-11-27
 
 ## Purpose
 
@@ -54,7 +54,7 @@ JSON field names are defined by the IR and do not change between languages.
 | `Module` | Module import declaration. |
 | `Diagnostic` | Structured diagnostic. |
 | `CompileResult` | PDF bytes or path, diagnostics, and compiler metadata. |
-| `TypcastConfig` | Validation and compilation configuration. |
+| `TypcastConfig` | Configuration of the validation engine. The compilation fields arrive with the compiler adapter. |
 
 ## Immutability
 
@@ -195,7 +195,7 @@ row with the wrong number of cells is rejected at build time.
 
 | Operation | Python | TypeScript |
 |---|---|---|
-| Validate | `document.validate()` | `document.validate()` |
+| Validate | `document.validate(config=None)` | `document.validate(options?)` |
 | Serialize to canonical JSON | `document.to_json()` | `document.toJSONString()` |
 | Serialize to a JSON value | `document.to_dict()` | `document.toJSON()` |
 | Deserialize from JSON | `Document.from_json(source)` | `Document.fromJSONString(source)` |
@@ -206,45 +206,77 @@ row with the wrong number of cells is rejected at build time.
 | Schema version | `document.schema_version` | `document.schemaVersion` |
 
 `validate()` returns a tuple or array of diagnostics and does not raise for
-validation errors. `build()`, `to_json()`, `to_typst()`, and `compile_pdf()`
-raise a typed error when an error diagnostic is present.
+validation errors. `build()`, `to_typst()`, and `compile_pdf()` raise a typed
+error when an error diagnostic is present. `to_json()` does not validate again:
+the serialization of a built model writes the document as it is, because
+ADR-0005 keeps the validation in the build step and in the reader.
 
 The current release implements the model types of the list above, the
-serialization rows of this table, and the error hierarchy. The builder,
-`validate()`, `to_typst()`, `compile_pdf()`, and `write_pdf()` are part of the
+serialization rows of this table, `validate()`, and the error hierarchy. The
+builder, `to_typst()`, `compile_pdf()`, and `write_pdf()` are part of the
 contract and are not implemented yet.
 
+## Validation
+
+The semantic validation engine is a separate layer of both SDKs. It checks the
+rules of the document IR that span more than one node:
+
+| Rule | Diagnostic code |
+|---|---|
+| The shape of a table: every row holds as many cells as the table holds columns. | `TYPCAST-VAL-0007` |
+| The uniqueness of a module alias within the document. | `TYPCAST-VAL-0008` |
+| The size of a raw node: the bytes of the UTF-8 encoding of the value stay within the raw size limit. | `TYPCAST-VAL-0010` |
+
+Behavior:
+
+- `validate()` reports every problem it finds and raises no error for a
+  semantic problem, so that a caller can show all of the problems at once.
+- The diagnostics come in the order of the document: the blocks in the order of
+  the contents, the spans in the order of their content, the rows of a table in
+  the order of the table, and the modules in the order of their declaration.
+- The configuration is passed per call and is never stored in the document.
+- An invalid configuration raises `ConfigError` with `TYPCAST-CONFIG-0004`,
+  the phase `config`, and the path `/max_raw_bytes`.
+
+The engine is called explicitly through `validate()`. The builder calls it
+again before it returns a document, and the emitter and the compiler adapter
+call it before they use a document.
+
 ## Configuration
+
+The configuration of the validation engine holds the limits that the semantic
+rules use. In this release it holds the raw size limit only, because the asset
+root, the compiler path, and the timeout belong to the asset layer and the
+compiler adapter, which arrive later.
 
 ### Python
 
 ```python
 from dataclasses import dataclass
-from pathlib import Path
 
 @dataclass(frozen=True)
 class TypcastConfig:
-    asset_root: Path | None = None
     max_raw_bytes: int = 1_048_576
-    typst_path: Path | None = None
-    timeout_seconds: float = 60.0
-    allow_unsupported_typst: bool = False
 ```
 
 ### TypeScript
 
 ```typescript
 interface TypcastOptions {
-  assetRoot?: string;
   maxRawBytes?: number;
-  typstPath?: string;
-  timeoutSeconds?: number;
-  allowUnsupportedTypst?: boolean;
 }
 ```
 
-`asset_root` is required for compilation when the document contains images or
-modules. It is not required to construct or serialize a document.
+The limit is a number of bytes, so it must be an integer that is finite and
+that is not negative. A value that breaks the rule raises `ConfigError` with
+`TYPCAST-CONFIG-0004`. The limit applies to every raw node on its own, and a
+value of exactly the limit is valid.
+
+The asset root, the compiler path, the timeout, and the flag that allows an
+unsupported Typst version arrive with the asset layer and the compiler adapter.
+The asset root is required for compilation when the document contains images or
+modules. It is not required to construct, to validate, or to serialize a
+document.
 
 ## Compile result
 
@@ -319,7 +351,7 @@ collection. A single error may carry multiple diagnostics.
 | API-004 | Model constructors MUST validate their inputs. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the constructor cases. |
 | API-005 | Strings passed as content MUST be normalized to text spans. | CONFIRMED | Builder test. |
 | API-006 | `build()` MUST raise `ValidationError` on error diagnostics. | CONFIRMED | Negative test. |
-| API-007 | `validate()` MUST return diagnostics without raising for validation errors. | CONFIRMED | API test. |
+| API-007 | `validate()` MUST return diagnostics without raising for validation errors. | IMPLEMENTED | `//packages/python/tests:validation_tests` and `//packages/typescript:validation_test_run`; the validation cases of both SDKs, and the fixtures of `//tests/contract:validation_py` and `//tests/contract:validation_ts_test`. |
 | API-008 | `to_typst()` and `compile_pdf()` MUST validate again before use. | CONFIRMED | Validation test. |
 | API-009 | `to_json()` MUST produce canonical JSON. | IMPLEMENTED | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`; every shared fixture is written back byte for byte. |
 | API-010 | `from_json()` MUST reject unknown fields and unsupported versions. | IMPLEMENTED | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`; the negative fixtures of the manifest. |
@@ -339,6 +371,7 @@ collection. A single error may carry multiple diagnostics.
 | API-024 | The builder MUST be documented as mutable, single-document, and not thread-safe. | CONFIRMED | API documentation review. |
 | API-025 | The npm package MUST be ESM-only for `1.0.0`; CommonJS support is DEFERRED. | CONFIRMED | Package and consumer tests. |
 | API-026 | The package root MUST export the version of the package, and the export MUST match the package manifest. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the version cases, and `//scripts:repository_checks` compares every export with its manifest. |
+| API-027 | The validation configuration MUST be passed per call and MUST NOT be stored in the document; in this release it MUST hold the raw size limit only, and an invalid limit MUST raise `ConfigError` with `TYPCAST-CONFIG-0004`. | IMPLEMENTED | `//packages/python/tests:validation_tests` and `//packages/typescript:validation_test_run`; the configuration cases of both SDKs, and the `ConfigError` case of both SDKs. |
 
 ## Open questions
 
@@ -358,3 +391,4 @@ collection. A single error may carry multiple diagnostics.
 - [ADR-0004](../decisions/ADR-0004-immutable-model-and-builder.md)
 - [ADR-0015](../decisions/ADR-0015-mutable-builder-contract.md)
 - [ADR-0016](../decisions/ADR-0016-esm-only-npm-package.md)
+- [ADR-0024](../decisions/ADR-0024-semantic-validation-engine-and-configuration.md)
