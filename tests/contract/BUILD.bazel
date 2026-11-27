@@ -139,3 +139,68 @@ py_test(
         "//packages/python:typcast",
     ],
 )
+
+# The TypeScript builder contract runner. It reads the shared builder fixtures
+# and the manifest, so it depends on the fixture filegroup and on the
+# TypeScript SDK. The runner uses the `.mts` extension, so TypeScript
+# classifies it as an ECMAScript module without a `package.json` next to it,
+# and Node runs the emitted `.mjs` as an ECMAScript module in every sandbox.
+ts_project(
+    name = "builder_ts",
+    srcs = [
+        "builder.test.mts",
+        "node_shims.d.ts",
+    ],
+    tsconfig = {
+        "compilerOptions": {
+            "target": "ES2022",
+            "module": "NodeNext",
+            "moduleResolution": "NodeNext",
+            "strict": True,
+            "noImplicitOverride": True,
+            "noUncheckedIndexedAccess": True,
+            "exactOptionalPropertyTypes": True,
+            "forceConsistentCasingInFileNames": True,
+            "verbatimModuleSyntax": True,
+            "skipLibCheck": True,
+            "declaration": False,
+            "types": [],
+        },
+    },
+    transpiler = "tsc",
+    deps = [
+        "//packages/typescript:typcast",
+    ],
+)
+
+# The runner needs the compiled SDK and the manifest of the package in its
+# runfiles, for the same reason as the contract runner above.
+js_test(
+    name = "builder_ts_test",
+    entry_point = ":builder_ts",
+    data = [
+        "//packages/typescript:package.json",
+        "//packages/typescript:typcast",
+        "//tests/fixtures:builder_fixtures",
+    ],
+    no_copy_to_bin = [
+        "//packages/typescript:package.json",
+    ],
+)
+
+# The Python builder contract runner. It reads the same shared fixtures and
+# the same manifest as the TypeScript runner.
+py_test(
+    name = "builder_py",
+    size = "small",
+    srcs = [
+        "test_builder.py",
+    ],
+    main = "test_builder.py",
+    data = [
+        "//tests/fixtures:builder_documents",
+    ],
+    deps = [
+        "//packages/python:typcast",
+    ],
+)

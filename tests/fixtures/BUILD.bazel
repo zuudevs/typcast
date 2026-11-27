@@ -41,7 +41,25 @@ js_library(
     ],
 )
 
+# The shared builder fixtures. Both SDKs read the same files, so the manifest
+# and the canonical JSON it names are the single source of truth of the
+# cross-language builder contract tests.
+filegroup(
+    name = "builder_documents",
+    srcs = glob([
+        "builder/**/*.json",
+    ]),
+)
+
+js_library(
+    name = "builder_fixtures",
+    srcs = [
+        ":builder_documents",
+    ],
+)
+
 exports_files([
     "documents/manifest.json",
     "validation/manifest.json",
+    "builder/manifest.json",
 ])

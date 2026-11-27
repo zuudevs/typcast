@@ -1,0 +1,199 @@
+{
+  "schemaVersion": "1.0.0",
+  "metadata": {
+    "title": "Quarterly Report",
+    "author": "Example Corp",
+    "date": "2026-11-24"
+  },
+  "page": {
+    "paper": "a4",
+    "orientation": "portrait",
+    "margin": {
+      "top": {
+        "value": 2,
+        "unit": "cm"
+      },
+      "right": {
+        "value": 2,
+        "unit": "cm"
+      },
+      "bottom": {
+        "value": 2,
+        "unit": "cm"
+      },
+      "left": {
+        "value": 2,
+        "unit": "cm"
+      }
+    }
+  },
+  "contents": [
+    {
+      "type": "heading",
+      "level": 1,
+      "content": [
+        {
+          "type": "text",
+          "value": "Quarterly Report"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "type": "text",
+          "value": "Section"
+        },
+        {
+          "type": "italic",
+          "content": [
+            {
+              "type": "text",
+              "value": "detail"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "value": "Revenue grew by "
+        },
+        {
+          "type": "bold",
+          "content": [
+            {
+              "type": "text",
+              "value": "12%"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "value": "."
+        }
+      ]
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        [
+          {
+            "type": "text",
+            "value": "Revenue"
+          }
+        ],
+        [
+          {
+            "type": "text",
+            "value": "Cost"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        [
+          {
+            "type": "text",
+            "value": "First"
+          }
+        ],
+        [
+          {
+            "type": "text",
+            "value": "Second"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "columns": [
+        {
+          "header": [
+            {
+              "type": "text",
+              "value": "Metric"
+            }
+          ],
+          "align": "left"
+        },
+        {
+          "header": [
+            {
+              "type": "text",
+              "value": "Value"
+            }
+          ],
+          "align": "right"
+        }
+      ],
+      "rows": [
+        [
+          [
+            {
+              "type": "text",
+              "value": "Revenue"
+            }
+          ],
+          [
+            {
+              "type": "text",
+              "value": "1,200"
+            }
+          ]
+        ],
+        [
+          [
+            {
+              "type": "text",
+              "value": "Cost"
+            }
+          ],
+          [
+            {
+              "type": "text",
+              "value": "800"
+            }
+          ]
+        ]
+      ]
+    },
+    {
+      "type": "image",
+      "path": "figures/revenue.png",
+      "alt": "Revenue chart",
+      "caption": [
+        {
+          "type": "text",
+          "value": "Figure 1"
+        }
+      ]
+    },
+    {
+      "type": "pageBreak"
+    },
+    {
+      "type": "raw",
+      "format": "markup",
+      "value": "#figure(image(\"logo.png\"), caption: [Logo])"
+    }
+  ],
+  "modules": [
+    {
+      "path": "modules/format.typ",
+      "items": [
+        "currency"
+      ]
+    }
+  ]
+}

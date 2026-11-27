@@ -29,3 +29,16 @@ py_test(
         "//packages/python:typcast",
     ],
 )
+
+# The unit tests of the fluent builder.
+py_test(
+    name = "builder_tests",
+    size = "small",
+    srcs = [
+        "test_builder.py",
+    ],
+    main = "test_builder.py",
+    deps = [
+        "//packages/python:typcast",
+    ],
+)
