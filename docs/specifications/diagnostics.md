@@ -126,6 +126,12 @@ codes must not be renumbered or reused.
 | `TYPCAST-API-0001` | error | api | Invalid argument type or value passed to a public method. |
 | `TYPCAST-API-0002` | error | api | Method called in an invalid state. |
 
+The builder raises `TYPCAST-API-0001` when an argument has a type that the
+method cannot use. The fluent builder of this release has no path that calls a
+method in an invalid state, so no call raises `TYPCAST-API-0002`: `build()`
+may be called more than once, and every metadata method may be called more than
+once.
+
 ### Validation
 
 | Code | Severity | Phase | Meaning |
@@ -296,7 +302,7 @@ parsers of the two runtimes word their reason differently.
 | DIAG-002 | Codes MUST follow `TYPCAST-<FAMILY>-<NUMBER>`. | CONFIRMED | Lint. |
 | DIAG-003 | Existing codes MUST NOT be renumbered or reused. | CONFIRMED | Release review. |
 | DIAG-004 | Python and TypeScript MUST expose the same diagnostic fields. | IMPLEMENTED | The `Diagnostic` shape of both SDKs; `//tests/contract:contract_py` and `//tests/contract:contract_ts_test` compare the code of every negative fixture. |
-| DIAG-005 | Errors MUST inherit from `TypcastError`. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the error cases. |
+| DIAG-005 | Errors MUST inherit from `TypcastError`. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the error cases, and `//packages/python/tests:builder_tests` and `//packages/typescript:builder_test_run`; the `ApiUsageError` cases of both SDKs. |
 | DIAG-006 | Validation errors MUST include a JSON Pointer when known. | IMPLEMENTED | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`; the diagnostic path points at the failing node. |
 | DIAG-013 | The tokens of a JSON Pointer MUST be escaped as RFC 6901 defines them. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the escaped-pointer cases. |
 | DIAG-014 | The details of a diagnostic MUST stay JSON-serializable. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the details cases. |
@@ -306,7 +312,7 @@ parsers of the two runtimes word their reason differently.
 | DIAG-007 | Compiler diagnostics MUST preserve raw output in `details.raw`. | CONFIRMED | Compiler test. |
 | DIAG-008 | Compiler diagnostics MUST include location when parseable. | CONFIRMED | Compiler test. |
 | DIAG-009 | Messages MUST be English-only for `1.0.0`. | IMPLEMENTED | Every diagnostic message of both SDKs is English. |
-| DIAG-010 | Applications MUST be able to handle errors by code. | IMPLEMENTED | The `TYPCAST-*` code constants of both SDKs; the manifest of the shared fixtures names the expected code of every negative fixture. |
+| DIAG-010 | Applications MUST be able to handle errors by code. | IMPLEMENTED | The `TYPCAST-*` code constants of both SDKs; the manifest of the shared fixtures names the expected code of every negative fixture, and the builder cases of `//packages/python/tests:builder_tests` and `//packages/typescript:builder_test_run` name the code of every error of the builder. |
 | DIAG-011 | Warnings MUST follow the policy in this document: only the listed conditions warn, warnings never raise, and warnings never fail a release gate. | CONFIRMED | Warning-policy tests and release review. |
 | DIAG-012 | Diagnostic codes MUST be documented in a catalog. | CONFIRMED | This document. |
 | DIAG-018 | The semantic validation engine MUST report every problem it finds and MUST report the diagnostics in the order of the document. | IMPLEMENTED | `//packages/python/tests:validation_tests` and `//packages/typescript:validation_test_run`; the order cases of both SDKs, and the fixtures of `//tests/contract:validation_py` and `//tests/contract:validation_ts_test`. |

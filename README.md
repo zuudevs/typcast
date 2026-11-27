@@ -164,10 +164,10 @@ The product, architecture, contract, and engineering documentation is in
 [vision and scope](docs/product/vision-and-scope.md).
 
 The documents describe the approved MVP baseline. The SDK exposes the immutable
-document model, the JSON serialization, and the semantic validation engine. The
-builder, the emitter, the compiler adapter, and the packaging are not
-implemented yet. The continuous integration workflows and the release tooling
-are.
+document model, the JSON serialization, the semantic validation engine, and the
+fluent builder with its span helpers and its table helpers. The emitter, the
+compiler adapter, and the packaging are not implemented yet. The continuous
+integration workflows and the release tooling are.
 
 ## Contributing
 
