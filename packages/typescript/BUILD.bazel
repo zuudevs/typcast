@@ -1,3 +1,4 @@
+load("@aspect_rules_js//js:defs.bzl", "js_test")
 load("@aspect_rules_ts//ts:defs.bzl", "ts_project")
 
 package(
@@ -9,12 +10,66 @@ exports_files([
     "package.json",
 ])
 
+# The manifest is an input of the project on purpose. Under `module` NodeNext
+# and `verbatimModuleSyntax`, TypeScript classifies a `.ts` file as an
+# ECMAScript module only when the nearest `package.json` declares
+# `"type": "module"`. The manifest is the one of the SDK, and it sits next to
+# the sources of the project, so the classification is the same in every
+# sandbox. Without it the sandbox of Linux has no manifest, the file becomes a
+# CommonJS file, and the compilation fails with TS1295.
 ts_project(
     name = "typcast",
     srcs = glob([
         "src/**/*.ts",
-    ]),
+    ]) + [
+        "package.json",
+    ],
     tsconfig = "tsconfig.json",
     transpiler = "tsc",
     declaration = True,
+    out_dir = "lib",
+)
+
+# The unit tests of the immutable document model. The manifest is an input for
+# the same reason as in the project above.
+ts_project(
+    name = "model_test",
+    srcs = [
+        "tests/model.test.ts",
+        "package.json",
+    ],
+    tsconfig = {
+        "compilerOptions": {
+            "target": "ES2022",
+            "module": "NodeNext",
+            "moduleResolution": "NodeNext",
+            "strict": True,
+            "noImplicitOverride": True,
+            "noUncheckedIndexedAccess": True,
+            "exactOptionalPropertyTypes": True,
+            "forceConsistentCasingInFileNames": True,
+            "verbatimModuleSyntax": True,
+            "skipLibCheck": True,
+            "declaration": False,
+            "types": [],
+        },
+    },
+    transpiler = "tsc",
+    deps = [
+        ":typcast",
+    ],
+)
+
+# The runner needs the compiled SDK and the manifest of the package in its
+# runfiles. The test imports the SDK with a relative path, so the runner can
+# only find it when the tree of the runfiles holds it. The manifest makes Node
+# classify the compiled files as ECMAScript modules, the same way the
+# compilation of TypeScript does.
+js_test(
+    name = "model_test_run",
+    entry_point = ":model_test",
+    data = [
+        ":package.json",
+        ":typcast",
+    ],
 )

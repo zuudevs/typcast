@@ -2,7 +2,7 @@
 
 Status: CONFIRMED
 Scope: Normative
-Last updated: 2026-11-24
+Last updated: 2026-11-26
 
 ## Purpose
 
@@ -32,7 +32,7 @@ failures programmatically.
 | `severity` | string | Yes | `error`, `warning`, or `info`. |
 | `phase` | string | Yes | `api`, `validation`, `serialization`, `emit`, `compiler`, `io`, or `config`. |
 | `message` | string | Yes | Human-readable English message. |
-| `path` | string or null | Yes | JSON Pointer to the affected document location, when known. |
+| `path` | string or null | Yes | JSON Pointer to the affected document location, when known. The tokens of the pointer are escaped as RFC 6901 defines them, so a property named `bad/name` is reported as `/bad~1name`. |
 | `location` | object or null | Yes | Compiler source location, when known. |
 | `details` | object | Yes | Machine-readable context. |
 | `cause` | string or null | Yes | Stable cause identifier, not a stack trace. |
@@ -44,7 +44,62 @@ failures programmatically.
 ```
 
 `details` must be JSON-serializable. It may contain raw compiler output, exit
-codes, field names, or supported version ranges.
+codes, field names, or supported version ranges. A value of a type that JSON
+cannot represent is replaced by the name of its type, and a number that is not
+finite is spelled in the form of ECMAScript.
+
+The `message` of a diagnostic is human-readable text. When it shows a rejected
+value, it shows it in the canonical form of the next section, so that the
+message stays readable.
+
+## Rejected values
+
+A message that shows a rejected value shows it in one canonical form. The two
+SDKs apply the same rule, so that the message of a diagnostic is the same in
+both SDKs.
+
+| Step | Rule |
+|---|---|
+| Text | The value is reduced to its text. A value of a type that JSON cannot represent is the name of its type, and a number that is not finite is spelled in the form of ECMAScript. |
+| Length | The text holds at most 64 Unicode code points. A longer text is cut after the 64th code point, and an ellipsis (`…`) follows the cut. |
+| Escaping | A backslash becomes `\\`, a single quote becomes `\'`, a double quote becomes `\"`, a newline becomes `\n`, a carriage return becomes `\r`, a tab becomes `\t`, and every other control character (U+0000 to U+001F and U+007F) becomes a `\u00xx` escape with lower-case hexadecimal digits. Every other character is shown as it is. |
+
+The length is counted in Unicode code points, and the cut never splits a
+character that lies outside the basic multilingual plane.
+
+The `details` of a diagnostic hold the rejected value under `value` in the
+JSON-safe form: the value itself for a string, a number, a boolean, or `null`,
+and the name of its type for a value of another type. The details are
+machine-readable, and the message holds the canonical text of the value.
+
+## Message wording
+
+The two SDKs report an invalid input in the same words. The wording follows
+these rules:
+
+- A message names the path of the failing node, the rule that the value broke,
+  and the rejected value when the value helps the reader.
+- A collection is an array, because the IR is a JSON IR. A message names the
+  elements of the collection, such as `an array of Span values`.
+- An element of a collection names its type, such as `must be a Span`.
+- A rejected enum value is shown in single quotes after `got`, and a rejected
+  value of another type is not shown at all.
+- A rejected value is shown in the canonical form of the section above, so
+  that a quote, a backslash, and a control character never break the text of
+  a message.
+- The reason of a parser of the runtime belongs to `details`, not to the
+  message, because the parsers of the two runtimes word their reason
+  differently. The message of a malformed JSON text is the same in both SDKs.
+
+The `details` of a diagnostic follow the same rules in both SDKs:
+
+- The details name the rejected value under `value`, the allowed literals
+  under `allowed`, the name of the expected element under `expected`, the name
+  of the missing or unknown field under `field`, and the length of a string
+  under `length` and `maxLength`.
+- The details hold no text of the runtime, because the two runtimes word their
+  own errors differently. The reason of the parser of a malformed JSON text is
+  the only such text, and it belongs to the details under `reason`.
 
 ## Code families
 
@@ -87,6 +142,7 @@ codes must not be renumbered or reused.
 | `TYPCAST-VAL-0010` | error | validation | Raw content exceeds the size limit. |
 | `TYPCAST-VAL-0011` | error | validation | Date is not a valid `YYYY-MM-DD` value. |
 | `TYPCAST-VAL-0012` | error | validation | Image or module path is absolute or unsafe. |
+| `TYPCAST-VAL-0013` | error | validation | Text holds more code points than the contract allows. |
 
 ### Serialization
 
@@ -204,26 +260,33 @@ Python and TypeScript diagnostics are compared on:
 - `phase`
 - `path`
 - `location` when deterministic
-- `details` after removing raw compiler output
+- `details` after removing raw compiler output and the reason of the parser of
+  the runtime
 - `message`
 
 Raw compiler output is excluded because it may contain absolute paths or
-platform-specific formatting.
+platform-specific formatting. The reason of the parser is excluded because the
+parsers of the two runtimes word their reason differently.
 
 ## Requirements
 
 | ID | Requirement | Status | Verification |
 |---|---|---|---|
-| DIAG-001 | Every diagnostic MUST have the documented shape. | CONFIRMED | Schema and unit tests. |
+| DIAG-001 | Every diagnostic MUST have the documented shape. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the `Diagnostic` type of `typcast.diagnostics` and of `packages/typescript/src/diagnostics.ts`. |
 | DIAG-002 | Codes MUST follow `TYPCAST-<FAMILY>-<NUMBER>`. | CONFIRMED | Lint. |
 | DIAG-003 | Existing codes MUST NOT be renumbered or reused. | CONFIRMED | Release review. |
-| DIAG-004 | Python and TypeScript MUST expose the same diagnostic fields. | CONFIRMED | Parity test. |
-| DIAG-005 | Errors MUST inherit from `TypcastError`. | CONFIRMED | Error test. |
-| DIAG-006 | Validation errors MUST include a JSON Pointer when known. | CONFIRMED | Validation test. |
+| DIAG-004 | Python and TypeScript MUST expose the same diagnostic fields. | IMPLEMENTED | The `Diagnostic` shape of both SDKs; `//tests/contract:contract_py` and `//tests/contract:contract_ts_test` compare the code of every negative fixture. |
+| DIAG-005 | Errors MUST inherit from `TypcastError`. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the error cases. |
+| DIAG-006 | Validation errors MUST include a JSON Pointer when known. | IMPLEMENTED | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`; the diagnostic path points at the failing node. |
+| DIAG-013 | The tokens of a JSON Pointer MUST be escaped as RFC 6901 defines them. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the escaped-pointer cases. |
+| DIAG-014 | The details of a diagnostic MUST stay JSON-serializable. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the details cases. |
+| DIAG-015 | The message of a diagnostic MUST be the same in both SDKs, and MUST show at most 64 code points of a rejected value. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the message cases, and `//tests/contract:contract_py` and `//tests/contract:contract_ts_test` compare the message of every negative fixture that the manifest names. |
+| DIAG-016 | The details of a diagnostic MUST be the same in both SDKs, except the reason of the parser of the runtime. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the details cases, and `//tests/contract:contract_py` and `//tests/contract:contract_ts_test` compare the details of every negative fixture that the manifest names. |
+| DIAG-017 | A rejected value MUST be shown in one canonical form in both SDKs: the same escaping of the quotes, the backslash, and the control characters, and the same limit of 64 Unicode code points. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the rejected-value cases, and the shared fixtures `date-quoted.json`, `date-control-chars.json`, `date-long.json`, `date-unicode.json`, `version-quoted.json`, `version-control-chars.json`, `version-long.json`, `enum-quoted.json`, `enum-control-chars.json`, and `enum-long.json` of `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`. |
 | DIAG-007 | Compiler diagnostics MUST preserve raw output in `details.raw`. | CONFIRMED | Compiler test. |
 | DIAG-008 | Compiler diagnostics MUST include location when parseable. | CONFIRMED | Compiler test. |
-| DIAG-009 | Messages MUST be English-only for `1.0.0`. | CONFIRMED | Review. |
-| DIAG-010 | Applications MUST be able to handle errors by code. | CONFIRMED | API test. |
+| DIAG-009 | Messages MUST be English-only for `1.0.0`. | IMPLEMENTED | Every diagnostic message of both SDKs is English. |
+| DIAG-010 | Applications MUST be able to handle errors by code. | IMPLEMENTED | The `TYPCAST-*` code constants of both SDKs; the manifest of the shared fixtures names the expected code of every negative fixture. |
 | DIAG-011 | Warnings MUST follow the policy in this document: only the listed conditions warn, warnings never raise, and warnings never fail a release gate. | CONFIRMED | Warning-policy tests and release review. |
 | DIAG-012 | Diagnostic codes MUST be documented in a catalog. | CONFIRMED | This document. |
 

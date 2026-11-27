@@ -2,7 +2,7 @@
 
 Status: CONFIRMED
 Scope: Normative
-Last updated: 2026-11-24
+Last updated: 2026-11-25
 
 ## Purpose
 
@@ -230,17 +230,17 @@ list marker. The emitter is responsible for context-sensitive escaping.
 
 | ID | Requirement | Status | Verification |
 |---|---|---|---|
-| NODE-001 | The MVP MUST support exactly the block types listed in this catalog. | CONFIRMED | Schema and fixture review. |
-| NODE-002 | The MVP MUST support exactly the inline span types listed in this catalog. | CONFIRMED | Schema and fixture review. |
-| NODE-003 | Heading levels MUST be integers from 1 to 6. | CONFIRMED | Schema test. |
-| NODE-004 | Headings and paragraphs MUST reject empty content. | CONFIRMED | Validation test. |
+| NODE-001 | The MVP MUST support exactly the block types listed in this catalog. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the model holds the seven block types of this catalog and no other. |
+| NODE-002 | The MVP MUST support exactly the inline span types listed in this catalog. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the model holds the seven inline span types of this catalog and no other. |
+| NODE-003 | Heading levels MUST be integers from 1 to 6. | IMPLEMENTED | The constructor of both SDKs rejects another level with `TYPCAST-VAL-0005`. |
+| NODE-004 | Headings and paragraphs MUST reject empty content. | IMPLEMENTED | The constructor of both SDKs rejects empty content with `TYPCAST-VAL-0006`. |
 | NODE-005 | Lists MUST support ordered and unordered modes. | CONFIRMED | Emitter test. |
 | NODE-006 | Nested lists MUST be rejected in the MVP. | CONFIRMED | Negative test. |
 | NODE-007 | Tables MUST support header rows and per-column alignment. | CONFIRMED | Emitter test. |
 | NODE-008 | Table rows MUST match the column count. | CONFIRMED | Semantic validation test. |
 | NODE-009 | Tables MUST NOT support merged cells in the MVP. | CONFIRMED | Schema review. |
-| NODE-010 | Images MUST require alt text. | CONFIRMED | Schema test. |
-| NODE-011 | Images MUST support an optional caption. | CONFIRMED | Emitter test. |
+| NODE-010 | Images MUST require alt text. | IMPLEMENTED | The constructor of both SDKs requires a non-empty `alt` value. |
+| NODE-011 | Images MUST support an optional caption. | IMPLEMENTED | The model of both SDKs holds an optional caption, and the canonical JSON omits the field when it is absent. |
 | NODE-012 | Images MUST NOT support remote URLs. | CONFIRMED | Asset test. |
 | NODE-013 | Page breaks MUST emit `#pagebreak()`. | CONFIRMED | Golden test. |
 | NODE-014 | Raw content MUST be emitted verbatim. | CONFIRMED | Golden test. |

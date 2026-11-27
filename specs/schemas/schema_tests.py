@@ -51,6 +51,38 @@ EXPECTED_FILES = {
     "definitions/node.schema.json",
 }
 
+# The versions that the pattern of the schema version accepts. The pattern is
+# the one of a semantic version, so a component holds no leading zero, and
+# the component of the patch holds no limit on its length.
+ACCEPTED_VERSIONS = (
+    "0.0.0",
+    "1.0.0",
+    "1.2.3",
+    "10.20.30",
+    "1.0.1234567890",
+)
+
+# The versions that the pattern of the schema version rejects. The pattern
+# holds the ASCII digits only, and it matches the whole text, so a version
+# that ends with a newline or with a carriage return is rejected as well.
+REJECTED_VERSIONS = (
+    "",
+    "1.0",
+    "1.0.0.0",
+    "01.0.0",
+    "1.00.0",
+    "1.0.00",
+    "v1.0.0",
+    " 1.0.0",
+    "1.0.0 ",
+    "1.0.0\n",
+    "1.0.0\r",
+    "1.0.0\t",
+    "١.0.0",
+    "1.0.0-rc1",
+    "1..0",
+)
+
 
 def find_bundle_root() -> Path:
     """Locates the built bundle in a Bazel runfiles tree or in a checkout."""
@@ -225,6 +257,120 @@ def check_file(path: Path, relative: str, bundle: Path) -> tuple[list[str], list
     return violations, identifiers
 
 
+def check_version_pattern(bundle: Path) -> list[str]:
+    """Returns the violations of the pattern of the schema version.
+
+    The check reads the pattern that the published schema carries, and it
+    checks the behavior of that pattern. The pattern of a JSON Schema is a
+    regular expression that the engine searches in the text, so the check
+    searches as well, and the anchors of the pattern make the search a match
+    of the whole text.
+
+    The check uses the regular expression engine of the standard library and
+    no JSON Schema library, and it checks the pattern alone. It is not an
+    instance validation of a document.
+    """
+    violations: list[str] = []
+    path = bundle / "validator.schema.json"
+    try:
+        document = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        return ["version-pattern-unreadable"]
+    if not isinstance(document, dict):
+        return ["version-pattern-unreadable"]
+    properties = document.get("properties")
+    schema = properties.get("schemaVersion") if isinstance(properties, dict) else None
+    pattern = schema.get("pattern") if isinstance(schema, dict) else None
+    if not isinstance(pattern, str):
+        return ["version-pattern-missing"]
+    try:
+        expression = re.compile(pattern)
+    except re.error:
+        return ["version-pattern-invalid"]
+    for version in ACCEPTED_VERSIONS:
+        if expression.search(version) is None:
+            violations.append(f"version-pattern-rejects:{version!r}")
+    for version in REJECTED_VERSIONS:
+        if expression.search(version) is not None:
+            violations.append(f"version-pattern-accepts:{version!r}")
+    # The component of the patch holds no limit on its length, so a patch
+    # number that the number domain of the IR cannot hold exactly is a valid
+    # version.
+    long_patch = "1.0." + "9" * 5000
+    if expression.search(long_patch) is None:
+        violations.append("version-pattern-rejects-long-patch")
+    return violations
+
+
+def check_image_width(bundle: Path) -> list[str]:
+    """Returns the violations of the rule of the width of an image.
+
+    The IR requires a positive width of an image, and the readers of both
+    SDKs reject a width of zero. The schema must reject it as well, so the
+    width of an image carries an exclusive lower bound of zero, while the
+    length of a margin stays non-negative.
+
+    The check reads the schemas of the built bundle and checks their
+    structure. It is not an instance validation of a document.
+    """
+    violations: list[str] = []
+    node = _read_json(bundle / "definitions" / "node.schema.json")
+    length = _read_json(bundle / "api" / "types" / "length.schema.json")
+    if node is None or length is None:
+        return ["width-schemas-unreadable"]
+    image = _branch_with_type(node, "image")
+    if image is None:
+        return ["width-image-missing"]
+    width = image.get("properties", {}).get("width")
+    if not isinstance(width, dict):
+        return ["width-image-missing"]
+    value = width.get("properties", {}).get("value")
+    if not isinstance(value, dict) or value.get("exclusiveMinimum") != 0:
+        violations.append("width-image-not-positive")
+    if width.get("required") != ["value"]:
+        violations.append("width-image-required")
+    # The length of a margin stays non-negative, so the shared length schema
+    # keeps its lower bound of zero.
+    margin_value = length.get("properties", {}).get("value")
+    if not isinstance(margin_value, dict) or margin_value.get("minimum") != 0:
+        violations.append("width-margin-not-non-negative")
+    if isinstance(margin_value, dict) and "exclusiveMinimum" in margin_value:
+        violations.append("width-margin-not-non-negative")
+    return violations
+
+
+def _read_json(path: Path) -> dict | None:
+    """Reads a JSON object of the bundle, or returns None."""
+    try:
+        document = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        return None
+    return document if isinstance(document, dict) else None
+
+
+def _branch_with_type(document: dict, name: str) -> dict | None:
+    """Returns the branch of the union whose discriminator is the name."""
+    definitions = document.get("$defs")
+    if not isinstance(definitions, dict):
+        return None
+    for definition in definitions.values():
+        if not isinstance(definition, dict):
+            continue
+        branches = definition.get("oneOf")
+        if not isinstance(branches, list):
+            continue
+        for branch in branches:
+            if not isinstance(branch, dict):
+                continue
+            properties = branch.get("properties")
+            if not isinstance(properties, dict):
+                continue
+            discriminator = properties.get("type")
+            if isinstance(discriminator, dict) and discriminator.get("const") == name:
+                return branch
+    return None
+
+
 def main() -> int:
     bundle = find_bundle_root()
     files = sorted(path for path in bundle.rglob("*.json") if path.is_file())
@@ -251,6 +397,9 @@ def main() -> int:
     for identifier, owners in sorted(identifiers.items()):
         if len(owners) > 1:
             violations.append(f"identity-unique:{identifier}")
+
+    violations.extend(check_version_pattern(bundle))
+    violations.extend(check_image_width(bundle))
 
     violations.sort()
 

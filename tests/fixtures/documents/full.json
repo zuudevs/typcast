@@ -1,0 +1,263 @@
+{
+  "schemaVersion": "1.0.0",
+  "metadata": {
+    "title": "Quarterly Report",
+    "author": "Example Corp",
+    "date": "2026-11-24"
+  },
+  "page": {
+    "paper": "a4",
+    "orientation": "landscape",
+    "margin": {
+      "top": {
+        "value": 2,
+        "unit": "cm"
+      },
+      "right": {
+        "value": 20,
+        "unit": "mm"
+      },
+      "bottom": {
+        "value": 56,
+        "unit": "pt"
+      },
+      "left": {
+        "value": 1,
+        "unit": "in"
+      }
+    }
+  },
+  "contents": [
+    {
+      "type": "heading",
+      "level": 1,
+      "content": [
+        {
+          "type": "text",
+          "value": "Quarterly Report"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 6,
+      "content": [
+        {
+          "type": "bold",
+          "content": [
+            {
+              "type": "text",
+              "value": "Deep heading"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "value": "Revenue grew by "
+        },
+        {
+          "type": "bold",
+          "content": [
+            {
+              "type": "text",
+              "value": "12%"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "value": " while costs fell. "
+        },
+        {
+          "type": "italic",
+          "content": [
+            {
+              "type": "text",
+              "value": "See the appendix."
+            }
+          ]
+        },
+        {
+          "type": "monospace",
+          "content": [
+            {
+              "type": "text",
+              "value": "report --format json"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "value": " Details: "
+        },
+        {
+          "type": "link",
+          "href": "https://example.com/report",
+          "content": [
+            {
+              "type": "text",
+              "value": "Report"
+            }
+          ]
+        },
+        {
+          "type": "lineBreak"
+        },
+        {
+          "type": "raw",
+          "format": "math",
+          "value": "x^2 + y^2"
+        }
+      ]
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        [
+          {
+            "type": "text",
+            "value": "First item"
+          }
+        ],
+        [
+          {
+            "type": "text",
+            "value": "Second item"
+          },
+          {
+            "type": "text",
+            "value": " with a note"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        [
+          {
+            "type": "text",
+            "value": "Revenue"
+          }
+        ],
+        [
+          {
+            "type": "text",
+            "value": "Cost"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "columns": [
+        {
+          "header": [
+            {
+              "type": "text",
+              "value": "Metric"
+            }
+          ],
+          "align": "left"
+        },
+        {
+          "header": [
+            {
+              "type": "text",
+              "value": "Value"
+            }
+          ],
+          "align": "right"
+        }
+      ],
+      "rows": [
+        [
+          [
+            {
+              "type": "text",
+              "value": "Revenue"
+            }
+          ],
+          [
+            {
+              "type": "text",
+              "value": "1,200"
+            }
+          ]
+        ],
+        [
+          [
+            {
+              "type": "text",
+              "value": "Cost"
+            }
+          ],
+          [
+            {
+              "type": "text",
+              "value": "800"
+            }
+          ]
+        ]
+      ]
+    },
+    {
+      "type": "image",
+      "path": "figures/revenue.png",
+      "alt": "Revenue chart",
+      "caption": [
+        {
+          "type": "text",
+          "value": "Figure 1"
+        }
+      ],
+      "width": {
+        "value": 12,
+        "unit": "cm"
+      }
+    },
+    {
+      "type": "image",
+      "path": "figures/logo.png",
+      "alt": "Company logo"
+    },
+    {
+      "type": "pageBreak"
+    },
+    {
+      "type": "raw",
+      "format": "markup",
+      "value": "#figure(image(\"logo.png\"), caption: [Logo])"
+    },
+    {
+      "type": "raw",
+      "format": "code",
+      "value": "let x = 1"
+    },
+    {
+      "type": "raw",
+      "format": "math",
+      "value": "integral_0^1 x dif x"
+    }
+  ],
+  "modules": [
+    {
+      "path": "modules/report.typ",
+      "alias": "report"
+    },
+    {
+      "path": "modules/format.typ",
+      "items": [
+        "currency",
+        "percent"
+      ]
+    }
+  ]
+}

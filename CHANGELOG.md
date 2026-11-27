@@ -96,6 +96,30 @@ No release has been published yet. Every change so far is listed under
   the pull request lane and of the main lane.
 - Unit tests for the rules of the repository gate and of the external link
   check.
+- The immutable document model of the Python SDK and of the TypeScript SDK:
+  `Document`, `Metadata`, `Page`, `Margin`, `Length`, `Module`, the seven block
+  types, and the seven inline span types. The Python model uses frozen
+  dataclasses and tuples, and the TypeScript model uses readonly properties,
+  frozen arrays, and runtime checks, so a model instance cannot change after
+  its construction.
+- The JSON reader and the writer of the document IR in both SDKs. The canonical
+  form follows the field order of the contract, uses two-space indentation and
+  a trailing newline, preserves Unicode, and formats the numbers the same way
+  in both languages. The reader rejects an unknown field, a missing required
+  field, an unknown discriminator, and an unsupported schema version.
+- The error hierarchy of the SDKs: `TypcastError` with a diagnostic collection,
+  `ValidationError`, and `SerializationError`, with the diagnostic codes of
+  `docs/specifications/diagnostics.md`.
+- Shared document fixtures under `tests/fixtures/documents/`, with a manifest
+  that names every valid fixture and every negative fixture with the
+  diagnostic code that both SDKs must report.
+- Cross-language contract runners, `//tests/contract:contract_py` and
+  `//tests/contract:contract_ts_test`, which read the same fixtures, write
+  every valid fixture back byte for byte, and compare the diagnostic code of
+  every negative fixture.
+- Unit tests for the document model, `//packages/python/tests:model_tests` and
+  `//packages/typescript:model_test_run`, which cover the immutability, the
+  constructor checks, the canonical JSON form, the reader, and the round trip.
 
 ### Changed
 
@@ -111,6 +135,10 @@ No release has been published yet. Every change so far is listed under
   required fields.
 - The alignment catalog holds the three alignment values of the MVP. The
   remaining Typst alignment values are not part of the contract.
+- The requirements of the document IR, the SDK API, the node catalog, the
+  diagnostics, the repository layout, and the testing layers that the new
+  model, the new fixtures, and the new contract runners prove are marked
+  `IMPLEMENTED`.
 
 ### Fixed
 
@@ -122,11 +150,186 @@ No release has been published yet. Every change so far is listed under
   of an identity and of a raw URL reference, so a suffix such as
   `v1.0.0-invalid` is no longer accepted as a release tag. The patterns are
   identical to the pattern of the publisher.
+- The repository structure checks walked into the Bazel output trees, so a
+  build directory could own a Python module and the SDK isolation check could
+  report a false error. The walk now skips the output trees, and a unit test
+  covers the case.
+- The TypeScript unit test project of the SDK did not carry the manifest of
+  the package as an input. The sandbox of Linux therefore classified the test
+  file as a CommonJS file, and the compilation failed with TS1295 while the
+  build on Windows passed. The manifest is now an input of the project, as it
+  already was for the project of the SDK.
+- The test runners of Node did not carry the compiled SDK in their runfiles.
+  The sandbox of Linux therefore could not resolve the import of the SDK and
+  the run failed with ERR_MODULE_NOT_FOUND while the test on Windows passed.
+  Both runners now declare the compiled SDK and the manifest of the package
+  in their data.
+- The TypeScript SDK read a date with the `Date.UTC` function, which maps a
+  year below 100 to the year 1900 and above. The SDK therefore rejected a
+  date such as `0001-01-01` that the Python SDK accepts. Both SDKs now check
+  the calendar with the same arithmetic.
+- The TypeScript SDK looked a discriminator up with the `in` operator, which
+  accepts an inherited key such as `constructor` or `toString`. Such a value
+  raised a raw `TypeError` instead of the documented diagnostic. The lookup
+  now checks the own keys of the table.
+- The Python SDK wrote a lone surrogate into the canonical JSON text, because
+  Python holds such a character in a string. The result was a text that no
+  UTF-8 encoder can encode. The Python SDK now rejects the value with the
+  same diagnostic as the TypeScript SDK.
+- The Python SDK read a date with a pattern that matches every Unicode
+  decimal digit and that accepts a final newline. A date such as
+  `2026-01-01\n` was therefore accepted by the Python SDK and rejected by the
+  TypeScript SDK. Both SDKs now read the same dates.
+- Both SDKs accepted a title or an author of more than 512 Unicode code
+  points, which the schema of the contract rejects. Both SDKs now check the
+  limit and report it with the new code `TYPCAST-VAL-0013`. The catalog of
+  the diagnostics allows a new code in a minor release.
+- The Python SDK read the schema version with a pattern that matches every
+  Unicode decimal digit and that accepts a final newline. A version such as
+  `١.0.0` or `1.0.0\n` was therefore accepted by the Python SDK and rejected
+  by the TypeScript SDK. Both SDKs now read the same versions.
+- The Python SDK checked a module alias and a module item with a pattern that
+  accepts a final newline. An identifier that ends with a newline was
+  therefore accepted by the Python SDK and rejected by the TypeScript SDK.
+  Both SDKs now accept the same identifiers.
+- The Python SDK held a length value as an arbitrary precision integer, so a
+  value that the binary64 number domain cannot hold exactly was rounded when
+  the canonical text was written. The document in the model and the document
+  in the text were therefore different, and the round trip did not preserve
+  the document. Both SDKs now hold the numbers of a document in the binary64
+  domain of ECMAScript, so a value that the domain cannot hold is narrowed
+  the same way in both SDKs, and a value that overflows the domain is
+  rejected in both SDKs.
+- The Python SDK rejected a JSON number with a zero fractional part, such as
+  the level `1.0` of a heading, while the TypeScript SDK accepted it. A JSON
+  integer is a number without a fractional part, so both SDKs now accept the
+  same values.
+- The TypeScript SDK parsed the lengths of a margin and the optional fields of
+  an image inside the factory of the construction helper, so the path of a
+  failing child was prefixed a second time. An error of the length of the top
+  margin was reported at `/page/margin/page/margin/top/value` instead of
+  `/page/margin/top/value`, and the path differed from the path of the Python
+  SDK. Both SDKs now report the path of the failing field.
+- Both SDKs formed the path of an unknown field without escaping the name, so
+  a property named `bad/name` produced the pointer `/bad/name` instead of
+  `/bad~1name`. Both SDKs now escape the name as RFC 6901 defines it.
+- The Python SDK stored a runtime value of an unknown type in the details of a
+  diagnostic, so the details of that diagnostic could not be serialized to
+  JSON. Both SDKs now keep only a JSON-serializable representation of such a
+  value, and the representation of the two SDKs agrees.
+- The Python SDK built the path of an unknown field without checking the type
+  of the key, so a mapping with a key that is not a string raised a raw
+  `AttributeError` instead of a diagnostic. The reader now rejects such a
+  mapping with the documented diagnostic.
+- The Python SDK kept a number that is not finite in the details of a
+  diagnostic, and such a number has no token in JSON. Both SDKs now spell a
+  number that is not finite in the form of ECMAScript, so the details of both
+  SDKs stay JSON-serializable.
+- The Python SDK read a JSON integer token of more than 4300 digits with the
+  integer parser of the interpreter, which reports such a token as malformed
+  JSON. The token is valid JSON, and the TypeScript reader reads it as an
+  infinity. The Python SDK now reads every integer token in the number domain
+  of the IR, so both SDKs report the same overflow.
+- The Python SDK checked the type of an item of a module before it checked the
+  item itself, so an item of another type reported the diagnostic of a wrong
+  element type, while the TypeScript SDK reports the diagnostic of the module
+  item. Both SDKs now report the diagnostic of the module item.
+- Both SDKs accepted an image whose width is zero, while the IR requires a
+  positive width. Both SDKs now reject a width of zero with the documented
+  diagnostic, and the requirement `IR-022` and the negative fixture
+  `invalid-image-width.json` record the rule.
+- The Python SDK converted a component of the schema version with the integer
+  parser of the interpreter, which reports a component of more than 4300
+  digits as a raw error. The component is a number of the IR, so it lives in
+  the binary64 domain of ECMAScript, in which such a number is an infinity.
+  Both SDKs now read the same components and accept and reject the same
+  versions.
+- The TypeScript SDK read the discriminator of a block or a span from the
+  value itself, so a property that the prototype of the value supplies was
+  accepted as a discriminator. The Python SDK reads only the own keys of a
+  mapping, so both SDKs now require an own discriminator.
+- Neither SDK exported the version of its package, although the API of
+  `docs/specifications/sdk-api.md` names `typcast.__version__` and the
+  TypeScript `VERSION` export. Both package roots now export the version of
+  the package, the requirement `API-026` records the rule, and the repository
+  gate compares every export with the manifest of its package.
+- Both SDKs accepted a schema version whose component held a leading zero,
+  such as `01.0.0`, while a semantic version holds none. Both SDKs now reject
+  such a version, and the negative fixture `version-leading-zero.json` records
+  the rule.
+- The Python SDK rendered the rejected value of a module alias or of a length
+  unit in the message of a diagnostic, so an integer of more than 4300 digits
+  raised a raw error of the interpreter instead of a diagnostic. Both SDKs now
+  render the value in a bounded form, so the message stays readable and the
+  details of the diagnostic stay JSON-serializable.
+- The two SDKs reported an invalid input in different words. The Python SDK
+  named the rejected value of an invalid enum, while the TypeScript SDK named
+  it in no message at all, and the Python SDK called a collection a sequence
+  while the TypeScript SDK called it an array. Both SDKs now use the same
+  wording, and the requirement `DIAG-015` records the rule. The manifest of
+  the shared fixtures names the message of every negative fixture, so a drift
+  in the wording fails the contract tests.
+- The message of a malformed JSON text quoted the reason of the parser of the
+  runtime, and the two parsers word their reason differently. Both SDKs now
+  write the same message, and the reason belongs to the details of the
+  diagnostic.
+- The Python SDK added the text of the exception of the runtime to the details
+  of the diagnostic of an impossible date, while the TypeScript SDK named the
+  rejected value only. Both SDKs now write the same details, and the
+  requirement `DIAG-016` records the rule. The manifest of the shared fixtures
+  names the details of every negative fixture, so a drift in the details fails
+  the contract tests.
+- The two SDKs showed a rejected value in no canonical form, so a value that
+  holds a quote, a backslash, or a control character broke the text of the
+  message, and a value that holds a supplementary character was cut in the
+  middle of the character. Both SDKs now show the value in the same escaped
+  form, and the text holds at most 64 Unicode code points. The requirement
+  `DIAG-017` records the rule.
+- The pattern of `schemaVersion` in `validator.schema.json` accepted a version
+  with a leading zero, a Unicode digit, and a trailing newline or carriage
+  return, while the readers of the SDKs rejected them. The pattern now matches
+  the whole text of a semantic version, and the requirement `SCH-022` records
+  the rule.
+- The Python SDK wrote a number in the canonical text with the format of the
+  interpreter, so a number such as `1e-7` and a number such as `1e+21` were
+  written in another form than the TypeScript SDK wrote them. The Python SDK
+  now writes every number in the format of ECMAScript, so the canonical text
+  of a document is the same in both SDKs.
+- The Python SDK checked the encodability of a document only when it wrote the
+  canonical text, so the JSON value of a document could hold a character that
+  UTF-8 cannot encode. The check now runs on every public path of both SDKs.
+- The details of the diagnostic of a mapping with a key that is not a string
+  named the type of the key in the language of the SDK, and the TypeScript SDK
+  accepted an object with a symbol key. Both SDKs now report the same
+  details, `{"keyType": "non-string"}`, and the TypeScript SDK rejects such an
+  object with the same diagnostic as the Python SDK.
+- The schema accepted an image whose width is zero, because the width of an
+  image referenced the shared length schema, whose lower bound of zero is the
+  bound of a margin, while the readers of the SDKs and the IR require a
+  positive width of an image. The width of an image now carries an exclusive
+  lower bound of zero, the length of a margin stays non-negative, and the
+  requirement `SCH-023` records the rule.
+- The Python SDK lost the sign of an integer that overflows the binary64
+  number domain of ECMAScript, because the conversion of such an integer to a
+  float raises an error of the interpreter, and the fallback returned a
+  positive infinity for every sign. A length whose value was a negative
+  integer of more than 400 digits therefore reported `{"value": "Infinity"}`
+  in its details, while the TypeScript SDK reported `{"value": "-Infinity"}`.
+  The conversion now keeps the sign, exactly as the conversion of a number of
+  ECMAScript does, and the canonical format of a number follows the same rule.
+- The shared fixtures held no case for a quoted value, a control character, a
+  supplementary character, a long value, a version that ends with a newline, a
+  number at the boundary of the binary64 domain, a lone surrogate, a key that
+  is not a string, and an integer token that the interpreter cannot convert.
+  The fixtures and the manifest of their expectations now cover these cases,
+  and both contract runners compare the code, the path, the message, and the
+  details of every one of them.
 
 ### Known issues
 
 - The project does not validate a document against the schema yet. That needs
   a JSON Schema implementation that the repository does not depend on.
-- The Typcast SDK core, the packaging targets for the wheel, the source
-  distribution, and the npm tarball, and the publishing jobs of the release
-  workflow are not implemented.
+- The builder, the validation engine, the Typst emitter, the Typst compiler
+  adapter, the packaging targets for the wheel, the source distribution, and
+  the npm tarball, and the publishing jobs of the release workflow are not
+  implemented.

@@ -1,0 +1,76 @@
+load("@aspect_rules_js//js:defs.bzl", "js_test")
+load("@aspect_rules_ts//ts:defs.bzl", "ts_project")
+load("@rules_python//python:defs.bzl", "py_test")
+
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+# The TypeScript contract runner. It reads the shared fixtures and the
+# manifest, so it depends on the fixture filegroup and on the TypeScript SDK.
+# The runner uses the `.mts` extension, so TypeScript classifies it as an
+# ECMAScript module without a `package.json` next to it, and Node runs the
+# emitted `.mjs` as an ECMAScript module in every sandbox.
+ts_project(
+    name = "contract_ts",
+    srcs = [
+        "contract.test.mts",
+        "node_shims.d.ts",
+    ],
+    tsconfig = {
+        "compilerOptions": {
+            "target": "ES2022",
+            "module": "NodeNext",
+            "moduleResolution": "NodeNext",
+            "strict": True,
+            "noImplicitOverride": True,
+            "noUncheckedIndexedAccess": True,
+            "exactOptionalPropertyTypes": True,
+            "forceConsistentCasingInFileNames": True,
+            "verbatimModuleSyntax": True,
+            "skipLibCheck": True,
+            "declaration": False,
+            "types": [],
+        },
+    },
+    transpiler = "tsc",
+    deps = [
+        "//packages/typescript:typcast",
+    ],
+)
+
+# The runner needs the compiled SDK and the manifest of the package in its
+# runfiles. The runner imports the SDK with a relative path, so it can only
+# find it when the tree of the runfiles holds it. The manifest makes Node
+# classify the compiled files as ECMAScript modules, the same way the
+# compilation of TypeScript does. The manifest is a source file of another
+# package, so it cannot be copied to the output tree by the test rule.
+js_test(
+    name = "contract_ts_test",
+    entry_point = ":contract_ts",
+    data = [
+        "//packages/typescript:package.json",
+        "//packages/typescript:typcast",
+        "//tests/fixtures:document_fixtures",
+    ],
+    no_copy_to_bin = [
+        "//packages/typescript:package.json",
+    ],
+)
+
+# The Python contract runner. It reads the same shared fixtures and the same
+# manifest as the TypeScript runner.
+py_test(
+    name = "contract_py",
+    size = "small",
+    srcs = [
+        "test_contract.py",
+    ],
+    main = "test_contract.py",
+    data = [
+        "//tests/fixtures:documents",
+    ],
+    deps = [
+        "//packages/python:typcast",
+    ],
+)

@@ -1,12 +1,12 @@
 # Typcast documentation
 
 Status: living index
-Last updated: 2026-11-24
+Last updated: 2026-11-25
 
 This directory contains the product, architecture, contract, and engineering
 documentation for Typcast. The documents describe the approved MVP baseline. They
-do not claim that the SDK, emitter, compiler adapter, packaging, or CI workflows
-are implemented.
+do not claim that the builder, the emitter, the compiler adapter, the packaging,
+or the CI workflows are implemented.
 
 ## Reading order
 
@@ -100,8 +100,8 @@ requirement ID and a status of `CONFIRMED` or `IMPLEMENTED`.
 
 | Area | Current state | Evidence |
 |---|---|---|
-| Bazel build | Implemented | `bazel build //...` succeeds with 39 targets. |
-| Bazel test | Implemented for codegen, the publisher, the release version check, the release preparation, the release rehearsal, the repository structure checks, the documentation checks, the link check, the schema bundle, and the release tag | `bazel test //...` runs eleven test targets: sixteen unittest cases, 45 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 42 repository structure cases, 4 release tag cases, 32 documentation gate cases, 4 link check cases, the documentation check, and the schema bundle check. |
+| Bazel build | Implemented | `bazel build //...` succeeds with 59 targets. |
+| Bazel test | Implemented for codegen, the publisher, the release version check, the release preparation, the release rehearsal, the repository structure checks, the documentation checks, the link check, the schema bundle, the release tag, the document model, and the cross-language contract | `bazel test //...` runs seventeen of the nineteen test rules, because the two transitive type-check rules are tagged `manual`: sixteen unittest cases, 45 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 47 repository structure cases, 4 release tag cases, 32 documentation gate cases, 4 link check cases, the documentation check, the schema bundle check, 125 document model cases, 12 contract fixture cases, and the TypeScript model, contract, and type-check targets. |
 | Documentation checks | Implemented | `//scripts:docs_checks` validates the documents, the Markdown structure, the Mermaid diagrams, the requirement index, the ADR index, the schema references, the workflow files, and the CODEOWNERS file. |
 | Repository structure checks | Implemented | `//scripts:repository_checks` validates the dependency direction, the Python packages, the toolchain, the committed lock file, the TypeScript compiler version, the ADR template, the committed generated schemas, the Bazel package structure, the pinned Bazel version, the security configuration, the npm package name, and the scope document. |
 | External link check | Implemented | `//scripts:check_links` checks the external links with a timeout and reports warnings only. |
@@ -112,9 +112,10 @@ requirement ID and a status of `CONFIRMED` or `IMPLEMENTED`.
 | Schema archive | Implemented | `//specs/schemas:archive` builds a deterministic gzip tarball of the bundle. |
 | Release version check | Implemented | `//scripts:check_version` compares the manifests, the contract version of every schema source, and the changelog with the tag. |
 | Release preparation | Implemented | `//scripts:prepare_release` sets the release version, publishes the bundle under `specs/schemas/`, verifies the result, and removes the generated published files from the development branch. |
-| Python SDK | Placeholder | `packages/python/src/typcast/__init__.py` is empty. |
-| TypeScript SDK | Placeholder | `packages/typescript/src/index.ts` is empty and the package is private. |
-| Document model, builder, emitter | Not implemented | No source files exist. |
+| Python SDK | Implemented for the document model | `packages/python/src/typcast/` holds the immutable model, the diagnostics, and the JSON serialization. The builder, the emitter, the compiler adapter, and the validation engine are not implemented. |
+| TypeScript SDK | Implemented for the document model | `packages/typescript/src/` holds the immutable model, the diagnostics, and the JSON serialization. The package is still private. |
+| Document model | Implemented | The immutable model of both SDKs, with the JSON reader and writer. |
+| Builder API, emitter, compiler adapter | Not implemented | No source files exist. |
 | Typst compiler adapter | Not implemented | No source files or tests exist. |
 | Packaging and release | Not implemented | No wheel, npm tarball, or publishing job exists. |
 | Schema distribution | Decided, tooling implemented | Versioned raw URLs at the release tag; see ADR-0022 and ADR-0023. The publisher, the release preparation, and the release lane carry the distribution. No release exists yet. |
@@ -145,6 +146,6 @@ requirements. The decisions that closed the previously open items are listed in
 the "Resolved decisions" table in `requirements/traceability.md`, and the
 architecture-level decisions are recorded as ADR-0014 through ADR-0023.
 
-The remaining gaps are implementation gaps, not decision gaps: the SDK,
-emitter, compiler adapter, packaging targets, CI workflows, and release
-process do not exist yet.
+The remaining gaps are implementation gaps, not decision gaps: the builder,
+the emitter, the compiler adapter, the validation engine, the packaging targets,
+and the release process do not exist yet.

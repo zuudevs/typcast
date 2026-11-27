@@ -1,0 +1,313 @@
+"""Shared helpers and base classes of the immutable document model.
+
+The helpers implement the model-level invariants of the IR: argument types,
+allowed enum values, and the element types of collections. The rules that
+belong to the document validation layer, such as the table shape, the asset
+paths, and the raw size limit, are deliberately not implemented here.
+"""
+
+from __future__ import annotations
+
+import math
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, ClassVar, Iterable, Sequence, TypeVar
+
+from typcast.diagnostics import (
+    CODE_EMPTY_CONTENT,
+    CODE_INVALID_ENUM,
+    CODE_REQUIRED_FIELD,
+    CODE_STRING_TOO_LONG,
+    raise_validation,
+    safe_text,
+    safe_value,
+)
+from typcast.numbers import to_binary64
+
+__all__ = [
+    "Block",
+    "Span",
+    "require_bool",
+    "require_bounded_string",
+    "require_enum",
+    "require_instance",
+    "require_int",
+    "require_number",
+    "require_sequence",
+    "require_string",
+    "require_tuple",
+    "to_binary64",
+]
+
+T = TypeVar("T")
+
+
+def _article(name: str) -> str:
+    """Returns the article that a name of a type needs."""
+    return "an" if name[:1].lower() in "aeiou" else "a"
+
+
+def _element_plural(name: str) -> str:
+    """Returns the name of the elements of a collection, in the plural.
+
+    The TypeScript SDK applies the same rule, so that the message of a
+    diagnostic is the same in both SDKs.
+    """
+    if name == "array":
+        return "arrays"
+    if name.startswith("array of "):
+        return f"arrays of {name[len('array of '):]}"
+    return f"{name} values"
+
+
+def require_string(
+    value: Any,
+    path: str,
+    *,
+    allow_empty: bool = False,
+) -> str:
+    """Returns a string argument after checking its type and length."""
+    if not isinstance(value, str):
+        raise_validation(
+            CODE_REQUIRED_FIELD,
+            f"'{path}' must be a string.",
+            path,
+        )
+    if not allow_empty and not value:
+        raise_validation(
+            CODE_EMPTY_CONTENT,
+            f"'{path}' must not be empty.",
+            path,
+        )
+    return value
+
+
+def require_bounded_string(
+    value: Any,
+    path: str,
+    max_length: int,
+    *,
+    allow_empty: bool = False,
+) -> str:
+    """Returns a string argument after checking its type and its length.
+
+    The length is counted in Unicode code points, as the contract counts it.
+    A Python string counts code points, while a JavaScript string counts
+    code units, so the TypeScript SDK counts the code points itself.
+    """
+    text = require_string(value, path, allow_empty=allow_empty)
+    if len(text) > max_length:
+        raise_validation(
+            CODE_STRING_TOO_LONG,
+            f"'{path}' must not hold more than {max_length} code points.",
+            path,
+            {"maxLength": max_length, "length": len(text)},
+        )
+    return text
+
+
+def require_enum(
+    value: Any,
+    allowed: Iterable[str],
+    path: str,
+) -> str:
+    """Returns an enum argument after checking that it is a known literal."""
+    names = sorted(allowed)
+    if not isinstance(value, str):
+        raise_validation(
+            CODE_INVALID_ENUM,
+            f"'{path}' must be one of {', '.join(names)}.",
+            path,
+            {"allowed": names},
+        )
+    if value not in names:
+        # The rejected value is shown in a bounded form, so that the message
+        # of the diagnostic stays readable. The TypeScript SDK applies the
+        # same rule.
+        raise_validation(
+            CODE_INVALID_ENUM,
+            f"'{path}' must be one of {', '.join(names)}, got '{safe_text(value)}'.",
+            path,
+            {"allowed": names, "value": safe_value(value)},
+        )
+    return value
+
+
+def require_instance(
+    value: Any,
+    expected: type[T],
+    path: str,
+    *,
+    name: str | None = None,
+) -> T:
+    """Returns a model argument after checking its type.
+
+    The name of the expected type is the name of the class, unless the
+    caller names another one. The TypeScript SDK applies the same rule.
+    """
+    label = name if name is not None else expected.__name__
+    if not isinstance(value, expected):
+        raise_validation(
+            CODE_REQUIRED_FIELD,
+            f"'{path}' must be {_article(label)} {label}.",
+            path,
+            {"expected": label},
+        )
+    return value
+
+
+def require_bool(value: Any, path: str) -> bool:
+    """Returns a boolean argument after checking its type."""
+    if not isinstance(value, bool):
+        raise_validation(
+            CODE_REQUIRED_FIELD,
+            f"'{path}' must be a boolean.",
+            path,
+        )
+    return value
+
+
+def require_int(value: Any, path: str) -> int:
+    """Returns an integer argument after checking its type.
+
+    An integer of the document IR is a number without a fractional part, as
+    the `Number.isInteger` function of JavaScript defines it, so a value of
+    `1.0` is an integer. A Python integer is narrowed to the number domain of
+    the IR first, because that domain holds the numbers of a document.
+    """
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise_validation(
+            CODE_REQUIRED_FIELD,
+            f"'{path}' must be an integer.",
+            path,
+        )
+    number = to_binary64(value) if isinstance(value, int) else value
+    if not math.isfinite(number) or not number.is_integer():
+        raise_validation(
+            CODE_REQUIRED_FIELD,
+            f"'{path}' must be an integer.",
+            path,
+        )
+    return int(number)
+
+
+def require_number(value: Any, path: str) -> float:
+    """Returns a numeric argument after checking its type.
+
+    The value is narrowed to the number domain of the IR, so that the number
+    in the model is the number that the canonical text holds.
+    """
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise_validation(
+            CODE_REQUIRED_FIELD,
+            f"'{path}' must be a number.",
+            path,
+        )
+    number = to_binary64(value) if isinstance(value, int) else value
+    if not math.isfinite(number):
+        raise_validation(
+            CODE_REQUIRED_FIELD,
+            f"'{path}' must be a finite number.",
+            path,
+        )
+    return number
+
+
+def require_sequence(
+    value: Any,
+    path: str,
+    *,
+    allow_empty: bool = True,
+    element_name: str | None = None,
+) -> tuple[Any, ...]:
+    """Returns a copied tuple after checking that the value is a sequence.
+
+    The elements are not checked. A caller that accepts more than one kind of
+    element checks every element itself. The name of the expected element is
+    the name of the type of the elements, unless the caller names another one.
+    The TypeScript SDK applies the same rule.
+    """
+    if isinstance(value, (str, bytes)) or not isinstance(value, Sequence):
+        if element_name is None:
+            raise_validation(
+                CODE_REQUIRED_FIELD,
+                f"'{path}' must be an array.",
+                path,
+            )
+        raise_validation(
+            CODE_REQUIRED_FIELD,
+            f"'{path}' must be an array of {_element_plural(element_name)}.",
+            path,
+            {"expected": element_name},
+        )
+    items = tuple(value)
+    if not allow_empty and not items:
+        raise_validation(
+            CODE_EMPTY_CONTENT,
+            f"'{path}' must not be empty.",
+            path,
+        )
+    return items
+
+
+def require_tuple(
+    value: Any,
+    expected: type[T],
+    path: str,
+    *,
+    allow_empty: bool = True,
+    element_name: str | None = None,
+) -> tuple[T, ...]:
+    """Returns a copied tuple after checking the type of every element.
+
+    The name of the expected element is the name of the class, unless the
+    caller names another one. The TypeScript SDK applies the same rule.
+    """
+    label = element_name if element_name is not None else expected.__name__
+    if isinstance(value, (str, bytes)) or not isinstance(value, Sequence):
+        raise_validation(
+            CODE_REQUIRED_FIELD,
+            f"'{path}' must be an array of {_element_plural(label)}.",
+            path,
+            {"expected": label},
+        )
+    items = tuple(value)
+    for index, item in enumerate(items):
+        # A string is a sequence of characters, not a sequence of elements,
+        # so it is rejected here, exactly as the TypeScript SDK rejects it.
+        if isinstance(item, (str, bytes)) or not isinstance(item, expected):
+            raise_validation(
+                CODE_REQUIRED_FIELD,
+                f"'{path}/{index}' must be {_article(label)} {label}.",
+                f"{path}/{index}",
+                {"expected": label},
+            )
+    if not allow_empty and not items:
+        raise_validation(
+            CODE_EMPTY_CONTENT,
+            f"'{path}' must not be empty.",
+            path,
+        )
+    return items
+
+
+@dataclass(frozen=True)
+class Span(ABC):
+    """The base class of every inline span."""
+
+    type: ClassVar[str] = ""
+
+    @abstractmethod
+    def to_dict(self) -> dict[str, Any]:
+        """Returns the JSON value of the span."""
+
+
+@dataclass(frozen=True)
+class Block(ABC):
+    """The base class of every block."""
+
+    type: ClassVar[str] = ""
+
+    @abstractmethod
+    def to_dict(self) -> dict[str, Any]:
+        """Returns the JSON value of the block."""

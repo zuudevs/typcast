@@ -1,0 +1,393 @@
+{
+  "version": 2,
+  "description": "Shared document IR fixtures. Both SDKs read this manifest and the files it names. Every negative fixture names the code, the path, the message, and the details that the diagnostic must carry.",
+  "valid": [
+    {
+      "file": "minimal.json"
+    },
+    {
+      "file": "full.json"
+    },
+    {
+      "file": "nested.json"
+    },
+    {
+      "file": "empty-collections.json"
+    },
+    {
+      "file": "modules.json"
+    },
+    {
+      "file": "unicode.json"
+    },
+    {
+      "file": "patch-version.json"
+    },
+    {
+      "file": "large-number.json"
+    },
+    {
+      "file": "binary64-boundary.json"
+    }
+  ],
+  "invalid": [
+    {
+      "file": "malformed.txt",
+      "code": "TYPCAST-IR-0001",
+      "path": null,
+      "message": "The source is not valid JSON.",
+      "details": {}
+    },
+    {
+      "file": "root-array.json",
+      "code": "TYPCAST-IR-0004",
+      "path": null,
+      "message": "'/' must be a JSON object.",
+      "details": {}
+    },
+    {
+      "file": "missing-version.json",
+      "code": "TYPCAST-VAL-0001",
+      "path": "/schemaVersion",
+      "message": "'/schemaVersion' is required.",
+      "details": {
+        "field": "schemaVersion"
+      }
+    },
+    {
+      "file": "unsupported-version.json",
+      "code": "TYPCAST-IR-0002",
+      "path": "/schemaVersion",
+      "message": "'schemaVersion' '2.0.0' is not supported; this SDK reads 1.0.x.",
+      "details": {
+        "value": "2.0.0",
+        "supportedMajor": 1,
+        "supportedMinor": 0
+      }
+    },
+    {
+      "file": "malformed-version.json",
+      "code": "TYPCAST-IR-0002",
+      "path": "/schemaVersion",
+      "message": "'schemaVersion' must be a semantic version, got '1.0'.",
+      "details": {
+        "value": "1.0"
+      }
+    },
+    {
+      "file": "version-leading-zero.json",
+      "code": "TYPCAST-IR-0002",
+      "path": "/schemaVersion",
+      "message": "'schemaVersion' must be a semantic version, got '01.0.0'.",
+      "details": {
+        "value": "01.0.0"
+      }
+    },
+    {
+      "file": "unknown-root-field.json",
+      "code": "TYPCAST-VAL-0002",
+      "path": "/theme",
+      "message": "'/theme' is not a known field.",
+      "details": {
+        "field": "theme"
+      }
+    },
+    {
+      "file": "missing-metadata.json",
+      "code": "TYPCAST-VAL-0001",
+      "path": "/metadata",
+      "message": "'/metadata' is required.",
+      "details": {
+        "field": "metadata"
+      }
+    },
+    {
+      "file": "unknown-node-field.json",
+      "code": "TYPCAST-VAL-0002",
+      "path": "/contents/0/style",
+      "message": "'/contents/0/style' is not a known field.",
+      "details": {
+        "field": "style"
+      }
+    },
+    {
+      "file": "unknown-discriminator.json",
+      "code": "TYPCAST-VAL-0003",
+      "path": "/contents/0/type",
+      "message": "'/contents/0/type' must be one of heading, image, list, pageBreak, paragraph, raw, table.",
+      "details": {
+        "allowed": [
+          "heading",
+          "image",
+          "list",
+          "pageBreak",
+          "paragraph",
+          "raw",
+          "table"
+        ]
+      }
+    },
+    {
+      "file": "inherited-discriminator.json",
+      "code": "TYPCAST-VAL-0003",
+      "path": "/contents/0/type",
+      "message": "'/contents/0/type' must be one of heading, image, list, pageBreak, paragraph, raw, table.",
+      "details": {
+        "allowed": [
+          "heading",
+          "image",
+          "list",
+          "pageBreak",
+          "paragraph",
+          "raw",
+          "table"
+        ]
+      }
+    },
+    {
+      "file": "invalid-orientation.json",
+      "code": "TYPCAST-VAL-0003",
+      "path": "/page/orientation",
+      "message": "'/orientation' must be one of landscape, portrait, got 'diagonal'.",
+      "details": {
+        "allowed": [
+          "landscape",
+          "portrait"
+        ],
+        "value": "diagonal"
+      }
+    },
+    {
+      "file": "invalid-length.json",
+      "code": "TYPCAST-VAL-0004",
+      "path": "/page/margin/top/value",
+      "message": "'/value' must not be negative, got -1.",
+      "details": {
+        "value": -1
+      }
+    },
+    {
+      "file": "invalid-image-width.json",
+      "code": "TYPCAST-VAL-0004",
+      "path": "/contents/0/width/value",
+      "message": "'/width/value' must be greater than zero, got 0.",
+      "details": {
+        "value": 0
+      }
+    },
+    {
+      "file": "invalid-heading-level.json",
+      "code": "TYPCAST-VAL-0005",
+      "path": "/contents/0/level",
+      "message": "'/level' must be between 1 and 6, got 7.",
+      "details": {
+        "value": 7
+      }
+    },
+    {
+      "file": "empty-content.json",
+      "code": "TYPCAST-VAL-0006",
+      "path": "/contents/0/content",
+      "message": "'/content' must not be empty.",
+      "details": {}
+    },
+    {
+      "file": "empty-text.json",
+      "code": "TYPCAST-VAL-0006",
+      "path": "/contents/0/content/0/value",
+      "message": "'/value' must not be empty.",
+      "details": {}
+    },
+    {
+      "file": "invalid-module-alias.json",
+      "code": "TYPCAST-VAL-0008",
+      "path": "/modules/0/alias",
+      "message": "'/alias' must match [A-Za-z_][A-Za-z0-9_]*, got '1report'.",
+      "details": {
+        "value": "1report"
+      }
+    },
+    {
+      "file": "module-alias-and-items.json",
+      "code": "TYPCAST-VAL-0009",
+      "path": "/modules/0/alias",
+      "message": "'/alias' and '/items' must not both be set.",
+      "details": {}
+    },
+    {
+      "file": "invalid-date.json",
+      "code": "TYPCAST-VAL-0011",
+      "path": "/metadata/date",
+      "message": "'/date' is not a calendar date: '2026-02-30'.",
+      "details": {
+        "value": "2026-02-30"
+      }
+    },
+    {
+      "file": "invalid-title-length.json",
+      "code": "TYPCAST-VAL-0013",
+      "path": "/metadata/title",
+      "message": "'/title' must not hold more than 512 code points.",
+      "details": {
+        "maxLength": 512,
+        "length": 513
+      }
+    },
+    {
+      "file": "invalid-type.json",
+      "code": "TYPCAST-IR-0004",
+      "path": "/contents",
+      "message": "'/contents' must be a JSON array.",
+      "details": {}
+    },
+    {
+      "file": "date-quoted.json",
+      "code": "TYPCAST-VAL-0011",
+      "path": "/metadata/date",
+      "message": "'/date' must be a calendar date in YYYY-MM-DD form, got '2026-01-01\\'\\\"\\\\'.",
+      "details": {
+        "value": "2026-01-01'\"\\"
+      }
+    },
+    {
+      "file": "date-control-chars.json",
+      "code": "TYPCAST-VAL-0011",
+      "path": "/metadata/date",
+      "message": "'/date' must be a calendar date in YYYY-MM-DD form, got '2026-01-01\\n\\r\\t'.",
+      "details": {
+        "value": "2026-01-01\n\r\t"
+      }
+    },
+    {
+      "file": "date-long.json",
+      "code": "TYPCAST-VAL-0011",
+      "path": "/metadata/date",
+      "message": "'/date' must be a calendar date in YYYY-MM-DD form, got '2026-00000000000000000000000000000000000000000000000000000000000…'.",
+      "details": {
+        "value": "2026-00000000000000000000000000000000000000000000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "file": "date-unicode.json",
+      "code": "TYPCAST-VAL-0011",
+      "path": "/metadata/date",
+      "message": "'/date' must be a calendar date in YYYY-MM-DD form, got '2026-01-01😀'.",
+      "details": {
+        "value": "2026-01-01😀"
+      }
+    },
+    {
+      "file": "date-trailing-newline.json",
+      "code": "TYPCAST-VAL-0011",
+      "path": "/metadata/date",
+      "message": "'/date' must be a calendar date in YYYY-MM-DD form, got '2026-01-01\\n'.",
+      "details": {
+        "value": "2026-01-01\n"
+      }
+    },
+    {
+      "file": "version-quoted.json",
+      "code": "TYPCAST-IR-0002",
+      "path": "/schemaVersion",
+      "message": "'schemaVersion' must be a semantic version, got '1.0.0\\'\\\"\\\\'.",
+      "details": {
+        "value": "1.0.0'\"\\"
+      }
+    },
+    {
+      "file": "version-control-chars.json",
+      "code": "TYPCAST-IR-0002",
+      "path": "/schemaVersion",
+      "message": "'schemaVersion' must be a semantic version, got '1.0.0\\n\\r\\t'.",
+      "details": {
+        "value": "1.0.0\n\r\t"
+      }
+    },
+    {
+      "file": "version-long.json",
+      "code": "TYPCAST-IR-0002",
+      "path": "/schemaVersion",
+      "message": "'schemaVersion' must be a semantic version, got '1.0.999999999999999999999999999999999999999999999999999999999999…'.",
+      "details": {
+        "value": "1.0.9999999999999999999999999999999999999999999999999999999999999999999999x"
+      }
+    },
+    {
+      "file": "version-trailing-newline.json",
+      "code": "TYPCAST-IR-0002",
+      "path": "/schemaVersion",
+      "message": "'schemaVersion' must be a semantic version, got '1.0.0\\n'.",
+      "details": {
+        "value": "1.0.0\n"
+      }
+    },
+    {
+      "file": "enum-quoted.json",
+      "code": "TYPCAST-VAL-0003",
+      "path": "/page/orientation",
+      "message": "'/orientation' must be one of landscape, portrait, got 'di\\'\\\"\\\\'.",
+      "details": {
+        "allowed": [
+          "landscape",
+          "portrait"
+        ],
+        "value": "di'\"\\"
+      }
+    },
+    {
+      "file": "enum-control-chars.json",
+      "code": "TYPCAST-VAL-0003",
+      "path": "/page/orientation",
+      "message": "'/orientation' must be one of landscape, portrait, got 'di\\n\\r\\t'.",
+      "details": {
+        "allowed": [
+          "landscape",
+          "portrait"
+        ],
+        "value": "di\n\r\t"
+      }
+    },
+    {
+      "file": "enum-long.json",
+      "code": "TYPCAST-VAL-0003",
+      "path": "/page/orientation",
+      "message": "'/orientation' must be one of landscape, portrait, got 'diiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii…'.",
+      "details": {
+        "allowed": [
+          "landscape",
+          "portrait"
+        ],
+        "value": "diiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii"
+      }
+    },
+    {
+      "file": "oversized-number.json",
+      "code": "TYPCAST-IR-0004",
+      "path": "/page/margin/top/value",
+      "message": "'/page/margin/top/value' must be a finite JSON number.",
+      "details": {}
+    }
+  ],
+  "unserializable": [
+    {
+      "file": "unpaired-surrogate.json",
+      "code": "TYPCAST-IR-0003",
+      "path": "/metadata/title",
+      "message": "'/metadata/title' holds a surrogate that UTF-8 cannot encode.",
+      "details": {}
+    }
+  ],
+  "invalid_object": [
+    {
+      "file": "non-string-key.json",
+      "case": "non-string-key",
+      "at": "/metadata",
+      "code": "TYPCAST-IR-0004",
+      "path": "/metadata",
+      "message": "'/metadata' must be a JSON object whose keys are strings.",
+      "details": {
+        "keyType": "non-string"
+      }
+    }
+  ]
+}

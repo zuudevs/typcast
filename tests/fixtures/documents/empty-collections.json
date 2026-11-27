@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0.0",
+  "metadata": {
+    "title": "Empty collections"
+  },
+  "page": {
+    "paper": "a5",
+    "orientation": "portrait",
+    "margin": {
+      "top": {
+        "value": 0,
+        "unit": "pt"
+      },
+      "right": {
+        "value": 0,
+        "unit": "pt"
+      },
+      "bottom": {
+        "value": 0,
+        "unit": "pt"
+      },
+      "left": {
+        "value": 0,
+        "unit": "pt"
+      }
+    }
+  },
+  "contents": [
+    {
+      "type": "table",
+      "columns": [
+        {
+          "header": [],
+          "align": "left"
+        }
+      ],
+      "rows": [
+        [
+          []
+        ]
+      ]
+    }
+  ],
+  "modules": []
+}

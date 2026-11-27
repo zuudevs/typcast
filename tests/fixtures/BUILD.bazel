@@ -1,0 +1,29 @@
+load("@aspect_rules_js//js:defs.bzl", "js_library")
+
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+# The shared document IR fixtures. Both SDKs read the same files, so the
+# manifest and the documents it names are the single source of truth of the
+# cross-language contract tests.
+filegroup(
+    name = "documents",
+    srcs = glob([
+        "documents/*.json",
+        "documents/*.txt",
+    ]),
+)
+
+# The JavaScript toolchain copies the fixtures of a `filegroup` into the
+# output tree only when the target holds them in a `js_library`.
+js_library(
+    name = "document_fixtures",
+    srcs = [
+        ":documents",
+    ],
+)
+
+exports_files([
+    "documents/manifest.json",
+])

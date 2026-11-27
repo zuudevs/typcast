@@ -2,7 +2,7 @@
 
 Status: CONFIRMED
 Scope: Normative
-Last updated: 2026-11-24
+Last updated: 2026-11-25
 
 ## Purpose
 
@@ -101,7 +101,7 @@ that produces `page.paper.paper` is not normative.
 
 | Field | Type | Required | Constraint |
 |---|---|---|---|
-| `value` | number | Yes | Finite, greater than or equal to zero. |
+| `value` | number | Yes | Finite, greater than or equal to zero, and inside the binary64 number domain of ECMAScript. |
 | `unit` | string | Yes | `pt`, `mm`, `cm`, `in`, or `em`. |
 
 Relative units `%` and `fr` are not part of the MVP. A future addition requires a
@@ -352,6 +352,10 @@ of the document, in declaration order. Remote modules are not supported.
 - Round-trip `from_json(to_json(document))` MUST produce an equivalent document.
 - JSON number formatting MUST be deterministic. Integers are emitted without a
   decimal point; non-integers use the shortest round-trippable representation.
+- The numbers of a document live in the binary64 number domain of ECMAScript,
+  because the canonical text follows the number format of that type. A value
+  that the domain cannot hold exactly is rounded to the nearest representable
+  value by both SDKs, and a value that overflows the domain is an error.
 - Unicode is preserved as-is; Typcast does not normalize text.
 
 ## Validation rules
@@ -364,36 +368,52 @@ of the document, in declaration order. Remote modules are not supported.
 | Table shape | Every row must have the same number of cells as `columns`. |
 | Table alignment | `align` must be `left`, `center`, or `right`. |
 | Length | Value must be finite and non-negative; unit must be supported. |
+| Image width | The width of an image must be a positive length. |
+| Number domain | Every number must be finite and must live in the binary64 domain of ECMAScript. |
+| Text length | `title` and `author` hold at most 512 Unicode code points. |
 | Image path | Must be relative, normalized, and inside `assetRoot`. |
 | Module path | Must be relative, normalized, and inside `assetRoot`. |
 | Module alias | Must be a valid identifier and unique within the document. |
 | Raw size | Must not exceed the configured raw size limit. |
 | Schema version | Major version must be supported; minor version must not exceed the supported minor. |
 
+The rules are enforced by three layers. The current release implements the
+first two layers only.
+
+| Layer | Rules | State |
+|---|---|---|
+| Model and reader | Required fields, closed objects, discriminator, table alignment, length, image width, number domain, text length, module alias, raw value, schema version. | Implemented. |
+| Validation engine | Table shape, module alias uniqueness, raw size. | Not implemented. |
+| Asset layer | Image path, module path. | Not implemented. |
+
 ## Requirements
 
 | ID | Requirement | Status | Verification |
 |---|---|---|---|
-| IR-001 | The root object MUST contain `schemaVersion`, `metadata`, `page`, and `contents`. | CONFIRMED | Schema test. |
-| IR-002 | `page` MUST contain `paper`, `orientation`, and `margin` without additional nesting. | CONFIRMED | Schema test. |
-| IR-003 | `contents` MUST be a non-empty array of typed blocks. | CONFIRMED | Schema test. |
-| IR-004 | Every block and span MUST have a supported `type` discriminator. | CONFIRMED | Schema test. |
-| IR-005 | Heading level MUST be an integer from 1 to 6. | CONFIRMED | Schema test. |
+| IR-001 | The root object MUST contain `schemaVersion`, `metadata`, `page`, and `contents`. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the reader rejects a missing required field. |
+| IR-002 | `page` MUST contain `paper`, `orientation`, and `margin` without additional nesting. | IMPLEMENTED | The reader of both SDKs rejects an unknown field of the page object. |
+| IR-003 | `contents` MUST be a non-empty array of typed blocks. | IMPLEMENTED | The constructor of both SDKs rejects empty contents, and the reader rejects a block without a supported discriminator. |
+| IR-004 | Every block and span MUST have a supported `type` discriminator. | IMPLEMENTED | The reader rejects an unknown discriminator with `TYPCAST-VAL-0003`; the negative fixture `unknown-discriminator.json`. |
+| IR-005 | Heading level MUST be an integer from 1 to 6. | IMPLEMENTED | The constructor of both SDKs rejects a level outside the range with `TYPCAST-VAL-0005`. |
 | IR-006 | Table rows MUST match the column count. | CONFIRMED | Semantic validation test. |
-| IR-007 | Table alignment MUST be `left`, `center`, or `right`. | CONFIRMED | Schema test. |
-| IR-008 | Length units MUST be `pt`, `mm`, `cm`, `in`, or `em`. | CONFIRMED | Schema test. |
+| IR-007 | Table alignment MUST be `left`, `center`, or `right`. | IMPLEMENTED | The constructor of both SDKs rejects another value with `TYPCAST-VAL-0003`. |
+| IR-008 | Length units MUST be `pt`, `mm`, `cm`, `in`, or `em`. | IMPLEMENTED | The constructor of both SDKs rejects another unit with `TYPCAST-VAL-0004`. |
 | IR-009 | Image and module paths MUST be relative and traversal-safe. | CONFIRMED | Asset tests. |
 | IR-010 | Module aliases MUST be unique identifiers. | CONFIRMED | Semantic validation test. |
-| IR-011 | Raw values MUST be non-empty and valid UTF-8. | CONFIRMED | Validation test. |
-| IR-012 | `schemaVersion` MUST be a semantic version. | CONFIRMED | Schema test. |
-| IR-013 | `to_json` MUST be deterministic across Python and TypeScript. | CONFIRMED | Serialization parity test. |
-| IR-014 | `from_json` MUST reject unknown fields and unsupported versions. | CONFIRMED | Negative tests. |
-| IR-015 | Round-trip serialization MUST preserve the document. | CONFIRMED | Contract test. |
+| IR-011 | Raw values MUST be non-empty and valid UTF-8. | IMPLEMENTED | The constructor of both SDKs rejects an empty raw value, and the raw value is a Unicode string in both SDKs. |
+| IR-012 | `schemaVersion` MUST be a semantic version. | IMPLEMENTED | The reader rejects a malformed or an unsupported version with `TYPCAST-IR-0002`; the negative fixtures `malformed-version.json`, `version-leading-zero.json`, and `unsupported-version.json`. |
+| IR-013 | `to_json` MUST be deterministic across Python and TypeScript. | IMPLEMENTED | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`; every shared fixture is written back byte for byte, including the fixture `large-number.json`. |
+| IR-014 | `from_json` MUST reject unknown fields and unsupported versions. | IMPLEMENTED | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`; the negative fixtures of the manifest. |
+| IR-015 | Round-trip serialization MUST preserve the document. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the round-trip cases. |
 | IR-016 | The IR MUST NOT contain absolute paths or remote asset URLs. | CONFIRMED | Schema and asset tests. |
-| IR-017 | The IR MUST NOT require a Typst compiler to be constructed or validated. | CONFIRMED | Offline test. |
-| IR-018 | The IR MUST remain language-neutral and contain no language-specific objects. | CONFIRMED | Fixture review. |
+| IR-017 | The IR MUST NOT require a Typst compiler to be constructed or validated. | IMPLEMENTED | The SDKs depend on no compiler; the model and the contract tests run without a Typst installation. |
+| IR-018 | The IR MUST remain language-neutral and contain no language-specific objects. | IMPLEMENTED | The shared fixtures under `tests/fixtures/documents/` are language-neutral JSON and are read by both SDKs. |
 | IR-019 | The raw size limit MUST default to 1 MiB, be configurable through `max_raw_bytes`, and be documented. | CONFIRMED | Validation test and configuration review. |
 | IR-020 | The IR MUST reserve `schemaVersion` major compatibility rules for future evolution. | CONFIRMED | Compatibility review. |
+| IR-021 | Every number of the IR MUST live in the binary64 number domain of ECMAScript. | IMPLEMENTED | Both SDKs narrow a value to that domain and reject a value that overflows it; the number-domain cases of both SDKs and the fixture `large-number.json`. The constructor of a length narrows an integer that the domain cannot hold exactly, so the model holds the value that the canonical text holds, and the value never changes after the construction. An integer that overflows the domain becomes an infinity that keeps the sign of the integer, exactly as the conversion of a number of ECMAScript does, so the details of the two SDKs agree. |
+| IR-022 | The width of an image MUST be a positive length. | IMPLEMENTED | The constructor of both SDKs rejects a width of zero with `TYPCAST-VAL-0004`; the negative fixture `invalid-image-width.json`. The schema states the same rule, because the width of an image carries an exclusive lower bound of zero while a margin length stays non-negative; `//specs/schemas:schema_tests` reads the schemas of the built bundle. |
+| IR-023 | The reader MUST reject a JSON object that holds a key that is not a string. | IMPLEMENTED | The reader of both SDKs rejects such a value with `TYPCAST-IR-0004`; the negative fixture `non-string-key.json` and the nested-key cases of both SDKs. |
+| IR-024 | The canonical JSON text of a document MUST be UTF-8, so a document that holds a character that UTF-8 cannot encode MUST be rejected when it is written. | IMPLEMENTED | The writer of both SDKs rejects such a document with `TYPCAST-IR-0003`; the negative fixture `unpaired-surrogate.json` and the encodability cases of both SDKs. |
 
 ## Open questions
 

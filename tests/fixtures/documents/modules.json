@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "1.0.0",
+  "metadata": {
+    "title": "Modules"
+  },
+  "page": {
+    "paper": "a4",
+    "orientation": "portrait",
+    "margin": {
+      "top": {
+        "value": 2,
+        "unit": "cm"
+      },
+      "right": {
+        "value": 2,
+        "unit": "cm"
+      },
+      "bottom": {
+        "value": 2,
+        "unit": "cm"
+      },
+      "left": {
+        "value": 2,
+        "unit": "cm"
+      }
+    }
+  },
+  "contents": [
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "value": "A document with module imports."
+        }
+      ]
+    }
+  ],
+  "modules": [
+    {
+      "path": "modules/report.typ",
+      "alias": "report"
+    },
+    {
+      "path": "modules/format.typ",
+      "items": [
+        "currency"
+      ]
+    },
+    {
+      "path": "modules/logos.typ",
+      "items": [
+        "mark",
+        "brand"
+      ]
+    }
+  ]
+}

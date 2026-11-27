@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0.0",
+  "metadata": {
+    "title": "Large number"
+  },
+  "page": {
+    "paper": "a4",
+    "orientation": "portrait",
+    "margin": {
+      "top": {
+        "value": 9007199254740992,
+        "unit": "cm"
+      },
+      "right": {
+        "value": 0.5,
+        "unit": "cm"
+      },
+      "bottom": {
+        "value": 1e+21,
+        "unit": "cm"
+      },
+      "left": {
+        "value": 0,
+        "unit": "cm"
+      }
+    }
+  },
+  "contents": [
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "value": "The numbers of the IR live in the binary64 domain."
+        }
+      ]
+    }
+  ],
+  "modules": []
+}
