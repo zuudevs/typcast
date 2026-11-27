@@ -3,15 +3,18 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, ClassVar, Sequence
+from typing import TYPE_CHECKING, Any, ClassVar, Sequence
 
 from typcast.canonical import assert_encodable
-from typcast.diagnostics import CODE_REQUIRED_FIELD, raise_validation
+from typcast.diagnostics import CODE_REQUIRED_FIELD, Diagnostic, raise_validation
 from typcast.models.base import Block, require_instance, require_tuple
 from typcast.models.metadata import Metadata
 from typcast.models.module import Module
 from typcast.models.page import Page
 from typcast.version import SCHEMA_VERSION, check_schema_version
+
+if TYPE_CHECKING:
+    from typcast.validations.config import TypcastConfig
 
 __all__ = ["Document"]
 
@@ -66,6 +69,17 @@ class Document:
         from typcast.serialization import document_to_json
 
         return document_to_json(self)
+
+    def validate(self, config: "TypcastConfig | None" = None) -> tuple[Diagnostic, ...]:
+        """Returns the diagnostics of the semantic rules of the document.
+
+        The method reports every problem it finds and raises no error for a
+        semantic problem, so that a caller can show all of them at once. An
+        invalid configuration raises a configuration error.
+        """
+        from typcast.validations.engine import validate_document
+
+        return validate_document(self, config)
 
     @classmethod
     def from_dict(cls, value: Any) -> "Document":

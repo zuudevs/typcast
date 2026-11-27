@@ -57,8 +57,12 @@ export const CODE_INVALID_ENUM = "TYPCAST-VAL-0003";
 export const CODE_INVALID_LENGTH = "TYPCAST-VAL-0004";
 export const CODE_INVALID_HEADING_LEVEL = "TYPCAST-VAL-0005";
 export const CODE_EMPTY_CONTENT = "TYPCAST-VAL-0006";
+export const CODE_TABLE_SHAPE = "TYPCAST-VAL-0007";
+// The catalog assigns one code to a module alias that is invalid and to a
+// module alias that is duplicated, so the constant covers both cases.
 export const CODE_INVALID_MODULE_ALIAS = "TYPCAST-VAL-0008";
 export const CODE_MODULE_ALIAS_AND_ITEMS = "TYPCAST-VAL-0009";
+export const CODE_RAW_TOO_LARGE = "TYPCAST-VAL-0010";
 export const CODE_INVALID_DATE = "TYPCAST-VAL-0011";
 export const CODE_STRING_TOO_LONG = "TYPCAST-VAL-0013";
 
@@ -67,6 +71,9 @@ export const CODE_MALFORMED_JSON = "TYPCAST-IR-0001";
 export const CODE_UNSUPPORTED_VERSION = "TYPCAST-IR-0002";
 export const CODE_NOT_SERIALIZABLE = "TYPCAST-IR-0003";
 export const CODE_ROOT_SHAPE = "TYPCAST-IR-0004";
+
+// Configuration codes.
+export const CODE_INVALID_RAW_LIMIT = "TYPCAST-CONFIG-0004";
 
 /** The number of characters of a value that the message of a diagnostic shows. */
 export const MAX_DIAGNOSTIC_VALUE_LENGTH = 64;
@@ -186,6 +193,13 @@ export class SerializationError extends TypcastError {
   }
 }
 
+/** Raised when a configuration value is invalid. */
+export class ConfigError extends TypcastError {
+  constructor(message: string, diagnostics: readonly Diagnostic[] = []) {
+    super(message, diagnostics, "ConfigError");
+  }
+}
+
 /** Builds the diagnostic of a validation failure. */
 export function validationDiagnostic(
   code: string,
@@ -233,6 +247,37 @@ export function throwValidation(
 ): never {
   throw new ValidationError(message, [
     validationDiagnostic(code, message, path, details),
+  ]);
+}
+
+/** Builds the diagnostic of an invalid configuration value. */
+export function configDiagnostic(
+  code: string,
+  message: string,
+  path: string | null = null,
+  details: Readonly<Record<string, unknown>> = {},
+): Diagnostic {
+  return Object.freeze({
+    code,
+    severity: SEVERITY_ERROR,
+    phase: PHASE_CONFIG,
+    message,
+    path,
+    location: null,
+    details: Object.freeze({ ...details }),
+    cause: null,
+  });
+}
+
+/** Raises a configuration error that carries a single diagnostic. */
+export function throwConfig(
+  code: string,
+  message: string,
+  path: string | null = null,
+  details: Readonly<Record<string, unknown>> = {},
+): never {
+  throw new ConfigError(message, [
+    configDiagnostic(code, message, path, details),
   ]);
 }
 
