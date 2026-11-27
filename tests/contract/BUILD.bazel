@@ -74,3 +74,68 @@ py_test(
         "//packages/python:typcast",
     ],
 )
+
+# The TypeScript validation contract runner. It reads the shared validation
+# fixtures and the manifest, so it depends on the fixture filegroup and on
+# the TypeScript SDK. The runner uses the `.mts` extension, so TypeScript
+# classifies it as an ECMAScript module without a `package.json` next to it,
+# and Node runs the emitted `.mjs` as an ECMAScript module in every sandbox.
+ts_project(
+    name = "validation_ts",
+    srcs = [
+        "validation.test.mts",
+        "node_shims.d.ts",
+    ],
+    tsconfig = {
+        "compilerOptions": {
+            "target": "ES2022",
+            "module": "NodeNext",
+            "moduleResolution": "NodeNext",
+            "strict": True,
+            "noImplicitOverride": True,
+            "noUncheckedIndexedAccess": True,
+            "exactOptionalPropertyTypes": True,
+            "forceConsistentCasingInFileNames": True,
+            "verbatimModuleSyntax": True,
+            "skipLibCheck": True,
+            "declaration": False,
+            "types": [],
+        },
+    },
+    transpiler = "tsc",
+    deps = [
+        "//packages/typescript:typcast",
+    ],
+)
+
+# The runner needs the compiled SDK and the manifest of the package in its
+# runfiles, for the same reason as the contract runner above.
+js_test(
+    name = "validation_ts_test",
+    entry_point = ":validation_ts",
+    data = [
+        "//packages/typescript:package.json",
+        "//packages/typescript:typcast",
+        "//tests/fixtures:validation_fixtures",
+    ],
+    no_copy_to_bin = [
+        "//packages/typescript:package.json",
+    ],
+)
+
+# The Python validation contract runner. It reads the same shared fixtures and
+# the same manifest as the TypeScript runner.
+py_test(
+    name = "validation_py",
+    size = "small",
+    srcs = [
+        "test_validation.py",
+    ],
+    main = "test_validation.py",
+    data = [
+        "//tests/fixtures:validation_documents",
+    ],
+    deps = [
+        "//packages/python:typcast",
+    ],
+)

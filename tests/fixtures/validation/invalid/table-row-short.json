@@ -1,0 +1,78 @@
+{
+  "schemaVersion": "1.0.0",
+  "metadata": {
+    "title": "Table row with too few cells"
+  },
+  "page": {
+    "paper": "a4",
+    "orientation": "portrait",
+    "margin": {
+      "top": {
+        "value": 2,
+        "unit": "cm"
+      },
+      "right": {
+        "value": 2,
+        "unit": "cm"
+      },
+      "bottom": {
+        "value": 2,
+        "unit": "cm"
+      },
+      "left": {
+        "value": 2,
+        "unit": "cm"
+      }
+    }
+  },
+  "contents": [
+    {
+      "type": "table",
+      "columns": [
+        {
+          "header": [
+            {
+              "type": "text",
+              "value": "Metric"
+            }
+          ],
+          "align": "left"
+        },
+        {
+          "header": [
+            {
+              "type": "text",
+              "value": "Value"
+            }
+          ],
+          "align": "right"
+        }
+      ],
+      "rows": [
+        [
+          [
+            {
+              "type": "text",
+              "value": "Revenue"
+            }
+          ],
+          [
+            {
+              "type": "text",
+              "value": "1200"
+            }
+          ]
+        ],
+        [
+          [
+            {
+              "type": "text",
+              "value": "Cost"
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  "modules": []
+}
