@@ -71,17 +71,17 @@ root.
 | Check | Result |
 |---|---|
 | `bazel build //...` | Pass, 87 targets. |
-| `bazel test //...` | Pass, 29 of 29 test targets of the 35 test rules, because the six transitive type-check rules are tagged `manual`: 16 unittest cases, 45 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 47 repository structure cases, 4 release tag cases, 32 documentation gate cases, 4 link check cases, 1 documentation check, 1 schema bundle check, 125 document model cases, 12 contract fixture cases, 28 validation cases, 6 validation contract fixture cases, 64 builder cases, 4 builder contract fixture cases, and the TypeScript model, validation, builder, contract, and type-check targets. |
+| `bazel test //...` | Pass, 29 of 29 test targets of the 35 test rules, because the six transitive type-check rules are tagged `manual`: 16 unittest cases, 45 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 47 repository structure cases, 4 release tag cases, 32 documentation gate cases, 4 link check cases, 1 documentation check, 1 schema bundle check, 125 document model cases, 12 contract fixture cases, 28 validation cases, 6 validation contract fixture cases, 71 builder cases, 5 builder contract fixture cases, and the TypeScript model, validation, builder, contract, and type-check targets. |
 | `bazel build //specs/schemas:schema_bundle` | Pass, 6 schema files. |
 | `bazel build //specs/schemas:schema_manifest` | Pass, 6 paths. |
 | `bazel build //specs/schemas:archive` | Pass, 6 members, deterministic gzip tarball. |
 | `bazel test //specs/schemas:schema_tests` | Pass, 6 bundle files, 0 violations. |
 | `bazel test //specs/schemas:release_tag_tests` | Pass, 4 cases. |
-| `bazel test //scripts:docs_checks` | Pass, 58 files, 477 requirements, and 3 workflows checked, 0 errors. |
+| `bazel test //scripts:docs_checks` | Pass, 59 files, 478 requirements, and 3 workflows checked, 0 errors. |
 | `bazel test //scripts/tests:version_tests` | Pass, 15 cases. |
 | `bazel test //scripts/tests:release_tests` | Pass, 20 cases. |
 | `bazel test //scripts/tests:release_flow_tests` | Pass, 6 cases. |
-| `bazel run //scripts:repository_checks` | Pass, 2 spec files, 50 SDK files, 13 gate files, 64 Python modules, 15 test modules, 2 toolchain files, 3 TypeScript files, 2 SDK versions, 24 decision records, 98 Bazel package files, 0 errors. |
+| `bazel run //scripts:repository_checks` | Pass, 2 spec files, 50 SDK files, 13 gate files, 64 Python modules, 15 test modules, 2 toolchain files, 3 TypeScript files, 2 SDK versions, 25 decision records, 98 Bazel package files, 0 errors. |
 | `bazel test //scripts/tests:repository_tests` | Pass, 47 cases. |
 | `bazel test //scripts/tests:docs_tests` | Pass, 32 cases. |
 | `bazel test //scripts/tests:link_tests` | Pass, 4 cases. |

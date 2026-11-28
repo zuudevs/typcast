@@ -33,7 +33,8 @@ explains why a decision was made; it does not replace the detailed specification
 | [ADR-0021](ADR-0021-schema-bundle-validation.md) | Schema bundle validation | Superseded by ADR-0023 |
 | [ADR-0022](ADR-0022-release-artifacts-schema-distribution-and-response-policy.md) | Release artifacts, schema distribution, and response policy | Accepted |
 | [ADR-0023](ADR-0023-schema-bundle-validation.md) | Schema bundle validation and published identity | Accepted |
-| [ADR-0024](ADR-0024-semantic-validation-engine-and-configuration.md) | Semantic validation engine and its configuration | Accepted |
+| [ADR-0024](ADR-0024-semantic-validation-engine-and-configuration.md) | Semantic validation engine and its configuration | Superseded by ADR-0026 |
+| [ADR-0026](ADR-0026-semantic-validation-engine-configuration-and-build.md) | Semantic validation engine, its configuration, and the build | Accepted |
 
 ## Template
 

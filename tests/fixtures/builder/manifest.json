@@ -126,6 +126,29 @@
         { "op": "module", "path": "modules/a.typ", "alias": "a" },
         { "op": "module", "path": "modules/b.typ", "items": ["currency", "date"] }
       ]
+    },
+    {
+      "name": "raw-at-limit",
+      "file": "expected/raw-at-limit.json",
+      "maxRawBytes": 8,
+      "operations": [
+        { "op": "title", "value": "Raw at the limit" },
+        { "op": "raw", "value": "12345678" }
+      ]
+    },
+    {
+      "name": "raw-over-limit",
+      "maxRawBytes": 8,
+      "error": {
+        "code": "TYPCAST-VAL-0010",
+        "path": "/contents/0/value",
+        "message": "'/contents/0/value' must not hold more than 8 bytes, got 9.",
+        "details": { "maxBytes": 8, "bytes": 9 }
+      },
+      "operations": [
+        { "op": "title", "value": "Raw over the limit" },
+        { "op": "raw", "value": "123456789" }
+      ]
     }
   ]
 }

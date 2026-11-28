@@ -132,6 +132,12 @@ method in an invalid state, so no call raises `TYPCAST-API-0002`: `build()`
 may be called more than once, and every metadata method may be called more than
 once.
 
+The configuration of `build()` is an argument of a public method, so the
+builder checks its type itself. An argument that is not a configuration object
+raises `TYPCAST-API-0001` with the path `/build`, and a limit that is not an
+integer that is finite and not negative raises `TYPCAST-CONFIG-0004` with the
+path `/max_raw_bytes`.
+
 ### Validation
 
 | Code | Severity | Phase | Meaning |
@@ -330,4 +336,4 @@ parsers of the two runtimes word their reason differently.
 - [Testing](../development/testing.md)
 - [ADR-0005](../decisions/ADR-0005-two-phase-validation-and-diagnostics.md)
 - [ADR-0014](../decisions/ADR-0014-diagnostic-warning-policy.md)
-- [ADR-0024](../decisions/ADR-0024-semantic-validation-engine-and-configuration.md)
+- [ADR-0026](../decisions/ADR-0026-semantic-validation-engine-configuration-and-build.md)

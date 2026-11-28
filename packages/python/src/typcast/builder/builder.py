@@ -42,6 +42,7 @@ from typcast.models.document import Document
 from typcast.models.metadata import Metadata
 from typcast.models.module import Module
 from typcast.models.page import Length, Margin, Page
+from typcast.validations.config import TypcastConfig
 
 __all__ = ["DocumentBuilder"]
 
@@ -318,14 +319,21 @@ class DocumentBuilder:
             for index, item in enumerate(values)
         )
 
-    def build(self) -> Document:
+    def build(self, config: TypcastConfig | None = None) -> Document:
         """Returns the immutable document of the current state of the builder.
 
         The method runs the semantic validation engine, and it raises a
         validation error when the engine reports an error. The diagnostics of
         the error hold every problem of the document, in the order of the
         document.
+
+        The configuration holds the limits of the validation run, so the raw
+        size limit of the build is the limit of the call. The configuration is
+        checked before the builder does any work, so an invalid configuration
+        is reported before a problem of the document. The configuration is
+        never stored in the document.
         """
+        settings = self._config(config)
         if self._title is None:
             raise_validation(
                 CODE_REQUIRED_FIELD,
@@ -356,7 +364,7 @@ class DocumentBuilder:
             ),
             "",
         )
-        diagnostics = document.validate()
+        diagnostics = document.validate(settings)
         errors = tuple(
             diagnostic
             for diagnostic in diagnostics
@@ -365,3 +373,19 @@ class DocumentBuilder:
         if errors:
             raise ValidationError(errors[0].message, errors)
         return document
+
+    def _config(self, config: TypcastConfig | None) -> TypcastConfig:
+        """Returns the configuration of the validation run of the build.
+
+        The configuration is a value of the public API, so the builder
+        checks its type itself. A configuration that names no limit holds
+        the default limit of the engine.
+        """
+        if config is None:
+            return TypcastConfig()
+        return require_api_instance(
+            config,
+            TypcastConfig,
+            "/build",
+            "TypcastConfig",
+        )

@@ -101,7 +101,7 @@ requirement ID and a status of `CONFIRMED` or `IMPLEMENTED`.
 | Area | Current state | Evidence |
 |---|---|---|
 | Bazel build | Implemented | `bazel build //...` succeeds with 87 targets. |
-| Bazel test | Implemented for codegen, the publisher, the release version check, the release preparation, the release rehearsal, the repository structure checks, the documentation checks, the link check, the schema bundle, the release tag, the document model, the semantic validation engine, the fluent builder, and the cross-language contract | `bazel test //...` runs twenty-nine of the thirty-five test rules, because the six transitive type-check rules are tagged `manual`: sixteen unittest cases, 45 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 47 repository structure cases, 4 release tag cases, 32 documentation gate cases, 4 link check cases, the documentation check, the schema bundle check, 125 document model cases, 12 contract fixture cases, 28 validation cases, 6 validation contract fixture cases, 64 builder cases, 4 builder contract fixture cases, and the TypeScript model, validation, builder, contract, and type-check targets. |
+| Bazel test | Implemented for codegen, the publisher, the release version check, the release preparation, the release rehearsal, the repository structure checks, the documentation checks, the link check, the schema bundle, the release tag, the document model, the semantic validation engine, the fluent builder, and the cross-language contract | `bazel test //...` runs twenty-nine of the thirty-five test rules, because the six transitive type-check rules are tagged `manual`: sixteen unittest cases, 45 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 47 repository structure cases, 4 release tag cases, 32 documentation gate cases, 4 link check cases, the documentation check, the schema bundle check, 125 document model cases, 12 contract fixture cases, 28 validation cases, 6 validation contract fixture cases, 71 builder cases, 5 builder contract fixture cases, and the TypeScript model, validation, builder, contract, and type-check targets. |
 | Documentation checks | Implemented | `//scripts:docs_checks` validates the documents, the Markdown structure, the Mermaid diagrams, the requirement index, the ADR index, the schema references, the workflow files, and the CODEOWNERS file. |
 | Repository structure checks | Implemented | `//scripts:repository_checks` validates the dependency direction, the Python packages, the toolchain, the committed lock file, the TypeScript compiler version, the ADR template, the committed generated schemas, the Bazel package structure, the pinned Bazel version, the security configuration, the npm package name, and the scope document. |
 | External link check | Implemented | `//scripts:check_links` checks the external links with a timeout and reports warnings only. |
@@ -146,7 +146,7 @@ change as the requirement it affects.
 Every requirement in the Phase 0 baseline is now decided. There are no `OPEN`
 requirements. The decisions that closed the previously open items are listed in
 the "Resolved decisions" table in `requirements/traceability.md`, and the
-architecture-level decisions are recorded as ADR-0014 through ADR-0024.
+architecture-level decisions are recorded as ADR-0014 through ADR-0026.
 
 The remaining gaps are implementation gaps, not decision gaps: the emitter,
 the compiler adapter, the packaging targets, and the release process do not

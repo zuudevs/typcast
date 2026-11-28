@@ -13,14 +13,15 @@
  * contract targets.
  */
 
-import { existsSync, readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { readFileSync, readdirSync, statSync } from "node:fs";
+import { dirname, join, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
   Document,
   DocumentBuilder,
   Length,
+  ValidationError,
   bold,
   column,
   italic,
@@ -33,6 +34,7 @@ import {
 import type {
   Alignment,
   Content,
+  Diagnostic,
   Orientation,
   RawFormat,
 } from "../../packages/typescript/lib/src/index.js";
@@ -44,9 +46,19 @@ interface Operation {
   readonly [key: string]: unknown;
 }
 
+/** The diagnostic that the build of a scenario must report. */
+interface ExpectedError {
+  readonly code: string;
+  readonly path: string;
+  readonly message: string;
+  readonly details: Readonly<Record<string, unknown>>;
+}
+
 interface Scenario {
   readonly name: string;
-  readonly file: string;
+  readonly file?: string;
+  readonly maxRawBytes?: number;
+  readonly error?: ExpectedError;
   readonly operations: readonly Operation[];
 }
 
@@ -141,8 +153,16 @@ function contentOf(items: readonly unknown[]): readonly Content[] {
   return items.map((item) => spanOf(item));
 }
 
-/** Builds the document of a scenario with the TypeScript builder. */
-function buildScenario(operations: readonly Operation[]): Document {
+/**
+ * Builds the document of a scenario with the TypeScript builder.
+ *
+ * A scenario may name a raw size limit, and the builder applies it to the
+ * validation run of the build.
+ */
+function buildScenario(
+  operations: readonly Operation[],
+  maxRawBytes?: number,
+): Document {
   const builder = new DocumentBuilder();
   for (const operation of operations) {
     switch (operation.op) {
@@ -257,7 +277,68 @@ function buildScenario(operations: readonly Operation[]): Document {
       }
     }
   }
-  return builder.build();
+  return builder.build(
+    maxRawBytes === undefined ? undefined : { maxRawBytes },
+  );
+}
+
+/**
+ * Checks the diagnostic of a scenario whose build must fail.
+ *
+ * The scenario names the diagnostic that the build must report, so a drift
+ * in the limit of the call fails the target.
+ */
+function checkFailingScenario(scenario: Scenario): void {
+  const expected = scenario.error as ExpectedError;
+  let thrown: unknown;
+  try {
+    buildScenario(scenario.operations, scenario.maxRawBytes);
+  } catch (error) {
+    thrown = error;
+  }
+  if (!(thrown instanceof ValidationError)) {
+    failures.push(
+      `${scenario.name}: the build must fail with a validation error, but it failed with ${String(thrown)}`,
+    );
+    return;
+  }
+  const diagnostic = thrown.diagnostics[0] as Diagnostic;
+  check(
+    diagnostic.code === expected.code,
+    `${scenario.name}: the code must be ${expected.code}, got ${diagnostic.code}`,
+  );
+  check(
+    diagnostic.path === expected.path,
+    `${scenario.name}: the path must be ${expected.path}, got ${String(diagnostic.path)}`,
+  );
+  check(
+    diagnostic.message === expected.message,
+    `${scenario.name}: the message must be ${expected.message}, got ${diagnostic.message}`,
+  );
+  check(
+    JSON.stringify(diagnostic.details) === JSON.stringify(expected.details),
+    `${scenario.name}: the details must be ${JSON.stringify(expected.details)}, got ${JSON.stringify(diagnostic.details)}`,
+  );
+}
+
+/**
+ * Returns the names of every fixture file of the directory.
+ *
+ * The manifest itself is no fixture, and a directory holds no file.
+ */
+function presentFiles(root: string): Set<string> {
+  const names = new Set<string>();
+  for (const entry of readdirSync(root, { recursive: true })) {
+    const relative = entry.split(sep).join("/");
+    if (relative === MANIFEST_NAME) {
+      continue;
+    }
+    if (!statSync(join(root, entry)).isFile()) {
+      continue;
+    }
+    names.add(relative);
+  }
+  return names;
 }
 
 const failures: string[] = [];
@@ -274,19 +355,38 @@ function main(): void {
 
   const listed = new Set<string>();
   for (const scenario of manifest.scenarios) {
-    listed.add(scenario.file);
-    if (!existsSync(join(root, scenario.file))) {
+    if (scenario.file !== undefined) {
+      listed.add(scenario.file);
+    }
+  }
+
+  const present = presentFiles(root);
+  for (const name of listed) {
+    if (!present.has(name)) {
+      failures.push(`${name}: the manifest names a file that does not exist`);
+    }
+  }
+  for (const name of present) {
+    if (!listed.has(name)) {
       failures.push(
-        `${scenario.file}: the manifest names a file that does not exist`,
+        `${name}: the fixture directory holds a file that the manifest does not name`,
       );
     }
   }
 
   for (const scenario of manifest.scenarios) {
+    if (scenario.error !== undefined) {
+      checkFailingScenario(scenario);
+      continue;
+    }
+    if (scenario.file === undefined) {
+      failures.push(`${scenario.name}: the scenario must name a file`);
+      continue;
+    }
     const expected = readFileSync(join(root, scenario.file), "utf-8");
     let document: Document;
     try {
-      document = buildScenario(scenario.operations);
+      document = buildScenario(scenario.operations, scenario.maxRawBytes);
     } catch (error) {
       failures.push(
         `${scenario.name}: the scenario must build, but it failed with ${String(error)}`,

@@ -21,7 +21,7 @@ change impact analysis.
 | Document IR | `specifications/document-ir.md` | `IR-001` to `IR-024` | Schema and contract tests. |
 | Nodes | `specifications/nodes.md` | `NODE-001` to `NODE-025` | Golden and emitter tests. |
 | Schema | `specifications/schema.md` | `SCH-001` to `SCH-023` | Schema lint and bundle tests. |
-| SDK API | `specifications/sdk-api.md` | `API-001` to `API-027` | API and parity tests. |
+| SDK API | `specifications/sdk-api.md` | `API-001` to `API-028` | API and parity tests. |
 | Emitter | `specifications/emitter.md` | `EMIT-001` to `EMIT-022` | Byte-level golden tests. |
 | Compiler | `specifications/compiler.md` | `COMP-001` to `COMP-022` | Compiler integration tests. |
 | Diagnostics | `specifications/diagnostics.md` | `DIAG-001` to `DIAG-018` | Negative and parity tests. |
@@ -44,7 +44,7 @@ change impact analysis.
 | Typed cross-language document builder | `PRD-008`, `ARC-001`, `IR-001`, `API-001`, `API-017` | Contract and parity tests. |
 | Deterministic `.typ` output | `PRD-009`, `EMIT-001`, `EMIT-002`, `EMIT-022` | Byte-level golden tests. |
 | PDF through Typst | `PRD-009`, `COMP-001`, `COMP-004`, `COMP-013`, `REL-024` | Compiler integration and release review. |
-| Two-phase validation | `PRD-013`, `API-006`, `API-008`, `DIAG-001` | Validation and diagnostics tests. |
+| Two-phase validation | `PRD-013`, `API-006`, `API-008`, `API-028`, `DIAG-001` | Validation and diagnostics tests. |
 | Warning handling | `DIAG-011`, `API-007`, `API-012` | Warning-policy and parity tests. |
 | Safe asset resolution | `ASSET-003`, `ASSET-005`, `ASSET-006`, `SEC-015`, `TEST-020` | Path, symlink, and negative tests. |
 | Stable diagnostics | `DIAG-002`, `DIAG-003`, `DIAG-004`, `API-016` | Diagnostics parity tests. |
@@ -83,6 +83,7 @@ recorded below and in the linked ADRs.
 | `NODE-023` | The raw size limit is enforced at `build()` and again before emit. | ADR-0017 |
 | `API-024` | The builder is mutable, single-document, and not thread-safe. | ADR-0015 |
 | `API-025` | The npm package is ESM-only for `1.0.0`; CommonJS is deferred. | ADR-0016 |
+| `API-028` | The builder takes the validation configuration per call, and the raw size limit of the build is the limit of the call. | ADR-0026 |
 | `DIAG-011` | Warnings follow the closed policy: three warning conditions, never raising, never gating a release. | ADR-0014 |
 | `ASSET-017` | Asset limits are 1024-character paths, 50 MiB per image, 10 MiB per module, 500 MiB per compilation. | ADR-0017 |
 | `COMPAT-008` | The supported Typst range is `>=0.15.0 <0.16.0`, tested with 0.15.1. | ADR-0018 |
@@ -146,7 +147,7 @@ a target for the MVP and is not yet verified in the repository.
 | `SCH-023` | The width of an image excludes zero in the schema, and the length of a margin stays non-negative. | `//specs/schemas:schema_tests`; the width rule reads the schemas of the built bundle and checks that the width of an image excludes zero and that the shared length schema keeps its lower bound of zero. |
 | `DOC-015` | The root `README.md` uses standard code fences and LF line endings. | Documentation validation script run on 2026-11-24. |
 | `DOC-016` | `.gitattributes` pins LF for text files and `.editorconfig` pins UTF-8, LF, final newline, and indentation. | Files present at the repository root. |
-| `DOC-021` | `scripts/validate_docs.py` validates the documents, the requirement index, the ADR index, and the schema references with the standard library only. | `//scripts:docs_checks`; 58 files, 477 requirements, and 3 workflows checked with 0 errors. |
+| `DOC-021` | `scripts/validate_docs.py` validates the documents, the requirement index, the ADR index, and the schema references with the standard library only. | `//scripts:docs_checks`; 59 files, 478 requirements, and 3 workflows checked with 0 errors. |
 | `DOC-012` | The documentation gate runs on pull requests. | The `Documentation gate` job of `.github/workflows/pr.yml`. |
 | `DOC-013` | The documentation gate runs on `main`. | The `Documentation gate` job of `.github/workflows/main.yml`. |
 | `DOC-022` | The repository gate validates the workflow files: pinned actions, declared permissions, no write access or secret in a pull request workflow, and no `pull_request_target`. | `//scripts:docs_checks`; 3 workflows checked. |
@@ -271,6 +272,7 @@ a target for the MVP and is not yet verified in the repository.
 | `API-026` | Both package roots export the version of the package, and every export matches the manifest of its package. | `//packages/python/tests:model_tests`; `//packages/typescript:model_test_run`; the version cases, and `//scripts:repository_checks`. |
 | `API-007` | The validation engine of both SDKs returns the diagnostics of the semantic rules and raises no error for a semantic problem. | `//packages/python/tests:validation_tests`; `//packages/typescript:validation_test_run`; the validation cases of both SDKs, and the fixtures of `//tests/contract:validation_py` and `//tests/contract:validation_ts_test`. |
 | `API-027` | Both SDKs take the configuration of the validation engine per call, hold the raw size limit only, and raise `ConfigError` with `TYPCAST-CONFIG-0004` for a limit that is not an integer that is finite and not negative. | `//packages/python/tests:validation_tests`; `//packages/typescript:validation_test_run`; the configuration cases of both SDKs. |
+| `API-028` | The builder of both SDKs takes the validation configuration per call, applies the raw size limit of the call to the validation run of the build, and stores no configuration in the document; an argument that is not a configuration raises `ApiUsageError` with `TYPCAST-API-0001` and the path `/build`. | `//packages/python/tests:builder_tests`; `//packages/typescript:builder_test_run`; the configuration cases of both SDKs, and the scenarios `raw-at-limit` and `raw-over-limit` of `//tests/contract:builder_py` and `//tests/contract:builder_ts_test`. |
 | `DIAG-001` | Both SDKs expose the documented diagnostic shape. | `typcast.diagnostics`; `packages/typescript/src/diagnostics.ts`; the diagnostic cases of the model tests. |
 | `DIAG-004` | Both SDKs expose the same diagnostic fields, and the contract runners compare the code of every negative fixture. | `typcast.diagnostics`; `packages/typescript/src/diagnostics.ts`; `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`. |
 | `DIAG-005` | `ValidationError` and `SerializationError` of both SDKs inherit from `TypcastError`. | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the error cases. |
