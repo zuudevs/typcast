@@ -7,10 +7,10 @@
  * structure of the content.
  */
 
+import { requireApiString } from "../api.js";
 import {
   normalizeContent,
   normalizeSpans,
-  requireApiString,
 } from "./content.js";
 import type { Content } from "./content.js";
 import { freezeArray } from "../models/base.js";

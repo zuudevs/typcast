@@ -266,6 +266,30 @@ Rules:
 - Two SDKs report the same diagnostics for the same instance, in the same
   order.
 
+## Emitter diagnostics
+
+The emitter reports the diagnostics of the family `TYPCAST-EMIT-*` with the
+phase `emit`. The details of every diagnostic of the family name the node that
+the emitter cannot emit, so that a caller can act on the node without reading
+the message.
+
+| Code | Path | Details | Message |
+|---|---|---|---|
+| `TYPCAST-EMIT-0001` | The node that breaks an invariant of the model. | `value` is the rejected value. | `'/metadata/date' is not a date of the form YYYY-MM-DD.` |
+| `TYPCAST-EMIT-0002` | The `type` of the node. | `type` is the discriminator that the emitter does not know. | `'/contents/0/type' is not a known block type.` |
+| `TYPCAST-EMIT-0003` | The value or the span that cannot be represented. | `expected` names what the emitter can represent, and `type` is the type of a span that it cannot. | `'/contents/0/content/0/value' holds a backtick, which the raw text of Typst cannot hold.` |
+
+Rules:
+
+- The emitter raises one `EmitError` with one diagnostic. It never returns
+  partial output, and it never reports more than one problem, because a
+  caller that receives the source fixes the first problem and emits again.
+- The emitter dispatches on the `type` discriminator of a node. A block or a
+  span of an unknown type is a failure of the emitter and not a failure of the
+  document, because the model and the reader reject such a node before it
+  reaches the emitter.
+- Two SDKs report the same diagnostic for the same document.
+
 ## Error classes
 
 | Python | TypeScript | Base | Typical codes |
@@ -365,6 +389,7 @@ parsers of the two runtimes word their reason differently.
 | DIAG-012 | Diagnostic codes MUST be documented in a catalog. | CONFIRMED | This document. |
 | DIAG-018 | The semantic validation engine MUST report every problem it finds and MUST report the diagnostics in the order of the document. | IMPLEMENTED | `//packages/python/tests:validation_tests` and `//packages/typescript:validation_test_run`; the order cases of both SDKs, and the fixtures of `//tests/contract:validation_py` and `//tests/contract:validation_ts_test`. |
 | DIAG-019 | The validation of an instance against the JSON Schema contract MUST use the family `TYPCAST-SCH-*` with the phase `validation`, MUST name the keyword of the broken rule in the details, and MUST report the same diagnostics in both SDKs. | IMPLEMENTED | `//packages/python/tests:schema_tests` and `//packages/typescript:schema_test_run`; the diagnostic cases of both SDKs, and the fixtures of `//tests/contract:schema_py` and `//tests/contract:schema_ts_test`. |
+| DIAG-020 | The emitter MUST use the family `TYPCAST-EMIT-*` with the phase `emit`, MUST name the node that it cannot emit in the path and in the details, and MUST report the same diagnostic in both SDKs. | IMPLEMENTED | `//packages/python/tests:emitter_tests` and `//packages/typescript:emitter_test_run`; the diagnostic cases of both SDKs. |
 
 ## Open questions
 
@@ -381,3 +406,4 @@ parsers of the two runtimes word their reason differently.
 - [ADR-0014](../decisions/ADR-0014-diagnostic-warning-policy.md)
 - [ADR-0026](../decisions/ADR-0026-semantic-validation-engine-configuration-and-build.md)
 - [ADR-0027](../decisions/ADR-0027-instance-validation-against-the-json-schema-contract.md)
+- [ADR-0028](../decisions/ADR-0028-typst-emitter.md)

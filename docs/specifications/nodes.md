@@ -228,6 +228,15 @@ The emitter escapes the following characters in text spans:
 A hyphen at the beginning of a line is escaped when it could be interpreted as a
 list marker. The emitter is responsible for context-sensitive escaping.
 
+The same rule holds for a plus, because Typst reads a plus at the beginning of
+a line as the marker of an ordered list. The emitter escapes a marker when the
+text starts a line and the marker is followed by a space or ends the value.
+The rules of the context are in `emitter.md`.
+
+A monospace span is emitted as the raw text of Typst. The raw text holds no
+escape sequence, so the content of a monospace span is not escaped with the
+table above. The rules of the monospace span are in `emitter.md`.
+
 ## Requirements
 
 | ID | Requirement | Status | Verification |
@@ -236,25 +245,25 @@ list marker. The emitter is responsible for context-sensitive escaping.
 | NODE-002 | The MVP MUST support exactly the inline span types listed in this catalog. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the model holds the seven inline span types of this catalog and no other. |
 | NODE-003 | Heading levels MUST be integers from 1 to 6. | IMPLEMENTED | The constructor of both SDKs rejects another level with `TYPCAST-VAL-0005`. |
 | NODE-004 | Headings and paragraphs MUST reject empty content. | IMPLEMENTED | The constructor of both SDKs rejects empty content with `TYPCAST-VAL-0006`. |
-| NODE-005 | Lists MUST support ordered and unordered modes. | CONFIRMED | Emitter test. |
+| NODE-005 | Lists MUST support ordered and unordered modes. | IMPLEMENTED | The model of both SDKs holds the `ordered` flag of a list, and `//packages/python/tests:emitter_tests` and `//packages/typescript:emitter_test_run`; the list cases of both SDKs emit `-` and `+`. |
 | NODE-006 | Nested lists MUST be rejected in the MVP. | CONFIRMED | Negative test. |
-| NODE-007 | Tables MUST support header rows and per-column alignment. | CONFIRMED | Emitter test. |
+| NODE-007 | Tables MUST support header rows and per-column alignment. | IMPLEMENTED | The model of both SDKs holds the header and the alignment of a column, and `//packages/python/tests:emitter_tests` and `//packages/typescript:emitter_test_run`; the table case of both SDKs emits `table.header` and the alignment. |
 | NODE-008 | Table rows MUST match the column count. | IMPLEMENTED | `//packages/python/tests:validation_tests` and `//packages/typescript:validation_test_run`; the table-shape cases of both SDKs, and the fixtures `table-row-short.json` and `table-row-long.json` of `//tests/contract:validation_py` and `//tests/contract:validation_ts_test`. |
 | NODE-009 | Tables MUST NOT support merged cells in the MVP. | CONFIRMED | Schema review. |
 | NODE-010 | Images MUST require alt text. | IMPLEMENTED | The constructor of both SDKs requires a non-empty `alt` value. |
 | NODE-011 | Images MUST support an optional caption. | IMPLEMENTED | The model of both SDKs holds an optional caption, and the canonical JSON omits the field when it is absent. |
 | NODE-012 | Images MUST NOT support remote URLs. | CONFIRMED | Asset test. |
-| NODE-013 | Page breaks MUST emit `#pagebreak()`. | CONFIRMED | Golden test. |
-| NODE-014 | Raw content MUST be emitted verbatim. | CONFIRMED | Golden test. |
-| NODE-015 | Raw content MUST NOT be escaped or parsed. | CONFIRMED | Golden test. |
-| NODE-016 | Text spans MUST be escaped according to the table above. | CONFIRMED | Escaping test. |
-| NODE-017 | Emphasis spans MUST be nestable. | CONFIRMED | Emitter test. |
-| NODE-018 | Links MUST emit display text and a URL. | CONFIRMED | Emitter test. |
-| NODE-019 | Line breaks MUST emit `#linebreak()`. | CONFIRMED | Golden test. |
-| NODE-020 | The emitter MUST reject unknown node types. | CONFIRMED | Negative test. |
-| NODE-021 | The emitter MUST preserve block order. | CONFIRMED | Golden test. |
-| NODE-022 | The emitter MUST preserve span order. | CONFIRMED | Golden test. |
-| NODE-023 | The raw size limit MUST be enforced during validation at `build()` and again before emit. | IMPLEMENTED | The validation engine enforces the limit and reports it with `TYPCAST-VAL-0010`; `//packages/python/tests:validation_tests` and `//packages/typescript:validation_test_run`; the check at `build()` is covered by `//packages/python/tests:builder_tests` and `//packages/typescript:builder_test_run`, and it applies the raw size limit of the configuration of the call; the check before emit waits for the emitter. |
+| NODE-013 | Page breaks MUST emit `#pagebreak()`. | IMPLEMENTED | The golden file `tests/fixtures/expected/full.typ`, which holds a page break. |
+| NODE-014 | Raw content MUST be emitted verbatim. | IMPLEMENTED | `//packages/python/tests:emitter_tests` and `//packages/typescript:emitter_test_run`; the raw cases of both SDKs, and the golden file `full.typ`. |
+| NODE-015 | Raw content MUST NOT be escaped or parsed. | IMPLEMENTED | `//packages/python/tests:emitter_tests` and `//packages/typescript:emitter_test_run`; the raw cases of both SDKs, and the golden file `full.typ`. |
+| NODE-016 | Text spans MUST be escaped according to the table above. | IMPLEMENTED | `//packages/python/tests:emitter_tests` and `//packages/typescript:emitter_test_run`; the escaping cases of both SDKs, and the golden file `tests/fixtures/expected/escaping.typ`. |
+| NODE-017 | Emphasis spans MUST be nestable. | IMPLEMENTED | `//packages/python/tests:emitter_tests` and `//packages/typescript:emitter_test_run`; the nested-emphasis case of both SDKs. |
+| NODE-018 | Links MUST emit display text and a URL. | IMPLEMENTED | `//packages/python/tests:emitter_tests` and `//packages/typescript:emitter_test_run`; the link case of both SDKs, and the golden file `full.typ`. |
+| NODE-019 | Line breaks MUST emit `#linebreak()`. | IMPLEMENTED | The golden file `tests/fixtures/expected/full.typ`, which holds a line break. |
+| NODE-020 | The emitter MUST reject unknown node types. | IMPLEMENTED | `//packages/python/tests:emitter_tests` and `//packages/typescript:emitter_test_run`; the unknown-type case of both SDKs, which reports `TYPCAST-EMIT-0002`. |
+| NODE-021 | The emitter MUST preserve block order. | IMPLEMENTED | The golden files under `tests/fixtures/expected/`, which hold the blocks of the document in the order of the document. |
+| NODE-022 | The emitter MUST preserve span order. | IMPLEMENTED | The golden files under `tests/fixtures/expected/`, which hold the spans of a block in the order of the block. |
+| NODE-023 | The raw size limit MUST be enforced during validation at `build()` and again before emit. | IMPLEMENTED | The validation engine enforces the limit and reports it with `TYPCAST-VAL-0010`; `//packages/python/tests:validation_tests` and `//packages/typescript:validation_test_run`; the check at `build()` is covered by `//packages/python/tests:builder_tests` and `//packages/typescript:builder_test_run`, and it applies the raw size limit of the configuration of the call; the check before emit is covered by `//packages/python/tests:emitter_tests` and `//packages/typescript:emitter_test_run`, which emit a raw node at the limit and one over the limit. |
 | NODE-024 | The node catalog MUST be extensible without changing existing node semantics. | CONFIRMED | Schema compatibility review. |
 | NODE-025 | The node catalog MUST NOT include math, citation, TOC, footnote, or header/footer nodes in the MVP. | CONFIRMED | Scope review. |
 
@@ -273,3 +282,4 @@ list marker. The emitter is responsible for context-sensitive escaping.
 - [Testing](../development/testing.md)
 - [ADR-0017](../decisions/ADR-0017-resource-limits.md)
 - [ADR-0026](../decisions/ADR-0026-semantic-validation-engine-configuration-and-build.md)
+- [ADR-0028](../decisions/ADR-0028-typst-emitter.md)

@@ -4,12 +4,15 @@
  * The package exposes the immutable document model of the IR. The model
  * serializes to the language-neutral document IR and reads it back, and the
  * validation engine checks the semantic rules of a document. The fluent
- * builder is the primary API of the SDK. The emitter and the compiler
- * adapter are not part of this release.
+ * builder is the primary API of the SDK, and the emitter turns a document
+ * into Typst source. The compiler adapter is not part of this release.
  */
 
 export {
   CODE_EMPTY_CONTENT,
+  CODE_EMIT_INVARIANT,
+  CODE_EMIT_UNKNOWN_TYPE,
+  CODE_EMIT_UNSAFE_VALUE,
   CODE_INVALID_ARGUMENT,
   CODE_INVALID_DATE,
   CODE_INVALID_ENUM,
@@ -32,6 +35,7 @@ export {
   CODE_UNSUPPORTED_VERSION,
   ApiUsageError,
   ConfigError,
+  EmitError,
   PHASE_API,
   PHASE_COMPILER,
   PHASE_CONFIG,

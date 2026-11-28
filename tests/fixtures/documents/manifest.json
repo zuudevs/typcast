@@ -28,6 +28,12 @@
     },
     {
       "file": "binary64-boundary.json"
+    },
+    {
+      "file": "escaping.json"
+    },
+    {
+      "file": "list-marker.json"
     }
   ],
   "invalid": [

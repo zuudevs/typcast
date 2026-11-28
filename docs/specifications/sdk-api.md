@@ -260,9 +260,36 @@ ADR-0005 keeps the validation in the build step and in the reader.
 
 The current release implements the model types of the list above, the
 serialization rows of this table, `validate()`, `validate_schema()`, the error
-hierarchy, and the fluent builder with its span helpers and its table helpers.
-`to_typst()`, `compile_pdf()`, and `write_pdf()` are part of the contract and
+hierarchy, the fluent builder with its span helpers and its table helpers, and
+`to_typst()`. `compile_pdf()` and `write_pdf()` are part of the contract and
 are not implemented yet.
+
+## Typst emission
+
+| Operation | Python | TypeScript |
+|---|---|---|
+| Emit Typst | `document.to_typst(config=None)` | `document.toTypst(options?)` |
+
+The method returns the Typst source of the document as a string. The decision
+is recorded in ADR-0028.
+
+Behavior:
+
+- The method runs the semantic validation engine before it emits, and raises
+  `ValidationError` with every error diagnostic when the engine reports an
+  error. The raw size limit is therefore enforced again before the emission.
+- The configuration holds the limits of the validation run, it is passed per
+  call, and it is never stored in the document.
+- A configuration that is not a configuration object raises `ApiUsageError`
+  with `TYPCAST-API-0001` and the path `/to_typst`.
+- The method reads no file, invokes no compiler, and writes no file. The
+  caller decides where the source goes.
+- The output is deterministic. Two calls with the same document produce the
+  same bytes.
+- The output of both SDKs is identical, because both compare their output with
+  the same golden file under `tests/fixtures/expected/`.
+- A value that the emitter cannot represent raises `EmitError` with one
+  diagnostic of the family `TYPCAST-EMIT-*` and the phase `emit`.
 
 ## Schema validation
 
@@ -442,7 +469,7 @@ collection. A single error may carry multiple diagnostics.
 | API-014 | `write_pdf()` MUST write atomically and MUST NOT leave partial output. | CONFIRMED | Failure test. |
 | API-015 | Every error MUST inherit from `TypcastError` and expose diagnostics. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the error cases. |
 | API-016 | Python and TypeScript MUST use the same diagnostic shape. | IMPLEMENTED | The `Diagnostic` shape of `typcast.diagnostics` and of `packages/typescript/src/diagnostics.ts`; the contract runners compare the code of every negative fixture. |
-| API-017 | Python and TypeScript MUST produce identical `.typ` bytes for the same fixture. | CONFIRMED | Parity test. |
+| API-017 | Python and TypeScript MUST produce identical `.typ` bytes for the same fixture. | IMPLEMENTED | `//tests/contract:typst_py` and `//tests/contract:typst_ts_test`; both runners compare their output with the same golden file under `tests/fixtures/expected/`. |
 | API-018 | The package root MUST export the public API. | IMPLEMENTED | `//packages/python/tests:model_tests` imports every public type from `typcast`; `//packages/typescript:model_test_run` imports every public type from the package root. |
 | API-019 | The npm package MUST expose ESM and type declarations. | CONFIRMED | Package test. |
 | API-020 | The public API MUST be stable from `1.0.0`. | CONFIRMED | Release review. |
@@ -455,6 +482,7 @@ collection. A single error may carry multiple diagnostics.
 | API-027 | The validation configuration MUST be passed per call and MUST NOT be stored in the document; in this release it MUST hold the raw size limit only, and an invalid limit MUST raise `ConfigError` with `TYPCAST-CONFIG-0004`. | IMPLEMENTED | `//packages/python/tests:validation_tests` and `//packages/typescript:validation_test_run`; the configuration cases of both SDKs, and the `ConfigError` case of both SDKs. |
 | API-028 | `build()` MUST take the validation configuration per call, MUST apply its raw size limit to the validation run of the build, and MUST NOT store it in the document; a configuration that is not a configuration object MUST raise `ApiUsageError` with `TYPCAST-API-0001` and the path `/build`. | IMPLEMENTED | `//packages/python/tests:builder_tests` and `//packages/typescript:builder_test_run`; the configuration cases of both SDKs, and the fixtures of `//tests/contract:builder_py` and `//tests/contract:builder_ts_test`. |
 | API-029 | Each SDK MUST expose `validate_schema(value)` and `validateSchema(value)` and the method `Document.validate_schema()` and `Document.validateSchema()`, MUST report every rule that the value breaks without raising, and MUST keep the check separate from the reader and from the semantic engine. | IMPLEMENTED | `//packages/python/tests:schema_tests` and `//packages/typescript:schema_test_run`; the cases of both SDKs, and the fixtures of `//tests/contract:schema_py` and `//tests/contract:schema_ts_test`. |
+| API-030 | Each SDK MUST expose `to_typst(config=None)` and `toTypst(options?)` on the document, MUST return the Typst source of the document as a string, MUST validate the document again before the emission, MUST raise `ValidationError` on error diagnostics, MUST NOT read assets or invoke the compiler, and MUST NOT store the configuration in the document. | IMPLEMENTED | `//packages/python/tests:emitter_tests` and `//packages/typescript:emitter_test_run`; the cases of both SDKs, and the runners `//tests/contract:typst_py` and `//tests/contract:typst_ts_test`. |
 
 ## Open questions
 
@@ -476,3 +504,4 @@ collection. A single error may carry multiple diagnostics.
 - [ADR-0016](../decisions/ADR-0016-esm-only-npm-package.md)
 - [ADR-0026](../decisions/ADR-0026-semantic-validation-engine-configuration-and-build.md)
 - [ADR-0027](../decisions/ADR-0027-instance-validation-against-the-json-schema-contract.md)
+- [ADR-0028](../decisions/ADR-0028-typst-emitter.md)

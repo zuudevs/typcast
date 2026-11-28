@@ -3,8 +3,8 @@
 The package exposes the immutable document model of the IR. The model
 serializes to the language-neutral document IR and reads it back, and the
 validation engine checks the semantic rules of a document. The fluent
-builder is the primary API of the SDK. The emitter and the compiler adapter
-are not part of this release.
+builder is the primary API of the SDK, and the emitter turns a document into
+Typst source. The compiler adapter is not part of this release.
 """
 
 from typcast.builder import (
@@ -21,10 +21,14 @@ from typcast.builder import (
 )
 from typcast.diagnostics import (
     ApiUsageError,
+    CODE_EMIT_INVARIANT,
+    CODE_EMIT_UNKNOWN_TYPE,
+    CODE_EMIT_UNSAFE_VALUE,
     CODE_SCHEMA_UNSUPPORTED_KEYWORD,
     CODE_SCHEMA_VIOLATION,
     ConfigError,
     Diagnostic,
+    EmitError,
     SerializationError,
     TypcastError,
     ValidationError,
@@ -68,11 +72,15 @@ __all__ = [
     "Bold",
     "CODE_SCHEMA_UNSUPPORTED_KEYWORD",
     "CODE_SCHEMA_VIOLATION",
+    "CODE_EMIT_INVARIANT",
+    "CODE_EMIT_UNKNOWN_TYPE",
+    "CODE_EMIT_UNSAFE_VALUE",
     "ConfigError",
     "DEFAULT_MAX_RAW_BYTES",
     "Diagnostic",
     "Document",
     "DocumentBuilder",
+    "EmitError",
     "Heading",
     "Image",
     "Italic",

@@ -1,0 +1,92 @@
+{
+  "schemaVersion": "1.0.0",
+  "metadata": {
+    "title": "List markers"
+  },
+  "page": {
+    "paper": "a4",
+    "orientation": "portrait",
+    "margin": {
+      "top": {
+        "value": 2,
+        "unit": "cm"
+      },
+      "right": {
+        "value": 2,
+        "unit": "cm"
+      },
+      "bottom": {
+        "value": 2,
+        "unit": "cm"
+      },
+      "left": {
+        "value": 2,
+        "unit": "cm"
+      }
+    }
+  },
+  "contents": [
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "value": "- A bullet that is not a list"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "value": "+ A number that is not a list"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "value": "-dash without a space"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "content": [
+        {
+          "type": "text",
+          "value": "- A heading is not a list"
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "columns": [
+        {
+          "header": [
+            {
+              "type": "text",
+              "value": "- A header that is not a list"
+            }
+          ],
+          "align": "left"
+        }
+      ],
+      "rows": [
+        [
+          [
+            {
+              "type": "text",
+              "value": "- A cell that is not a list"
+            }
+          ]
+        ]
+      ]
+    }
+  ],
+  "modules": []
+}

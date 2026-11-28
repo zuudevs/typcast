@@ -11,14 +11,16 @@ from __future__ import annotations
 
 from typing import Any, Callable, Sequence, TypeVar
 
-from typcast.builder.content import (
-    normalize_content,
-    normalize_spans,
+from typcast.api import (
     reject_api_argument,
     require_api_instance,
     require_api_number,
     require_api_sequence,
     require_api_string,
+)
+from typcast.builder.content import (
+    normalize_content,
+    normalize_spans,
 )
 from typcast.diagnostics import (
     CODE_REQUIRED_FIELD,

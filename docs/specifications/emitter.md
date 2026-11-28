@@ -2,7 +2,7 @@
 
 Status: CONFIRMED
 Scope: Normative
-Last updated: 2026-11-24
+Last updated: 2026-11-28
 
 ## Purpose
 
@@ -10,6 +10,11 @@ The emitter converts a validated immutable document into deterministic Typst
 source. It is a pure function of the document, the product version, and the
 emitter configuration. It does not read assets, invoke the compiler, or write
 files.
+
+The emitter is implemented in both SDKs. The public API is the method
+`Document.to_typst(config=None)` in Python and `Document.toTypst(options?)` in
+TypeScript, and the method returns the source as a string. The decision is
+recorded in ADR-0028.
 
 ## Output contract
 
@@ -223,13 +228,34 @@ Revenue grew by *12%*.
 | `text` | Escaped text. |
 | `bold` | `*` + inline content + `*`. |
 | `italic` | `_` + inline content + `_`. |
-| `monospace` | Backtick + escaped content + backtick. |
+| `monospace` | Backtick + raw text + backtick. |
 | `link` | `#link("href")[` + inline content + `]`. |
 | `lineBreak` | `#linebreak()`. |
 | `raw` | Verbatim value. |
 
 Nested emphasis is emitted recursively. Adjacent spans are emitted in order with
 no inserted separators.
+
+### Monospace
+
+A monospace span is emitted as the raw text of Typst:
+
+```typst
+`report --format json`
+```
+
+The raw text of Typst holds no escape sequence, so the rules below apply:
+
+- The content of a monospace span is emitted verbatim. The escaping table of
+  the node catalog does not apply inside the raw text, because a backslash in
+  the raw text is a literal backslash.
+- A monospace span holds text spans and raw spans only. A span of another type
+  cannot be represented in the raw text, and the emitter rejects it with
+  `TYPCAST-EMIT-0003`.
+- The content of a monospace span holds no backtick, because a backtick would
+  end the raw text. The emitter rejects such a value with
+  `TYPCAST-EMIT-0003`.
+- The emitter returns no partial output when it rejects a value.
 
 ## Escaping
 
@@ -242,6 +268,24 @@ Text escaping follows `nodes.md`. In addition:
 - The emitter does not HTML-escape content.
 - The emitter does not normalize Unicode.
 
+### List markers
+
+Typst reads a hyphen or a plus at the start of a line as the marker of a list.
+The emitter therefore escapes a list marker when the text starts a line and the
+marker is followed by a space or ends the value:
+
+| Text | Emission |
+|---|---|
+| `- A bullet` | `\- A bullet` |
+| `+ A number` | `\+ A number` |
+| `-dash` | `-dash` |
+| `A - bullet` | `A - bullet` |
+
+The rule is context-sensitive. The emitter applies it to the first span of a
+paragraph, of a table cell, of an image caption, and of the content of a link.
+A heading starts with the markers of its level, so a heading is not a list and
+its text is not escaped.
+
 ## Error handling
 
 The emitter:
@@ -249,9 +293,15 @@ The emitter:
 - MUST validate the document before emission.
 - MUST reject unknown block or span types with `TYPCAST-EMIT-0002`.
 - MUST reject an internal invariant failure with `TYPCAST-EMIT-0001`.
+- MUST reject a value that cannot be escaped safely with `TYPCAST-EMIT-0003`.
 - MUST NOT return partial output when an error occurs.
 - MUST NOT invoke the compiler.
 - MUST NOT read or write assets.
+
+The validation of the document raises `ValidationError` with every error
+diagnostic of the semantic engine. The failures of the emitter itself raise
+`EmitError` with one diagnostic of the family `TYPCAST-EMIT-*` and the phase
+`emit`.
 
 ## Golden files
 
@@ -266,32 +316,40 @@ tests/fixtures/expected/<name>.typ
 The test compares the emitter output to the expected file byte for byte. Golden
 files are updated only by an explicit review that explains the output change.
 
+The golden files are shared by both SDKs. Every valid document of the manifest
+under `tests/fixtures/documents/` has one golden file, and the runners
+`//tests/contract:typst_py` and `//tests/contract:typst_ts_test` compare
+their output with that file, so a drift in either SDK fails one of the two
+contract targets.
+
 ## Requirements
 
 | ID | Requirement | Status | Verification |
 |---|---|---|---|
-| EMIT-001 | The emitter MUST produce UTF-8 without BOM and LF line endings. | CONFIRMED | Byte-level golden test. |
-| EMIT-002 | The emitter MUST produce a deterministic output for the same input. | CONFIRMED | Repeated emission test. |
-| EMIT-003 | The emitter MUST include the fixed generated-file header. | CONFIRMED | Golden test. |
-| EMIT-004 | The emitter MUST NOT include timestamps or random values. | CONFIRMED | Golden review. |
-| EMIT-005 | The emitter MUST emit page setup before content. | CONFIRMED | Golden test. |
-| EMIT-006 | The emitter MUST map portrait and landscape to `flipped`. | CONFIRMED | Golden test. |
-| EMIT-007 | The emitter MUST emit metadata only when present. | CONFIRMED | Golden test. |
-| EMIT-008 | The emitter MUST emit module imports before page setup. | CONFIRMED | Golden test. |
-| EMIT-009 | The emitter MUST preserve block order. | CONFIRMED | Golden test. |
-| EMIT-010 | The emitter MUST preserve span order. | CONFIRMED | Golden test. |
-| EMIT-011 | The emitter MUST escape text according to the catalog. | CONFIRMED | Escaping test. |
-| EMIT-012 | The emitter MUST NOT escape raw content. | CONFIRMED | Golden test. |
-| EMIT-013 | The emitter MUST emit table headers with `table.header`. | CONFIRMED | Golden test. |
-| EMIT-014 | The emitter MUST emit image alt text. | CONFIRMED | Golden test. |
-| EMIT-015 | The emitter MUST emit image captions inside a figure. | CONFIRMED | Golden test. |
-| EMIT-016 | The emitter MUST emit page breaks as `#pagebreak()`. | CONFIRMED | Golden test. |
-| EMIT-017 | The emitter MUST use `/` separators for asset paths. | CONFIRMED | Golden test. |
-| EMIT-018 | The emitter MUST reject unknown node types. | CONFIRMED | Negative test. |
-| EMIT-019 | The emitter MUST NOT return partial output on failure. | CONFIRMED | Negative test. |
-| EMIT-020 | The emitter MUST NOT read assets or invoke the compiler. | CONFIRMED | Dependency review. |
-| EMIT-021 | The emitter MUST end with exactly one newline. | CONFIRMED | Byte-level test. |
-| EMIT-022 | The emitter MUST be identical in Python and TypeScript. | CONFIRMED | Parity test. |
+| EMIT-001 | The emitter MUST produce UTF-8 without BOM and LF line endings. | IMPLEMENTED | `//tests/contract:typst_py` and `//tests/contract:typst_ts_test`; the byte checks of both runners. |
+| EMIT-002 | The emitter MUST produce a deterministic output for the same input. | IMPLEMENTED | `//tests/contract:typst_py` and `//tests/contract:typst_ts_test`; the determinism case of both runners. |
+| EMIT-003 | The emitter MUST include the fixed generated-file header. | IMPLEMENTED | `//tests/contract:typst_py` and `//tests/contract:typst_ts_test`; the header case of both runners. |
+| EMIT-004 | The emitter MUST NOT include timestamps or random values. | IMPLEMENTED | The golden files under `tests/fixtures/expected/`; no file holds a timestamp or a random value. |
+| EMIT-005 | The emitter MUST emit page setup before content. | IMPLEMENTED | `//packages/python/tests:emitter_tests` and `//packages/typescript:emitter_test_run`; the page-setup cases of both SDKs, and the golden files. |
+| EMIT-006 | The emitter MUST map portrait and landscape to `flipped`. | IMPLEMENTED | `//packages/python/tests:emitter_tests` and `//packages/typescript:emitter_test_run`; the orientation cases of both SDKs. |
+| EMIT-007 | The emitter MUST emit metadata only when present. | IMPLEMENTED | `//packages/python/tests:emitter_tests` and `//packages/typescript:emitter_test_run`; the metadata cases of both SDKs. |
+| EMIT-008 | The emitter MUST emit module imports before page setup. | IMPLEMENTED | The golden files under `tests/fixtures/expected/`, and the module cases of the emitter tests of both SDKs. |
+| EMIT-009 | The emitter MUST preserve block order. | IMPLEMENTED | The golden files under `tests/fixtures/expected/`, which hold the blocks of the document in the order of the document. |
+| EMIT-010 | The emitter MUST preserve span order. | IMPLEMENTED | The golden files under `tests/fixtures/expected/`, which hold the spans of a block in the order of the block. |
+| EMIT-011 | The emitter MUST escape text according to the catalog. | IMPLEMENTED | `//packages/python/tests:emitter_tests` and `//packages/typescript:emitter_test_run`; the escaping cases of both SDKs, and the golden file `escaping.typ`. |
+| EMIT-012 | The emitter MUST NOT escape raw content. | IMPLEMENTED | `//packages/python/tests:emitter_tests` and `//packages/typescript:emitter_test_run`; the raw cases of both SDKs, and the golden file `full.typ`. |
+| EMIT-013 | The emitter MUST emit table headers with `table.header`. | IMPLEMENTED | `//packages/python/tests:emitter_tests` and `//packages/typescript:emitter_test_run`; the table case of both SDKs, and the golden file `full.typ`. |
+| EMIT-014 | The emitter MUST emit image alt text. | IMPLEMENTED | `//packages/python/tests:emitter_tests` and `//packages/typescript:emitter_test_run`; the image case of both SDKs, and the golden file `full.typ`. |
+| EMIT-015 | The emitter MUST emit image captions inside a figure. | IMPLEMENTED | The golden file `full.typ`, which holds the caption of an image inside a figure. |
+| EMIT-016 | The emitter MUST emit page breaks as `#pagebreak()`. | IMPLEMENTED | The golden file `full.typ`, which holds a page break. |
+| EMIT-017 | The emitter MUST use `/` separators for asset paths. | IMPLEMENTED | `//packages/python/tests:emitter_tests` and `//packages/typescript:emitter_test_run`; the path case of both SDKs. |
+| EMIT-018 | The emitter MUST reject unknown node types. | IMPLEMENTED | `//packages/python/tests:emitter_tests` and `//packages/typescript:emitter_test_run`; the unknown-type case of both SDKs. |
+| EMIT-019 | The emitter MUST NOT return partial output on failure. | IMPLEMENTED | `//packages/python/tests:emitter_tests` and `//packages/typescript:emitter_test_run`; the negative cases of both SDKs, which raise instead of returning. |
+| EMIT-020 | The emitter MUST NOT read assets or invoke the compiler. | IMPLEMENTED | The emitter module of each SDK imports no file system API and no process API. |
+| EMIT-021 | The emitter MUST end with exactly one newline. | IMPLEMENTED | `//tests/contract:typst_py` and `//tests/contract:typst_ts_test`; the newline case of both runners. |
+| EMIT-022 | The emitter MUST be identical in Python and TypeScript. | IMPLEMENTED | `//tests/contract:typst_py` and `//tests/contract:typst_ts_test`; both runners compare their output with the same golden file. |
+| EMIT-023 | The emitter MUST emit a monospace span as the raw text of Typst and MUST reject a value that the raw text cannot hold. | IMPLEMENTED | `//packages/python/tests:emitter_tests` and `//packages/typescript:emitter_test_run`; the monospace cases of both SDKs. |
+| EMIT-024 | The emitter MUST escape a list marker at the start of a line when the marker could open a list. | IMPLEMENTED | `//packages/python/tests:emitter_tests` and `//packages/typescript:emitter_test_run`; the list-marker cases of both SDKs, and the golden file `list-marker.typ`. |
 
 ## Open questions
 
@@ -305,3 +363,4 @@ files are updated only by an explicit review that explains the output change.
 - [Node catalog](nodes.md)
 - [SDK API](sdk-api.md)
 - [Testing](../development/testing.md)
+- [ADR-0028](../decisions/ADR-0028-typst-emitter.md)

@@ -15,8 +15,8 @@ compiler integration, and package installation.
 
 | Area | Current state |
 |---|---|
-| Test targets | Twenty-nine hand-written test targets: `//tools/codegen/tests:unit_tests`, `//tools/schemagen/tests:unit_tests`, `//tools/publish/tests:publish_tests`, `//scripts/tests:version_tests`, `//scripts/tests:release_tests`, `//scripts/tests:release_flow_tests`, `//scripts/tests:repository_tests`, `//scripts/tests:docs_tests`, `//scripts/tests:link_tests`, `//scripts:docs_checks`, `//specs/schemas:schema_tests`, `//specs/schemas:release_tag_tests`, `//packages/python/tests:model_tests`, `//packages/python/tests:validation_tests`, `//packages/python/tests:builder_tests`, `//packages/python/tests:schema_tests`, `//packages/typescript:model_test_run`, `//packages/typescript:validation_test_run`, `//packages/typescript:builder_test_run`, `//packages/typescript:schema_test_run`, `//tests/contract:contract_py`, `//tests/contract:contract_ts_test`, `//tests/contract:validation_py`, `//tests/contract:validation_ts_test`, `//tests/contract:builder_py`, `//tests/contract:builder_ts_test`, `//tests/contract:schema_py`, `//tests/contract:schema_ts_test`, and `//tests/schema:schema_py`. The TypeScript toolchain adds eight generated type-check targets. |
-| Test cases | Sixteen generator cases, 12 schema generator cases, 45 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 47 repository structure cases, 4 release tag cases, 32 documentation gate cases, 4 link check cases, one documentation check, one schema bundle check, 125 document model cases, 12 contract fixture cases, 28 validation cases, 6 validation contract fixture cases, 71 builder cases, 5 builder contract fixture cases, 11 schema validation cases, 7 schema contract fixture cases, and 4 schema stage cases. |
+| Test targets | Thirty-three hand-written test targets: `//tools/codegen/tests:unit_tests`, `//tools/schemagen/tests:unit_tests`, `//tools/publish/tests:publish_tests`, `//scripts/tests:version_tests`, `//scripts/tests:release_tests`, `//scripts/tests:release_flow_tests`, `//scripts/tests:repository_tests`, `//scripts/tests:docs_tests`, `//scripts/tests:link_tests`, `//scripts:docs_checks`, `//specs/schemas:schema_tests`, `//specs/schemas:release_tag_tests`, `//packages/python/tests:model_tests`, `//packages/python/tests:validation_tests`, `//packages/python/tests:builder_tests`, `//packages/python/tests:schema_tests`, `//packages/python/tests:emitter_tests`, `//packages/typescript:model_test_run`, `//packages/typescript:validation_test_run`, `//packages/typescript:builder_test_run`, `//packages/typescript:schema_test_run`, `//packages/typescript:emitter_test_run`, `//tests/contract:contract_py`, `//tests/contract:contract_ts_test`, `//tests/contract:validation_py`, `//tests/contract:validation_ts_test`, `//tests/contract:builder_py`, `//tests/contract:builder_ts_test`, `//tests/contract:schema_py`, `//tests/contract:schema_ts_test`, `//tests/contract:typst_py`, `//tests/contract:typst_ts_test`, and `//tests/schema:schema_py`. The TypeScript toolchain adds ten generated type-check targets. |
+| Test cases | Sixteen generator cases, 12 schema generator cases, 45 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 47 repository structure cases, 4 release tag cases, 32 documentation gate cases, 4 link check cases, one documentation check, one schema bundle check, 125 document model cases, 12 contract fixture cases, 28 validation cases, 6 validation contract fixture cases, 71 builder cases, 5 builder contract fixture cases, 11 schema validation cases, 7 schema contract fixture cases, 30 emitter cases, 5 emitter contract fixture cases, and 4 schema stage cases. |
 | Schema tests | `//specs/schemas:schema_tests` validates the built bundle. The validation of a schema document against the meta-schema is missing. The instance validation against the contract is implemented in the two SDKs. |
 | Release tag tests | `//specs/schemas:release_tag_tests` covers the release tag pattern of the contract, so that the contract and the publisher agree on what a release tag is. |
 | Publisher tests | `//tools/publish/tests:publish_tests` covers the publisher, the published identity of the built bundle, the resolution of the versioned raw URLs, and the deterministic archive. |
@@ -35,8 +35,9 @@ compiler integration, and package installation.
 | Schema validation tests | `//packages/python/tests:schema_tests` and `//packages/typescript:schema_test_run` cover the validator of the subset of JSON Schema 2020-12 that the contract uses, the keywords that the contract uses and the validator does not implement, the diagnostics that the validator reports, and the relation of the validator to the model of a document. |
 | Schema contract tests | `//tests/contract:schema_py` and `//tests/contract:schema_ts_test` read the same schema fixtures and the same manifest, so a drift in the diagnostics of either validator fails one of the two targets. |
 | Schema stage | `//tests/schema:schema_py` walks the whole embedded contract of the Python SDK and reports a keyword that the validator does not implement, and it checks every valid document fixture and every canonical document of the builder against the contract. |
-| Golden `.typ` tests | None. |
-| Parity tests | The serialization parity of the document IR and the diagnostic parity of the validation engine are covered by the contract runners. The `.typ` parity is not implemented. |
+| Emitter tests | `//packages/python/tests:emitter_tests` and `//packages/typescript:emitter_test_run` cover the shape of the output, the page setup, the metadata, the block forms, the escaping rules, the list markers, the raw text of a monospace span, and the diagnostics that the emitter reports. |
+| Golden `.typ` tests | `//tests/contract:typst_py` and `//tests/contract:typst_ts_test` compare the output of both SDKs with the golden files under `tests/fixtures/expected/`, so a drift in either SDK fails one of the two targets. |
+| Parity tests | The serialization parity of the document IR and the diagnostic parity of the validation engine are covered by the contract runners. The `.typ` parity is covered by the two emitter contract runners, which compare their output with the same golden file. |
 | Compiler integration | None. |
 | Install tests | None. |
 | CI | The pull request and main lanes run the build, the test lane, the clean checkout build, and the documentation gate on Windows and Linux. |
@@ -286,6 +287,12 @@ asset layer, which is not implemented yet.
 - Golden files are not generated during the test run; they are reviewed source
   artifacts.
 
+The golden files of the emitter live under `tests/fixtures/expected/`, and one
+file belongs to one document fixture under `tests/fixtures/documents/`. The
+name of the golden file is the name of the document fixture with the
+extension `.typ`. Both SDKs compare their output with the same golden file, so
+the file is the single source of truth of the output contract.
+
 ## Parity tests
 
 For each shared fixture:
@@ -319,8 +326,11 @@ implemented as well: `//tests/contract:schema_py` and
 `//tests/contract:schema_ts_test` read the same schema fixtures and the same
 manifest, validate every fixture with the validator of their own SDK, and
 compare the diagnostic code, the diagnostic path, the diagnostic message, and
-the diagnostic details of every negative fixture. The `.typ` part waits for the
-emitter.
+the diagnostic details of every negative fixture. The `.typ` part of the rule is
+implemented as well: `//tests/contract:typst_py` and
+`//tests/contract:typst_ts_test` read the same document fixtures and the same
+golden files, emit the source with the emitter of their own SDK, and compare
+their output with the golden file byte for byte.
 
 ## Compiler integration
 
@@ -353,6 +363,8 @@ Post-MVP unless a dependency-free check is available.
 | Invalid raw size limit | `TYPCAST-CONFIG-0004` |
 | Instance breaks a rule of the schema contract | `TYPCAST-SCH-0001` |
 | Schema uses a keyword that the validator does not implement | `TYPCAST-SCH-0002` |
+| Unknown block or span type at the emission | `TYPCAST-EMIT-0002` |
+| Value that the raw text of Typst cannot hold | `TYPCAST-EMIT-0003` |
 | Absolute asset path | `TYPCAST-VAL-0012` or `TYPCAST-IO-0003` |
 | Path traversal | `TYPCAST-IO-0002` |
 | Missing asset | `TYPCAST-IO-0001` |
@@ -438,6 +450,7 @@ threshold may be added in a later minor version once the suite stabilizes.
 | TEST-032 | The release preparation MUST be rehearsed end to end with the manifests, the schema sources, and the bundle of the build, so that the path of the release lane runs in the test lane. | IMPLEMENTED | `//scripts/tests:release_flow_tests`; 6 cases. |
 | TEST-033 | The validation fixtures MUST be shared by both SDKs, and the validation contract runners MUST compare the diagnostics of every negative validation fixture, in the order the engine reports them. | IMPLEMENTED | `//tests/contract:validation_py` and `//tests/contract:validation_ts_test`; the fixtures under `tests/fixtures/validation/` and the manifest that names the diagnostics of every negative fixture. |
 | TEST-034 | The schema fixtures MUST be shared by both SDKs, and the schema contract runners MUST compare the diagnostics of every negative schema fixture, in the order the validator reports them. | IMPLEMENTED | `//tests/contract:schema_py` and `//tests/contract:schema_ts_test`; the fixtures under `tests/fixtures/schema/` and the manifest that names the diagnostics of every negative fixture, and the stage `//tests/schema:schema_py`, which walks the whole embedded contract. |
+| TEST-035 | The golden Typst files MUST be shared by both SDKs, and every valid document fixture MUST have one. | IMPLEMENTED | `//tests/contract:typst_py` and `//tests/contract:typst_ts_test`; the golden files under `tests/fixtures/expected/`, one for every valid document fixture of the manifest under `tests/fixtures/documents/`. |
 
 ## Open questions
 
@@ -453,4 +466,6 @@ threshold may be added in a later minor version once the suite stabilizes.
 - [CI/CD](ci-cd.md)
 - [Document IR](../specifications/document-ir.md)
 - [Diagnostics](../specifications/diagnostics.md)
+- [Emitter](../specifications/emitter.md)
 - [ADR-0019](../decisions/ADR-0019-test-and-benchmark-policy.md)
+- [ADR-0028](../decisions/ADR-0028-typst-emitter.md)

@@ -6,8 +6,8 @@ the JavaScript/TypeScript ecosystem.
 The repository is managed as a Bazel monorepo. The current implementation is an
 early foundation: it includes a CSV-backed JSON template generator, the
 immutable document model, the semantic validation engine, the validation
-against the JSON Schema contract, and the fluent builder of the Python and
-TypeScript SDKs, and build targets for the two packages.
+against the JSON Schema contract, the fluent builder, and the Typst emitter of
+the Python and TypeScript SDKs, and build targets for the two packages.
 
 ## Repository layout
 
@@ -167,10 +167,10 @@ The product, architecture, contract, and engineering documentation is in
 [vision and scope](docs/product/vision-and-scope.md).
 
 The documents describe the approved MVP baseline. The SDK exposes the immutable
-document model, the JSON serialization, the semantic validation engine, and the
-fluent builder with its span helpers and its table helpers. The emitter, the
-compiler adapter, and the packaging are not implemented yet. The continuous
-integration workflows and the release tooling are.
+document model, the JSON serialization, the semantic validation engine, the
+fluent builder with its span helpers and its table helpers, and the Typst
+emitter. The compiler adapter and the packaging are not implemented yet. The
+continuous integration workflows and the release tooling are.
 
 ## Contributing
 

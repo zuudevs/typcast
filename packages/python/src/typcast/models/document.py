@@ -94,6 +94,18 @@ class Document:
 
         return validate_schema(self.to_dict())
 
+    def to_typst(self, config: "TypcastConfig | None" = None) -> str:
+        """Returns the Typst source of the document.
+
+        The method validates the document before it emits it, so that a
+        document that breaks a semantic rule is reported with the diagnostic
+        of the rule instead of being emitted. The configuration holds the
+        limits of the validation run, and it is never stored in the document.
+        """
+        from typcast.emitter import emit_typst
+
+        return emit_typst(self, config)
+
     @classmethod
     def from_dict(cls, value: Any) -> "Document":
         """Builds a document from a JSON value."""
