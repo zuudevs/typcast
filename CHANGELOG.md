@@ -266,6 +266,13 @@ No release has been published yet. Every change so far is listed under
 
 ### Fixed
 
+- The validator of the JSON Schema contract of the Python SDK converted a
+  number to the binary64 domain of ECMAScript when it checked the type of an
+  integer. A Python integer that is larger than that domain, such as the
+  heading level `10**400` of a JSON document, raised an `OverflowError`
+  instead of reporting the diagnostics of the document. The validator now
+  checks the type of an integer without a conversion, and the comparison of
+  two numbers of the contract handles the same case.
 - The generator rejects the constants `NaN`, `Infinity`, and `-Infinity`, which
   Python accepts by default and which the JSON specification does not define.
   The generator reported success and wrote a file that every standard JSON

@@ -130,6 +130,31 @@ class DiagnosticTests(unittest.TestCase):
         self.assertIsNone(diagnostics[0].path)
         self.assertEqual(diagnostics[0].details["keyword"], "type")
 
+    def test_an_integer_that_the_number_domain_cannot_hold_is_reported(self) -> None:
+        # A Python integer may be larger than the number domain of the
+        # document IR, and the conversion of such an integer to that domain
+        # raises an error. The validator reports the value and raises no
+        # error.
+        value = document().to_dict()
+        value["contents"] = [
+            {
+                "type": "heading",
+                "level": 10**400,
+                "content": [{"type": "text", "value": "Heading"}],
+            }
+        ]
+
+        diagnostics = validate_schema(value)
+
+        self.assertEqual(len(diagnostics), 1)
+        diagnostic = diagnostics[0]
+        self.assertEqual(diagnostic.path, "/contents/0/level")
+        self.assertEqual(
+            diagnostic.message,
+            "'/contents/0/level' must not be greater than 6.",
+        )
+        self.assertEqual(diagnostic.details["keyword"], "maximum")
+
 
 class ModelTests(unittest.TestCase):
     """Checks the relation of the validator to the model of a document."""

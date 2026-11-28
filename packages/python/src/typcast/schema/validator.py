@@ -472,8 +472,24 @@ def _matches_type(value: Any, expected: Any) -> bool:
             return True
         if name == "number" and _is_number(value):
             return True
-        if name == "integer" and _is_number(value) and float(value).is_integer():
+        if name == "integer" and _is_integer(value):
             return True
+    return False
+
+
+def _is_integer(value: Any) -> bool:
+    """Returns whether the value is a JSON number of an integer value.
+
+    The check does not convert the value to the binary64 domain, because a
+    Python integer may be larger than that domain, and the conversion of such
+    an integer raises an error.
+    """
+    if isinstance(value, bool):
+        return False
+    if isinstance(value, int):
+        return True
+    if isinstance(value, float):
+        return value.is_integer()
     return False
 
 
@@ -482,7 +498,7 @@ def _equal(left: Any, right: Any) -> bool:
     if isinstance(left, bool) or isinstance(right, bool):
         return left is right
     if _is_number(left) and _is_number(right):
-        return float(left) == float(right)
+        return _equal_numbers(left, right)
     if isinstance(left, str) and isinstance(right, str):
         return left == right
     if left is None or right is None:
@@ -496,6 +512,24 @@ def _equal(left: Any, right: Any) -> bool:
             _equal(left[name], right[name]) for name in left
         )
     return False
+
+
+def _equal_numbers(left: Any, right: Any) -> bool:
+    """Returns whether two JSON numbers are equal.
+
+    The comparison does not convert a number to the binary64 domain, because a
+    Python integer may be larger than that domain, and the conversion of such
+    an integer raises an error. An integer that is larger than every number of
+    that domain is not equal to a number of it.
+    """
+    if isinstance(left, int) and isinstance(right, int):
+        return left == right
+    if isinstance(left, float) and isinstance(right, float):
+        return left == right
+    try:
+        return float(left) == float(right)
+    except OverflowError:
+        return False
 
 
 def _escape(token: str) -> str:
