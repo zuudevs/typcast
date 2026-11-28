@@ -1,4 +1,5 @@
 load("@rules_python//python:defs.bzl", "py_library")
+load("//bazel:schemagen.bzl", "typcast_schema_source")
 
 package(
     default_visibility = ["//visibility:public"],
@@ -9,11 +10,24 @@ exports_files([
     "pyproject.toml",
 ])
 
+# The JSON Schema contract of the document IR. The rule embeds the bundle
+# that the build produces into a source file of the SDK, so that the package
+# carries the contract and needs no file of the repository at run time.
+typcast_schema_source(
+    name = "schema_sources",
+    language = "python",
+    output = "src/typcast/schema/schemas_generated.py",
+    root = "specs/schemas",
+    srcs = ["//specs/schemas:schema_bundle"],
+)
+
 py_library(
     name = "typcast",
     srcs = glob([
         "src/typcast/**/*.py",
-    ]),
+    ]) + [
+        ":schema_sources",
+    ],
     imports = [
         "src",
     ],

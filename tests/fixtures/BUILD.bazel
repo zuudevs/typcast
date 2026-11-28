@@ -58,8 +58,26 @@ js_library(
     ],
 )
 
+# The shared schema fixtures. The instance validation stage reads the same
+# files and the same manifest, so the schema contract has one source of
+# truth.
+filegroup(
+    name = "schema_documents",
+    srcs = glob([
+        "schema/**/*.json",
+    ]),
+)
+
+js_library(
+    name = "schema_fixtures",
+    srcs = [
+        ":schema_documents",
+    ],
+)
+
 exports_files([
     "documents/manifest.json",
     "validation/manifest.json",
     "builder/manifest.json",
+    "schema/manifest.json",
 ])

@@ -1,0 +1,17 @@
+load("@rules_python//python:defs.bzl", "py_test")
+
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+py_test(
+    name = "unit_tests",
+    size = "small",
+    srcs = [
+        "test_schemagen.py",
+    ],
+    main = "test_schemagen.py",
+    deps = [
+        "//tools/schemagen:typcast_schemagen_lib",
+    ],
+)

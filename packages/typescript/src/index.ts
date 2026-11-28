@@ -24,6 +24,8 @@ export {
   CODE_RAW_TOO_LARGE,
   CODE_REQUIRED_FIELD,
   CODE_ROOT_SHAPE,
+  CODE_SCHEMA_UNSUPPORTED_KEYWORD,
+  CODE_SCHEMA_VIOLATION,
   CODE_STRING_TOO_LONG,
   CODE_TABLE_SHAPE,
   CODE_UNKNOWN_FIELD,
@@ -96,6 +98,7 @@ export type {
   RawFormat,
   Span,
 } from "./models/index.js";
+export { validateSchema } from "./schema/index.js";
 export {
   DEFAULT_MAX_RAW_BYTES,
   resolveOptions,

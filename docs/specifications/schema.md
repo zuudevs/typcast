@@ -2,7 +2,7 @@
 
 Status: CONFIRMED
 Scope: Normative
-Last updated: 2026-11-24
+Last updated: 2026-11-28
 
 ## Purpose
 
@@ -204,8 +204,41 @@ violation. The test also checks that the bundle carries exactly the six
 published files, so a schema cannot disappear from the artifact set unnoticed.
 
 The test does not validate a schema document against the JSON Schema
-meta-schema, and it does not validate an instance against the contract. Both
-need a JSON Schema implementation that the repository does not depend on yet.
+meta-schema. The instance validation against the contract is implemented in the
+two SDKs and is described in the next section.
+
+## Instance validation
+
+Each SDK validates an instance against the contract and carries the contract as
+a generated source file. The build embeds the bundle that
+`//specs/schemas:schema_bundle` produces into a source file of the SDK, so a
+published package holds the contract and needs no file of the repository at run
+time, and the SDK reads no file and parses no JSON at run time.
+
+| Rule | Requirement |
+|---|---|
+| Carrier | The contract is embedded as a generated source file, never read from the file system at run time. |
+| Dialect | The validator implements the subset of draft 2020-12 that the contract uses. |
+| Unknown keyword | A keyword that the validator does not implement is reported, never ignored silently. |
+| Coverage | The validator reports every rule that the instance breaks and raises no error. |
+| Parity | Both SDKs report the same diagnostics for the same instance, in the same order. |
+
+The keywords that the contract uses are:
+
+| Kind | Keywords |
+|---|---|
+| Assertions | `$ref`, `additionalProperties`, `const`, `enum`, `exclusiveMinimum`, `items`, `maxLength`, `maximum`, `minItems`, `minLength`, `minimum`, `not`, `oneOf`, `pattern`, `properties`, `required`, `type`, `unevaluatedProperties`. |
+| Annotations | `$comment`, `$defs`, `$id`, `$schema`, `default`, `deprecated`, `description`, `examples`, `readOnly`, `title`, `writeOnly`. |
+
+The stage `//tests/schema:schema_py` and the unit test of the TypeScript SDK
+walk the whole embedded contract and report a keyword that the validator does
+not implement, so a contract that gains a keyword fails the build instead of
+passing every instance. The shared fixtures of `tests/fixtures/schema/` name
+the diagnostics that both SDKs must report, and the cross-language runners of
+`tests/contract/` compare them.
+
+The reader of the document IR keeps its own error contract and stays unchanged,
+and the schema validation is opt-in. The decision is recorded in ADR-0027.
 
 ## Publishing
 
@@ -255,7 +288,7 @@ invalidation will be incorrect.
 ```mermaid
 flowchart TD
   A["JSON input"] --> B["JSON syntax"]
-  B --> C["Meta-schema validation"]
+  B --> C["Reader checks"]
   C --> D["Instance schema validation"]
   D --> E["Semantic validation"]
   E --> F["Immutable model"]
@@ -263,7 +296,10 @@ flowchart TD
   G --> H["Emitter"]
 ```
 
-Semantic validation covers rules that JSON Schema cannot express cleanly:
+The reader checks the rules that one node carries, and the schema validation of
+the SDKs checks the contract as a whole. Both are opt-in and separate from the
+semantic validation, which covers rules that JSON Schema cannot express
+cleanly:
 
 - Table row and column count equality.
 - Unique module aliases.
@@ -335,7 +371,8 @@ The MVP uses a hybrid approach:
 
 - JSON Schema is the data contract.
 - Python and TypeScript model types are written by hand for idiomatic APIs.
-- Validators may be generated from the schema where practical.
+- The schema contract is embedded in both SDKs as a generated source file, and
+  each SDK holds a validator for the subset that the contract uses.
 - Builders and emitters are hand-written.
 - Shared fixtures verify behavior that the schema cannot describe.
 
@@ -369,6 +406,7 @@ the public API to JSON Schema limitations.
 | SCH-021 | A published schema MUST be referenced by the versioned raw URL of its release tag, and a `main` URL MUST NOT be used as a stable reference. | CONFIRMED | Release check. |
 | SCH-022 | The pattern of `schemaVersion` MUST be the one of a semantic version, and it MUST match the whole text. | IMPLEMENTED | `//specs/schemas:schema_tests`; the check of the pattern reads the pattern that `validator.schema.json` carries and rejects a leading zero, a Unicode digit, and a trailing newline or carriage return. |
 | SCH-023 | The width of an image MUST carry an exclusive lower bound of zero, and the length of a margin MUST stay non-negative. | IMPLEMENTED | `//specs/schemas:schema_tests`; the width rule reads the schemas of the built bundle and checks that the width of an image excludes zero and that the shared length schema keeps its lower bound of zero. |
+| SCH-024 | Each SDK MUST carry the schema contract as a generated source file, MUST validate an instance against it, MUST report every rule that the instance breaks, and MUST report a keyword of the contract that the validator does not implement. | IMPLEMENTED | `//packages/python/tests:schema_tests` and `//packages/typescript:schema_test_run`; the keyword and diagnostic cases of both SDKs, and the stage `//tests/schema:schema_py`, which walks the whole embedded contract. |
 
 ## Open questions
 
@@ -390,3 +428,4 @@ the public API to JSON Schema limitations.
 - [ADR-0002](../decisions/ADR-0002-hybrid-schema-and-builders.md)
 - [ADR-0022](../decisions/ADR-0022-release-artifacts-schema-distribution-and-response-policy.md)
 - [ADR-0023](../decisions/ADR-0023-schema-bundle-validation.md)
+- [ADR-0027](../decisions/ADR-0027-instance-validation-against-the-json-schema-contract.md)

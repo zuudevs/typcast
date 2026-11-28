@@ -1,0 +1,170 @@
+{
+  "schemaVersion": "1.0.0",
+  "metadata": {
+    "title": "Title"
+  },
+  "page": {
+    "paper": "a4",
+    "orientation": "portrait",
+    "margin": {
+      "top": {
+        "value": 2,
+        "unit": "cm"
+      },
+      "right": {
+        "value": 2,
+        "unit": "cm"
+      },
+      "bottom": {
+        "value": 2,
+        "unit": "cm"
+      },
+      "left": {
+        "value": 2,
+        "unit": "cm"
+      }
+    }
+  },
+  "contents": [
+    {
+      "type": "heading",
+      "level": 1,
+      "content": [
+        {
+          "type": "text",
+          "value": "H"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "value": "P"
+        }
+      ]
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        [
+          {
+            "type": "text",
+            "value": "I"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "columns": [
+        {
+          "header": [
+            {
+              "type": "text",
+              "value": "H"
+            }
+          ],
+          "align": "left"
+        }
+      ],
+      "rows": [
+        [
+          [
+            {
+              "type": "text",
+              "value": "C"
+            }
+          ]
+        ]
+      ]
+    },
+    {
+      "type": "image",
+      "path": "figures/cover.png",
+      "alt": "Cover",
+      "caption": [
+        {
+          "type": "text",
+          "value": "Caption"
+        }
+      ],
+      "width": {
+        "value": 12,
+        "unit": "cm"
+      }
+    },
+    {
+      "type": "pageBreak"
+    },
+    {
+      "type": "raw",
+      "format": "markup",
+      "value": "#set page(width: 10pt)"
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "bold",
+          "content": [
+            {
+              "type": "text",
+              "value": "B"
+            }
+          ]
+        },
+        {
+          "type": "italic",
+          "content": [
+            {
+              "type": "text",
+              "value": "I"
+            }
+          ]
+        },
+        {
+          "type": "monospace",
+          "content": [
+            {
+              "type": "text",
+              "value": "M"
+            }
+          ]
+        },
+        {
+          "type": "link",
+          "href": "https://example.com",
+          "content": [
+            {
+              "type": "text",
+              "value": "L"
+            }
+          ]
+        },
+        {
+          "type": "lineBreak"
+        },
+        {
+          "type": "raw",
+          "format": "code",
+          "value": "let x = 1"
+        }
+      ]
+    }
+  ],
+  "modules": [
+    {
+      "path": "modules/report.typ",
+      "alias": "report"
+    },
+    {
+      "path": "modules/format.typ",
+      "items": [
+        "currency"
+      ]
+    }
+  ]
+}

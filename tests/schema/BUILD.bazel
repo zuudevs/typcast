@@ -1,0 +1,23 @@
+load("@rules_python//python:defs.bzl", "py_test")
+
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+# The checks of the JSON Schema contract of the document IR. The stage reads
+# the fixtures of the repository and the schema contract that the SDK carries.
+py_test(
+    name = "schema_py",
+    size = "small",
+    srcs = [
+        "test_schema.py",
+    ],
+    main = "test_schema.py",
+    data = [
+        "//tests/fixtures:builder_documents",
+        "//tests/fixtures:documents",
+    ],
+    deps = [
+        "//packages/python:typcast",
+    ],
+)

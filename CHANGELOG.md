@@ -15,7 +15,7 @@ No release has been published yet. Every change so far is listed under
 ### Added
 
 - The product, architecture, specification, engineering, and governance
-  document set, with the requirement index and 25 architecture decision
+  document set, with the requirement index and 26 architecture decision
   records.
 - A JSON Schema generator that expands CSV catalog placeholders in templates,
   with unit tests. The generator rejects a placeholder whose catalog is not
@@ -189,6 +189,36 @@ No release has been published yet. Every change so far is listed under
   path, the message, and the details that both SDKs must report.
 - ADR-0026, which supersedes ADR-0024 and restates the rules of the engine
   unchanged, and adds the configuration of the validation run of a build.
+- The validation of an instance against the JSON Schema contract in both SDKs.
+  `validate_schema(value)` in Python and `validateSchema(value)` in TypeScript,
+  and the method `Document.validate_schema()` and `Document.validateSchema()`,
+  report every rule that the value breaks and raise no error. The check is
+  opt-in and stays separate from the reader of the document IR and from the
+  semantic validation engine.
+- The diagnostics of the schema validation use the new family `TYPCAST-SCH-*`
+  with the phase `validation`. `TYPCAST-SCH-0001` names an instance that
+  breaks a rule of the schema, and the details name the keyword of the broken
+  rule. `TYPCAST-SCH-0002` names a keyword of the schema that the validator
+  does not implement, so a contract that gains a keyword fails the check
+  instead of passing every instance.
+- A schema embedding generator, `//tools/schemagen`, and the rule
+  `typcast_schema_source` of `bazel/schemagen.bzl`, which embed the built
+  bundle into a source file of an SDK. The contract travels with the package,
+  the SDK reads no file and parses no JSON at run time, and the SDKs depend on
+  no third-party JSON Schema library.
+- Shared schema fixtures under `tests/fixtures/schema/`, with a manifest that
+  names the diagnostics of every negative fixture in the order the validator
+  reports them, and cross-language schema contract runners,
+  `//tests/contract:schema_py` and `//tests/contract:schema_ts_test`, which
+  read the same fixtures and the same manifest, so a drift in the diagnostics
+  of either validator fails one of the two targets.
+- The stage `//tests/schema:schema_py`, which walks the whole embedded
+  contract and reports a keyword that the validator does not implement, and
+  which checks every valid document fixture and every canonical document of
+  the builder against the contract.
+- ADR-0027, which records the validation of an instance against the JSON
+  Schema contract and the decision to keep the SDKs free of a third-party
+  JSON Schema dependency.
 
 ### Changed
 
@@ -214,6 +244,11 @@ No release has been published yet. Every change so far is listed under
 - The requirements `API-001`, `API-002`, `API-003`, `API-005`, `API-006`,
   `API-024`, and `NODE-023` that the fluent builder proves are marked
   `IMPLEMENTED`.
+- The requirements `SCH-024`, `API-029`, `DIAG-019`, and `TEST-034` that the
+  validation against the schema contract proves are marked `IMPLEMENTED`.
+- The schema document states that the instance validation against the contract
+  is implemented in the two SDKs. The validation of a schema document against
+  the JSON Schema meta-schema is still missing.
 - The SDK API document names the behavior of the builder: the chaining of its
   methods, the normalization of the content, the defaults of the node catalog,
   the split between the errors of the public API and the errors of the model,
@@ -231,6 +266,13 @@ No release has been published yet. Every change so far is listed under
 
 ### Fixed
 
+- The validator of the JSON Schema contract of the Python SDK converted a
+  number to the binary64 domain of ECMAScript when it checked the type of an
+  integer. A Python integer that is larger than that domain, such as the
+  heading level `10**400` of a JSON document, raised an `OverflowError`
+  instead of reporting the diagnostics of the document. The validator now
+  checks the type of an integer without a conversion, and the comparison of
+  two numbers of the contract handles the same case.
 - The generator rejects the constants `NaN`, `Infinity`, and `-Infinity`, which
   Python accepts by default and which the JSON specification does not define.
   The generator reported success and wrote a file that every standard JSON
@@ -431,8 +473,9 @@ No release has been published yet. Every change so far is listed under
 
 ### Known issues
 
-- The project does not validate a document against the schema yet. That needs
-  a JSON Schema implementation that the repository does not depend on.
-- The builder, the Typst emitter, the Typst compiler adapter, the packaging
-  targets for the wheel, the source distribution, and the npm tarball, and the
-  publishing jobs of the release workflow are not implemented.
+- The project does not validate a schema document against the JSON Schema
+  meta-schema yet. That needs a JSON Schema implementation that the repository
+  does not depend on.
+- The Typst emitter, the Typst compiler adapter, the packaging targets for the
+  wheel, the source distribution, and the npm tarball, and the publishing jobs
+  of the release workflow are not implemented.
