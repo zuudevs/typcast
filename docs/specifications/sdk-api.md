@@ -163,7 +163,7 @@ const document = new DocumentBuilder()
 | Page break | `.page_break()` | `.pageBreak()` |
 | Raw block | `.raw(value, format="markup")` | `.raw(value, { format })` |
 | Module | `.module(path, alias=None, items=None)` | `.module(path, { alias, items })` |
-| Build | `.build()` | `.build()` |
+| Build | `.build(config=None)` | `.build(options?)` |
 
 Builder content arguments accept strings or span objects. A string is normalized
 to a `Text` span. This applies to headings, paragraphs, list items, table cells,
@@ -220,9 +220,22 @@ row with the wrong number of cells is rejected at build time.
   engine reports an error. The error carries every error diagnostic of the
   document, in the order of the document, and its message is the message of the
   first diagnostic.
-- The raw size limit of a build is the default limit of the engine, because the
-  configuration of the engine is passed per call and `build()` takes no
-  configuration.
+- `build()` takes the configuration of the validation engine, so the raw size
+  limit of the build is the limit of the call. A call that names no
+  configuration uses the default limit of the engine. The configuration is
+  passed per call and is never stored in the document, so a later `validate()`
+  of the document uses the default limit again.
+- The builder checks the type of the configuration itself, because the
+  configuration is an argument of a public method. An argument that is not a
+  configuration raises `ApiUsageError` with `TYPCAST-API-0001`, the phase
+  `api`, and the path `/build`.
+- The builder reads the configuration before it does any work, so an invalid
+  configuration is reported before a problem of the document. A limit that is
+  not an integer that is finite and not negative raises `ConfigError` with
+  `TYPCAST-CONFIG-0004`, the phase `config`, and the path `/max_raw_bytes`.
+  Python checks the limit when the configuration is built, because the
+  configuration is a frozen dataclass that checks its value; TypeScript checks
+  the limit when the call resolves it. Both report the same diagnostic.
 
 ## Document methods
 
@@ -273,8 +286,8 @@ Behavior:
   the phase `config`, and the path `/max_raw_bytes`.
 
 The engine is called explicitly through `validate()`. The builder calls it
-again before it returns a document, and the emitter and the compiler adapter
-call it before they use a document.
+again before it returns a document, with the configuration of the call, and the
+emitter and the compiler adapter call it before they use a document.
 
 ## Configuration
 
@@ -304,7 +317,8 @@ interface TypcastOptions {
 The limit is a number of bytes, so it must be an integer that is finite and
 that is not negative. A value that breaks the rule raises `ConfigError` with
 `TYPCAST-CONFIG-0004`. The limit applies to every raw node on its own, and a
-value of exactly the limit is valid.
+value of exactly the limit is valid. The same configuration is the argument of
+`validate()` and of `build()`.
 
 The asset root, the compiler path, the timeout, and the flag that allows an
 unsupported Typst version arrive with the asset layer and the compiler adapter.
@@ -406,6 +420,7 @@ collection. A single error may carry multiple diagnostics.
 | API-025 | The npm package MUST be ESM-only for `1.0.0`; CommonJS support is DEFERRED. | CONFIRMED | Package and consumer tests. |
 | API-026 | The package root MUST export the version of the package, and the export MUST match the package manifest. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the version cases, and `//scripts:repository_checks` compares every export with its manifest. |
 | API-027 | The validation configuration MUST be passed per call and MUST NOT be stored in the document; in this release it MUST hold the raw size limit only, and an invalid limit MUST raise `ConfigError` with `TYPCAST-CONFIG-0004`. | IMPLEMENTED | `//packages/python/tests:validation_tests` and `//packages/typescript:validation_test_run`; the configuration cases of both SDKs, and the `ConfigError` case of both SDKs. |
+| API-028 | `build()` MUST take the validation configuration per call, MUST apply its raw size limit to the validation run of the build, and MUST NOT store it in the document; a configuration that is not a configuration object MUST raise `ApiUsageError` with `TYPCAST-API-0001` and the path `/build`. | IMPLEMENTED | `//packages/python/tests:builder_tests` and `//packages/typescript:builder_test_run`; the configuration cases of both SDKs, and the fixtures of `//tests/contract:builder_py` and `//tests/contract:builder_ts_test`. |
 
 ## Open questions
 
@@ -425,4 +440,4 @@ collection. A single error may carry multiple diagnostics.
 - [ADR-0004](../decisions/ADR-0004-immutable-model-and-builder.md)
 - [ADR-0015](../decisions/ADR-0015-mutable-builder-contract.md)
 - [ADR-0016](../decisions/ADR-0016-esm-only-npm-package.md)
-- [ADR-0024](../decisions/ADR-0024-semantic-validation-engine-and-configuration.md)
+- [ADR-0026](../decisions/ADR-0026-semantic-validation-engine-configuration-and-build.md)

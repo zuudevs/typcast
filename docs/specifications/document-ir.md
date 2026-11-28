@@ -440,4 +440,4 @@ engine is called through `Document.validate()`; see the SDK API contract.
 - [Emitter](emitter.md)
 - [Assets and modules](assets.md)
 - [ADR-0017](../decisions/ADR-0017-resource-limits.md)
-- [ADR-0024](../decisions/ADR-0024-semantic-validation-engine-and-configuration.md)
+- [ADR-0026](../decisions/ADR-0026-semantic-validation-engine-configuration-and-build.md)

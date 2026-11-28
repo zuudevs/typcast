@@ -15,7 +15,7 @@ No release has been published yet. Every change so far is listed under
 ### Added
 
 - The product, architecture, specification, engineering, and governance
-  document set, with the requirement index and 24 architecture decision
+  document set, with the requirement index and 25 architecture decision
   records.
 - A JSON Schema generator that expands CSV catalog placeholders in templates,
   with unit tests. The generator rejects a placeholder whose catalog is not
@@ -179,6 +179,16 @@ No release has been published yet. Every change so far is listed under
   `//tests/contract:builder_ts_test`, which read the same builder fixtures and
   the same manifest, so a drift in the builder of either SDK fails one of the
   two targets.
+- The configuration of the validation run of a build. `build()` takes the
+  configuration of the validation engine in both SDKs, so the raw size limit of
+  a build is the limit of the call and a call that names no configuration uses
+  the default limit of one MiB. The configuration is passed per call and is
+  never stored in the document.
+- The shared builder fixtures cover the limit of a build: a scenario may name a
+  raw size limit, and a scenario that expects a diagnostic names the code, the
+  path, the message, and the details that both SDKs must report.
+- ADR-0026, which supersedes ADR-0024 and restates the rules of the engine
+  unchanged, and adds the configuration of the validation run of a build.
 
 ### Changed
 

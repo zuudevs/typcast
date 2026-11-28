@@ -1,9 +1,14 @@
 # ADR-0024: Semantic validation engine and its configuration
 
-Status: Accepted
+Status: Superseded
 Date: 2026-11-27
 Supersedes: none
-Superseded by: none
+Superseded by: ADR-0026
+
+> Superseded by
+> [ADR-0026](ADR-0026-semantic-validation-engine-configuration-and-build.md).
+> The rules of the engine are restated unchanged, and the builder passes the
+> configuration of the engine to the validation run of the build.
 
 ## Context
 

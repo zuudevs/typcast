@@ -44,6 +44,8 @@ import { Module } from "../models/module.js";
 import { Length, Margin, Page } from "../models/page.js";
 import type { Orientation } from "../models/page.js";
 import type { RawFormat, Span } from "../models/spans.js";
+import { resolveOptions } from "../validations/config.js";
+import type { TypcastOptions } from "../validations/config.js";
 
 /** The page of a document. */
 export interface PageOptions {
@@ -398,8 +400,23 @@ export class DocumentBuilder {
    * validation error when the engine reports an error. The diagnostics of
    * the error hold every problem of the document, in the order of the
    * document.
+   *
+   * The options hold the configuration of the validation run, so the raw
+   * size limit of the build is the limit of the call. The options are read
+   * before the builder does any work, so an invalid configuration is
+   * reported before a problem of the document. The configuration is never
+   * stored in the document.
    */
-  build(): Document {
+  build(options?: TypcastOptions): Document {
+    const settings = resolveOptions(
+      options === undefined
+        ? undefined
+        : requireApiOptions<TypcastOptions>(
+            options,
+            "/build",
+            "a TypcastOptions object",
+          ),
+    );
     if (this.titleValue === null) {
       throwValidation(
         CODE_REQUIRED_FIELD,
@@ -430,7 +447,7 @@ export class DocumentBuilder {
         ),
       "",
     );
-    const diagnostics = document.validate();
+    const diagnostics = document.validate(settings);
     const errors = diagnostics.filter(
       (diagnostic) => diagnostic.severity === SEVERITY_ERROR,
     );

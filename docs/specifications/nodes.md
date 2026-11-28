@@ -254,7 +254,7 @@ list marker. The emitter is responsible for context-sensitive escaping.
 | NODE-020 | The emitter MUST reject unknown node types. | CONFIRMED | Negative test. |
 | NODE-021 | The emitter MUST preserve block order. | CONFIRMED | Golden test. |
 | NODE-022 | The emitter MUST preserve span order. | CONFIRMED | Golden test. |
-| NODE-023 | The raw size limit MUST be enforced during validation at `build()` and again before emit. | IMPLEMENTED | The validation engine enforces the limit and reports it with `TYPCAST-VAL-0010`; `//packages/python/tests:validation_tests` and `//packages/typescript:validation_test_run`; the check at `build()` is covered by `//packages/python/tests:builder_tests` and `//packages/typescript:builder_test_run`, and the check before emit waits for the emitter. |
+| NODE-023 | The raw size limit MUST be enforced during validation at `build()` and again before emit. | IMPLEMENTED | The validation engine enforces the limit and reports it with `TYPCAST-VAL-0010`; `//packages/python/tests:validation_tests` and `//packages/typescript:validation_test_run`; the check at `build()` is covered by `//packages/python/tests:builder_tests` and `//packages/typescript:builder_test_run`, and it applies the raw size limit of the configuration of the call; the check before emit waits for the emitter. |
 | NODE-024 | The node catalog MUST be extensible without changing existing node semantics. | CONFIRMED | Schema compatibility review. |
 | NODE-025 | The node catalog MUST NOT include math, citation, TOC, footnote, or header/footer nodes in the MVP. | CONFIRMED | Scope review. |
 
@@ -272,4 +272,4 @@ list marker. The emitter is responsible for context-sensitive escaping.
 - [Assets and modules](assets.md)
 - [Testing](../development/testing.md)
 - [ADR-0017](../decisions/ADR-0017-resource-limits.md)
-- [ADR-0024](../decisions/ADR-0024-semantic-validation-engine-and-configuration.md)
+- [ADR-0026](../decisions/ADR-0026-semantic-validation-engine-configuration-and-build.md)

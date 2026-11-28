@@ -10,6 +10,7 @@
 import {
   ApiUsageError,
   Bold,
+  ConfigError,
   Document,
   DocumentBuilder,
   Italic,
@@ -43,6 +44,7 @@ import type {
   PageOptions,
   RawFormat,
   TableOptions,
+  TypcastOptions,
 } from "../lib/src/index.js";
 
 const failures: string[] = [];
@@ -602,6 +604,88 @@ function validationTests(): void {
   );
 }
 
+/**
+ * Checks the configuration of the validation run of a build.
+ *
+ * The configuration is passed per call, so the raw size limit of the build
+ * is the limit of the call, and the configuration is never stored in the
+ * document that the build returns.
+ */
+function buildConfigurationTests(): void {
+  const overLimit = assertError(
+    "TYPCAST-VAL-0010",
+    "validation",
+    "/contents/0/value",
+    () =>
+      new DocumentBuilder()
+        .title("Title")
+        .raw("123456789")
+        .build({ maxRawBytes: 8 }),
+  );
+  const diagnostic = overLimit.diagnostics[0] as Diagnostic;
+  checkEqual(diagnostic.details["maxBytes"], 8, "the details must name the limit");
+  checkEqual(diagnostic.details["bytes"], 9, "the details must name the size");
+  checkEqual(
+    diagnostic.message,
+    "'/contents/0/value' must not hold more than 8 bytes, got 9.",
+    "the message must name the limit and the size",
+  );
+
+  const atLimit = new DocumentBuilder()
+    .title("Title")
+    .raw("12345678")
+    .build({ maxRawBytes: 8 });
+  checkEqual(
+    atLimit.contents.length,
+    1,
+    "a raw node at the limit of the configuration must be accepted",
+  );
+  checkEqual(
+    atLimit.validate().length,
+    0,
+    "the configuration must not be stored in the document",
+  );
+  check(
+    !atLimit.toJSONString().includes("maxRawBytes"),
+    "the document must not hold the configuration",
+  );
+
+  for (const value of [null, "x", 42, true, []]) {
+    assertError(
+      "TYPCAST-API-0001",
+      "api",
+      "/build",
+      () =>
+        new DocumentBuilder()
+          .title("Title")
+          .build(value as unknown as TypcastOptions),
+      ApiUsageError,
+    );
+  }
+
+  assertError(
+    "TYPCAST-CONFIG-0004",
+    "config",
+    "/max_raw_bytes",
+    () => new DocumentBuilder().title("Title").build({ maxRawBytes: -1 }),
+    ConfigError,
+  );
+  assertError(
+    "TYPCAST-CONFIG-0004",
+    "config",
+    "/max_raw_bytes",
+    () => new DocumentBuilder().title("Title").build({ maxRawBytes: 1.5 }),
+    ConfigError,
+  );
+  assertError(
+    "TYPCAST-CONFIG-0004",
+    "config",
+    "/max_raw_bytes",
+    () => new DocumentBuilder().build({ maxRawBytes: -1 }),
+    ConfigError,
+  );
+}
+
 function apiErrorTests(): void {
   assertError(
     "TYPCAST-API-0001",
@@ -1098,6 +1182,7 @@ orderTests();
 contentNormalizationTests();
 defaultTests();
 validationTests();
+buildConfigurationTests();
 apiErrorTests();
 optionsValidationTests();
 optionsDefaultsTests();

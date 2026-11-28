@@ -29,6 +29,8 @@ from typcast import (
     Document,
     DocumentBuilder,
     Length,
+    TypcastConfig,
+    ValidationError,
     bold,
     column,
     italic,
@@ -75,8 +77,16 @@ def load_manifest(root: Path) -> dict[str, Any]:
 
 
 def listed_files(manifest: dict[str, Any]) -> set[str]:
-    """Returns the names of every fixture that the manifest names."""
-    return {entry["file"] for entry in manifest["scenarios"]}
+    """Returns the names of every fixture that the manifest names.
+
+    A scenario that expects a diagnostic names no file, because the build
+    of the scenario fails and produces no document.
+    """
+    return {
+        entry["file"]
+        for entry in manifest["scenarios"]
+        if "file" in entry
+    }
 
 
 def present_files(root: Path) -> set[str]:
@@ -119,8 +129,15 @@ def content_of(items: list[Any]) -> tuple[Any, ...]:
     return tuple(span_of(item) for item in items)
 
 
-def build_scenario(operations: list[dict[str, Any]]) -> Document:
-    """Builds the document of a scenario with the Python builder."""
+def build_scenario(
+    operations: list[dict[str, Any]],
+    max_raw_bytes: int | None = None,
+) -> Document:
+    """Builds the document of a scenario with the Python builder.
+
+    A scenario may name a raw size limit, and the builder applies it to
+    the validation run of the build.
+    """
     builder = DocumentBuilder()
     for operation in operations:
         kind = operation["op"]
@@ -192,7 +209,12 @@ def build_scenario(operations: list[dict[str, Any]]) -> Document:
             )
         else:
             raise SystemExit(f"unknown builder operation: {kind}")
-    return builder.build()
+    config = (
+        None
+        if max_raw_bytes is None
+        else TypcastConfig(max_raw_bytes=max_raw_bytes)
+    )
+    return builder.build(config)
 
 
 class BuilderFixtureTests(unittest.TestCase):
@@ -212,8 +234,10 @@ class BuilderFixtureTests(unittest.TestCase):
 
     def test_every_scenario_matches_its_canonical_json(self) -> None:
         for entry in self.manifest["scenarios"]:
+            if "error" in entry:
+                continue
             with self.subTest(scenario=entry["name"]):
-                document = build_scenario(entry["operations"])
+                document = build_scenario(entry["operations"], entry.get("maxRawBytes"))
                 source = (self.root / entry["file"]).read_bytes()
                 self.assertEqual(
                     document.to_json().encode("utf-8"),
@@ -223,19 +247,37 @@ class BuilderFixtureTests(unittest.TestCase):
 
     def test_every_scenario_round_trips_through_the_reader(self) -> None:
         for entry in self.manifest["scenarios"]:
+            if "error" in entry:
+                continue
             with self.subTest(scenario=entry["name"]):
-                document = build_scenario(entry["operations"])
+                document = build_scenario(entry["operations"], entry.get("maxRawBytes"))
                 again = Document.from_json(document.to_json())
                 self.assertEqual(again.to_dict(), document.to_dict())
 
     def test_every_scenario_is_readable_as_a_json_value(self) -> None:
         for entry in self.manifest["scenarios"]:
+            if "error" in entry:
+                continue
             with self.subTest(scenario=entry["name"]):
                 value = json.loads(
                     (self.root / entry["file"]).read_text(encoding="utf-8")
                 )
                 document = Document.from_dict(value)
                 self.assertEqual(document.to_dict(), value)
+
+    def test_every_failing_scenario_reports_its_diagnostic(self) -> None:
+        for entry in self.manifest["scenarios"]:
+            if "error" not in entry:
+                continue
+            with self.subTest(scenario=entry["name"]):
+                with self.assertRaises(ValidationError) as context:
+                    build_scenario(entry["operations"], entry.get("maxRawBytes"))
+                diagnostic = context.exception.diagnostics[0]
+                expected = entry["error"]
+                self.assertEqual(diagnostic.code, expected["code"])
+                self.assertEqual(diagnostic.path, expected["path"])
+                self.assertEqual(diagnostic.message, expected["message"])
+                self.assertEqual(dict(diagnostic.details), expected["details"])
 
 
 if __name__ == "__main__":

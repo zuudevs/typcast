@@ -16,7 +16,7 @@ compiler integration, and package installation.
 | Area | Current state |
 |---|---|
 | Test targets | Twenty-three hand-written test targets: `//tools/codegen/tests:unit_tests`, `//tools/publish/tests:publish_tests`, `//scripts/tests:version_tests`, `//scripts/tests:release_tests`, `//scripts/tests:release_flow_tests`, `//scripts/tests:repository_tests`, `//scripts/tests:docs_tests`, `//scripts/tests:link_tests`, `//scripts:docs_checks`, `//specs/schemas:schema_tests`, `//specs/schemas:release_tag_tests`, `//packages/python/tests:model_tests`, `//packages/python/tests:validation_tests`, `//packages/python/tests:builder_tests`, `//packages/typescript:model_test_run`, `//packages/typescript:validation_test_run`, `//packages/typescript:builder_test_run`, `//tests/contract:contract_py`, `//tests/contract:contract_ts_test`, `//tests/contract:validation_py`, `//tests/contract:validation_ts_test`, `//tests/contract:builder_py`, and `//tests/contract:builder_ts_test`. The TypeScript toolchain adds six generated type-check targets. |
-| Test cases | Sixteen generator cases, 45 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 47 repository structure cases, 4 release tag cases, 32 documentation gate cases, 4 link check cases, one documentation check, one schema bundle check, 125 document model cases, 12 contract fixture cases, 28 validation cases, 6 validation contract fixture cases, 64 builder cases, and 4 builder contract fixture cases. |
+| Test cases | Sixteen generator cases, 45 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 47 repository structure cases, 4 release tag cases, 32 documentation gate cases, 4 link check cases, one documentation check, one schema bundle check, 125 document model cases, 12 contract fixture cases, 28 validation cases, 6 validation contract fixture cases, 71 builder cases, and 5 builder contract fixture cases. |
 | Schema tests | `//specs/schemas:schema_tests` validates the built bundle. Meta-schema and instance validation are missing. |
 | Release tag tests | `//specs/schemas:release_tag_tests` covers the release tag pattern of the contract, so that the contract and the publisher agree on what a release tag is. |
 | Publisher tests | `//tools/publish/tests:publish_tests` covers the publisher, the published identity of the built bundle, the resolution of the versioned raw URLs, and the deterministic archive. |
@@ -27,10 +27,10 @@ compiler integration, and package installation.
 | Gate tests | `//scripts/tests:docs_tests` and `//scripts/tests:link_tests` cover the rules of the repository gate and of the external link check, including the encoding and the text hygiene rules. |
 | Model tests | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run` cover the immutability, the constructor checks, the canonical JSON form, the reader, and the round trip of the document model. |
 | Validation tests | `//packages/python/tests:validation_tests` and `//packages/typescript:validation_test_run` cover the semantic rules, the configuration of the raw size limit, and the order of the diagnostics. |
-| Builder tests | `//packages/python/tests:builder_tests` and `//packages/typescript:builder_test_run` cover the surface of the builder, the chaining of its methods, the normalization of the content, the defaults of the node catalog, the errors of the diagnostic taxonomy, the validation of the options objects of the TypeScript builder, and the immutability of the snapshot that `build()` returns. |
+| Builder tests | `//packages/python/tests:builder_tests` and `//packages/typescript:builder_test_run` cover the surface of the builder, the chaining of its methods, the normalization of the content, the defaults of the node catalog, the errors of the diagnostic taxonomy, the validation of the options objects of the TypeScript builder, the configuration of the validation run of a build, and the immutability of the snapshot that `build()` returns. |
 | Contract tests | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test` read the same shared fixtures and the same manifest, so a drift in either SDK fails one of the two targets. |
 | Validation contract tests | `//tests/contract:validation_py` and `//tests/contract:validation_ts_test` read the same validation fixtures and the same manifest, so a drift in the diagnostics of either SDK fails one of the two targets. |
-| Builder contract tests | `//tests/contract:builder_py` and `//tests/contract:builder_ts_test` read the same builder fixtures and the same manifest, and every scenario names the canonical JSON that the builder must produce, so a drift in the builder of either SDK fails one of the two targets. |
+| Builder contract tests | `//tests/contract:builder_py` and `//tests/contract:builder_ts_test` read the same builder fixtures and the same manifest, every scenario names the canonical JSON that the builder must produce, and a scenario that names a raw size limit covers the limit of a build, so a drift in the builder of either SDK fails one of the two targets. |
 | Golden `.typ` tests | None. |
 | Parity tests | The serialization parity of the document IR and the diagnostic parity of the validation engine are covered by the contract runners. The `.typ` parity is not implemented. |
 | Compiler integration | None. |
@@ -168,6 +168,14 @@ tests/
         raw-block-over-limit.json
         raw-span-over-limit.json
         multiple-problems.json
+    builder/
+      manifest.json
+      expected/
+        defaults.json
+        full-example.json
+        modules-and-image.json
+        raw-at-limit.json
+        span-helpers.json
   contract/
     BUILD.bazel
     contract.test.mts
@@ -175,6 +183,8 @@ tests/
     test_contract.py
     validation.test.mts
     test_validation.py
+    builder.test.mts
+    test_builder.py
 ```
 
 The `expected/` directory and the `integration/` directory are reserved for
@@ -226,6 +236,15 @@ diagnostics that the manifest names, in the order the engine reports them. A
 fixture may name a raw size limit through `maxRawBytes`, so that the suite
 covers the limit of a call without committing a file of one MiB.
 
+The builder fixtures live in `tests/fixtures/builder/`, and their manifest
+describes the contract of the builder: every scenario names the operations of
+the builder and the canonical JSON that the builder must produce. A scenario
+may name a raw size limit through `maxRawBytes`, and the runner builds the
+scenario with that limit. A scenario that expects a diagnostic names no file,
+because the build of the scenario fails and produces no document, and it names
+the code, the path, the message, and the details of the diagnostic that both
+SDKs must report.
+
 The fixtures carry the paths of the document IR, such as `modules/report.typ`.
 The rules of the path normalization and of the Windows path input belong to the
 asset layer, which is not implemented yet.
@@ -267,8 +286,9 @@ diagnostic code, the diagnostic path, the diagnostic message, and the
 diagnostic details of every negative fixture. The builder part of the rule is
 implemented as well: `//tests/contract:builder_py` and
 `//tests/contract:builder_ts_test` read the same builder fixtures and the same
-manifest, build every scenario with the builder of their own SDK, and compare
-the canonical JSON of the document byte for byte. The `.typ` part waits for the
+manifest, build every scenario with the builder of their own SDK, compare the
+canonical JSON of the document byte for byte, and compare the diagnostic of
+every scenario whose build must fail. The `.typ` part waits for the
 emitter.
 
 ## Compiler integration

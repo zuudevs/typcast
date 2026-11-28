@@ -17,6 +17,7 @@ import unittest
 from typcast import (
     ApiUsageError,
     Bold,
+    ConfigError,
     Diagnostic,
     Document,
     DocumentBuilder,
@@ -32,6 +33,7 @@ from typcast import (
     Table,
     TableColumn,
     Text,
+    TypcastConfig,
     TypcastError,
     ValidationError,
     bold,
@@ -427,7 +429,8 @@ class DefaultTests(unittest.TestCase):
 
 
 class ValidationTests(unittest.TestCase):
-    """Checks the errors that the builder reports."""
+    """Checks the errors that the builder reports, and the configuration of
+    the validation run of a build."""
 
     def assert_error(
         self,
@@ -715,6 +718,78 @@ class ValidationTests(unittest.TestCase):
             builder.paragraph(42)
         document = builder.paragraph("Body").build()
         self.assertEqual(len(document.contents), 1)
+
+    def test_the_limit_of_the_configuration_is_applied(self) -> None:
+        error = self.assert_error(
+            "TYPCAST-VAL-0010",
+            "validation",
+            "/contents/0/value",
+            lambda: DocumentBuilder()
+            .title("Title")
+            .raw("123456789")
+            .build(TypcastConfig(max_raw_bytes=8)),
+        )
+        diagnostic = first_diagnostic(error)
+        self.assertEqual(diagnostic.details, {"maxBytes": 8, "bytes": 9})
+        self.assertEqual(
+            diagnostic.message,
+            "'/contents/0/value' must not hold more than 8 bytes, got 9.",
+        )
+
+    def test_a_raw_node_at_the_limit_of_the_configuration_is_accepted(self) -> None:
+        document = (
+            DocumentBuilder()
+            .title("Title")
+            .raw("12345678")
+            .build(TypcastConfig(max_raw_bytes=8))
+        )
+        self.assertEqual(len(document.contents), 1)
+
+    def test_the_configuration_is_not_stored_in_the_document(self) -> None:
+        document = (
+            DocumentBuilder()
+            .title("Title")
+            .raw("12345678")
+            .build(TypcastConfig(max_raw_bytes=8))
+        )
+        self.assertEqual(document.validate(), ())
+        self.assertNotIn("maxRawBytes", document.to_json())
+
+    def test_a_configuration_of_the_wrong_type_is_an_api_error(self) -> None:
+        self.assert_error(
+            "TYPCAST-API-0001",
+            "api",
+            "/build",
+            lambda: DocumentBuilder().title("Title").build("x"),  # type: ignore[arg-type]
+            ApiUsageError,
+        )
+
+    def test_the_configuration_is_checked_before_the_document(self) -> None:
+        self.assert_error(
+            "TYPCAST-API-0001",
+            "api",
+            "/build",
+            lambda: DocumentBuilder().build("x"),  # type: ignore[arg-type]
+            ApiUsageError,
+        )
+
+    def test_a_limit_that_is_invalid_is_a_config_error(self) -> None:
+        self.assert_error(
+            "TYPCAST-CONFIG-0004",
+            "config",
+            "/max_raw_bytes",
+            lambda: TypcastConfig(max_raw_bytes=-1),
+            ConfigError,
+        )
+
+    def test_a_limit_that_is_not_an_integer_is_a_config_error(self) -> None:
+        self.assert_error(
+            "TYPCAST-CONFIG-0004",
+            "config",
+            "/max_raw_bytes",
+            lambda: TypcastConfig(max_raw_bytes=1.5),  # type: ignore[arg-type]
+            ConfigError,
+        )
 
 
 class SnapshotTests(unittest.TestCase):
