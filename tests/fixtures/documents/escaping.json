@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "1.0.0",
+  "metadata": {
+    "title": "Quotes \" and a backslash \\",
+    "author": "Ünicode — “quotes”"
+  },
+  "page": {
+    "paper": "a4",
+    "orientation": "portrait",
+    "margin": {
+      "top": {
+        "value": 2,
+        "unit": "cm"
+      },
+      "right": {
+        "value": 2,
+        "unit": "cm"
+      },
+      "bottom": {
+        "value": 2,
+        "unit": "cm"
+      },
+      "left": {
+        "value": 2,
+        "unit": "cm"
+      }
+    }
+  },
+  "contents": [
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "value": "\\#*_`$[]<>@"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "link",
+          "href": "https://example.com/a\"b",
+          "content": [
+            {
+              "type": "text",
+              "value": "A \"quoted\" link"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "image",
+      "path": "figures/a-b.png",
+      "alt": "An \"image\" with a backslash \\"
+    }
+  ],
+  "modules": []
+}

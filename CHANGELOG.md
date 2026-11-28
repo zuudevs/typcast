@@ -15,7 +15,7 @@ No release has been published yet. Every change so far is listed under
 ### Added
 
 - The product, architecture, specification, engineering, and governance
-  document set, with the requirement index and 26 architecture decision
+  document set, with the requirement index and 27 architecture decision
   records.
 - A JSON Schema generator that expands CSV catalog placeholders in templates,
   with unit tests. The generator rejects a placeholder whose catalog is not
@@ -219,6 +219,29 @@ No release has been published yet. Every change so far is listed under
 - ADR-0027, which records the validation of an instance against the JSON
   Schema contract and the decision to keep the SDKs free of a third-party
   JSON Schema dependency.
+- A Typst emitter in both SDKs, with the public API `Document.to_typst(config=None)`
+  and `Document.toTypst(options?)`. The method returns the Typst source of a
+  document as a string, validates the document again before the emission, and
+  reads no asset and invokes no compiler.
+- The output contract of the emitter: the fixed header, the module imports, the
+  page setup, the document metadata, and the blocks in the order of the
+  document, with one blank line between the sections, UTF-8 without a byte
+  order mark, LF line endings, and exactly one trailing newline.
+- The escaping rules of the emitter, which follow the table of the node
+  catalog and escape a list marker at the start of a line when the marker could
+  open a list. A monospace span is emitted as the raw text of Typst, and a value
+  that the raw text cannot hold is rejected with `TYPCAST-EMIT-0003`.
+- The diagnostics of the emitter, which use the family `TYPCAST-EMIT-*` with the
+  phase `emit`. `TYPCAST-EMIT-0001` names an invariant of the model that does
+  not hold, `TYPCAST-EMIT-0002` names a node of an unknown type, and
+  `TYPCAST-EMIT-0003` names a value that cannot be escaped safely.
+- Golden Typst files under `tests/fixtures/expected/`, one for every valid
+  document fixture, and cross-language emitter contract runners,
+  `//tests/contract:typst_py` and `//tests/contract:typst_ts_test`, which
+  compare the output of both SDKs with the same golden file, so a drift in the
+  output of either SDK fails one of the two targets.
+- ADR-0028, which records the Typst emitter, the context-sensitive escaping of
+  the list markers, and the raw text of a monospace span.
 
 ### Changed
 
@@ -246,6 +269,15 @@ No release has been published yet. Every change so far is listed under
   `IMPLEMENTED`.
 - The requirements `SCH-024`, `API-029`, `DIAG-019`, and `TEST-034` that the
   validation against the schema contract proves are marked `IMPLEMENTED`.
+- The requirements `EMIT-001` to `EMIT-024`, `API-017`, `API-030`, `DIAG-020`,
+  `NODE-005`, `NODE-007`, `NODE-013` to `NODE-023`, and `TEST-035` that the
+  Typst emitter proves are marked `IMPLEMENTED`.
+- The emitter document states that the emitter is implemented in both SDKs, and
+  it names the rules of the monospace span and of the list markers.
+- The node catalog states that a plus at the start of a line is escaped like a
+  hyphen, and that the content of a monospace span is not escaped.
+- The SDK API document names the behavior of `to_typst()` and `toTypst()`.
+- The diagnostics document names the details of the codes of the emitter.
 - The schema document states that the instance validation against the contract
   is implemented in the two SDKs. The validation of a schema document against
   the JSON Schema meta-schema is still missing.
@@ -476,6 +508,6 @@ No release has been published yet. Every change so far is listed under
 - The project does not validate a schema document against the JSON Schema
   meta-schema yet. That needs a JSON Schema implementation that the repository
   does not depend on.
-- The Typst emitter, the Typst compiler adapter, the packaging targets for the
-  wheel, the source distribution, and the npm tarball, and the publishing jobs
-  of the release workflow are not implemented.
+- The Typst compiler adapter, the packaging targets for the wheel, the source
+  distribution, and the npm tarball, and the publishing jobs of the release
+  workflow are not implemented.

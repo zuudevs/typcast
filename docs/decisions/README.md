@@ -36,6 +36,7 @@ explains why a decision was made; it does not replace the detailed specification
 | [ADR-0024](ADR-0024-semantic-validation-engine-and-configuration.md) | Semantic validation engine and its configuration | Superseded by ADR-0026 |
 | [ADR-0026](ADR-0026-semantic-validation-engine-configuration-and-build.md) | Semantic validation engine, its configuration, and the build | Accepted |
 | [ADR-0027](ADR-0027-instance-validation-against-the-json-schema-contract.md) | Instance validation against the JSON Schema contract | Accepted |
+| [ADR-0028](ADR-0028-typst-emitter.md) | The Typst emitter of the document IR | Accepted |
 
 ## Template
 

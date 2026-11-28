@@ -84,6 +84,11 @@ export const CODE_INVALID_RAW_LIMIT = "TYPCAST-CONFIG-0004";
 export const CODE_SCHEMA_VIOLATION = "TYPCAST-SCH-0001";
 export const CODE_SCHEMA_UNSUPPORTED_KEYWORD = "TYPCAST-SCH-0002";
 
+// Emitter codes. The family names the emission of a document into Typst.
+export const CODE_EMIT_INVARIANT = "TYPCAST-EMIT-0001";
+export const CODE_EMIT_UNKNOWN_TYPE = "TYPCAST-EMIT-0002";
+export const CODE_EMIT_UNSAFE_VALUE = "TYPCAST-EMIT-0003";
+
 /** The number of characters of a value that the message of a diagnostic shows. */
 export const MAX_DIAGNOSTIC_VALUE_LENGTH = 64;
 
@@ -209,6 +214,13 @@ export class SerializationError extends TypcastError {
   }
 }
 
+/** Raised when the emitter cannot produce valid Typst for a valid model. */
+export class EmitError extends TypcastError {
+  constructor(message: string, diagnostics: readonly Diagnostic[] = []) {
+    super(message, diagnostics, "EmitError");
+  }
+}
+
 /** Raised when a configuration value is invalid. */
 export class ConfigError extends TypcastError {
   constructor(message: string, diagnostics: readonly Diagnostic[] = []) {
@@ -325,6 +337,37 @@ export function throwConfig(
 ): never {
   throw new ConfigError(message, [
     configDiagnostic(code, message, path, details),
+  ]);
+}
+
+/** Builds the diagnostic of a failure of the emitter. */
+export function emitDiagnostic(
+  code: string,
+  message: string,
+  path: string | null = null,
+  details: Readonly<Record<string, unknown>> = {},
+): Diagnostic {
+  return Object.freeze({
+    code,
+    severity: SEVERITY_ERROR,
+    phase: PHASE_EMIT,
+    message,
+    path,
+    location: null,
+    details: Object.freeze({ ...details }),
+    cause: null,
+  });
+}
+
+/** Raises an emitter error that carries a single diagnostic. */
+export function throwEmit(
+  code: string,
+  message: string,
+  path: string | null = null,
+  details: Readonly<Record<string, unknown>> = {},
+): never {
+  throw new EmitError(message, [
+    emitDiagnostic(code, message, path, details),
   ]);
 }
 

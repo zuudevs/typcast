@@ -9,14 +9,16 @@
  */
 
 import {
-  normalizeContent,
-  normalizeSpans,
   rejectApiArgument,
   requireApiArray,
   requireApiInstance,
   requireApiNumber,
   requireApiOptions,
   requireApiString,
+} from "../api.js";
+import {
+  normalizeContent,
+  normalizeSpans,
 } from "./content.js";
 import type { Content, ContentGroup } from "./content.js";
 import {

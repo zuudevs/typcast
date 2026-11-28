@@ -10,10 +10,10 @@ from __future__ import annotations
 
 from typing import Any
 
+from typcast.api import require_api_string
 from typcast.builder.content import (
     normalize_content,
     normalize_spans,
-    require_api_string,
 )
 from typcast.models.blocks import TableColumn
 from typcast.models.spans import (

@@ -18,6 +18,7 @@ __all__ = [
     "ApiUsageError",
     "ValidationError",
     "SerializationError",
+    "EmitError",
     "ConfigError",
     "safe_text",
     "safe_value",
@@ -53,10 +54,15 @@ __all__ = [
     "CODE_INVALID_RAW_LIMIT",
     "CODE_SCHEMA_VIOLATION",
     "CODE_SCHEMA_UNSUPPORTED_KEYWORD",
+    "CODE_EMIT_INVARIANT",
+    "CODE_EMIT_UNKNOWN_TYPE",
+    "CODE_EMIT_UNSAFE_VALUE",
     "api_diagnostic",
     "config_diagnostic",
+    "emit_diagnostic",
     "raise_api",
     "raise_config",
+    "raise_emit",
 ]
 
 
@@ -108,6 +114,11 @@ CODE_INVALID_RAW_LIMIT = "TYPCAST-CONFIG-0004"
 # JSON Schema contract of the project.
 CODE_SCHEMA_VIOLATION = "TYPCAST-SCH-0001"
 CODE_SCHEMA_UNSUPPORTED_KEYWORD = "TYPCAST-SCH-0002"
+
+# Emitter codes. The family names the emission of a document into Typst.
+CODE_EMIT_INVARIANT = "TYPCAST-EMIT-0001"
+CODE_EMIT_UNKNOWN_TYPE = "TYPCAST-EMIT-0002"
+CODE_EMIT_UNSAFE_VALUE = "TYPCAST-EMIT-0003"
 
 
 def _freeze_mapping(value: Mapping[str, Any] | None) -> Mapping[str, Any] | None:
@@ -266,6 +277,10 @@ class SerializationError(TypcastError):
     """Raised when JSON cannot be parsed, serialized, or version-matched."""
 
 
+class EmitError(TypcastError):
+    """Raised when the emitter cannot produce valid Typst for a valid model."""
+
+
 class ConfigError(TypcastError):
     """Raised when a configuration value is invalid."""
 
@@ -335,6 +350,36 @@ def config_diagnostic(
         message=message,
         path=path,
         details=details or {},
+    )
+
+
+def emit_diagnostic(
+    code: str,
+    message: str,
+    path: str | None = None,
+    details: Mapping[str, Any] | None = None,
+) -> Diagnostic:
+    """Builds the diagnostic of a failure of the emitter."""
+    return Diagnostic(
+        code=code,
+        severity=SEVERITY_ERROR,
+        phase=PHASE_EMIT,
+        message=message,
+        path=path,
+        details=details or {},
+    )
+
+
+def raise_emit(
+    code: str,
+    message: str,
+    path: str | None = None,
+    details: Mapping[str, Any] | None = None,
+) -> None:
+    """Raises an emitter error that carries a single diagnostic."""
+    raise EmitError(
+        message,
+        (emit_diagnostic(code, message, path, details),),
     )
 
 

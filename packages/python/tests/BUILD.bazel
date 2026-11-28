@@ -55,3 +55,16 @@ py_test(
         "//packages/python:typcast",
     ],
 )
+
+# The unit tests of the Typst emitter.
+py_test(
+    name = "emitter_tests",
+    size = "small",
+    srcs = [
+        "test_emitter.py",
+    ],
+    main = "test_emitter.py",
+    deps = [
+        "//packages/python:typcast",
+    ],
+)

@@ -269,3 +269,71 @@ py_test(
         "//packages/python:typcast",
     ],
 )
+
+# The TypeScript emitter contract runner. It reads the shared document
+# fixtures and the golden Typst files, so it depends on both fixture
+# filegroups and on the TypeScript SDK. The runner uses the `.mts` extension,
+# so TypeScript classifies it as an ECMAScript module without a
+# `package.json` next to it, and Node runs the emitted `.mjs` as an ECMAScript
+# module in every sandbox.
+ts_project(
+    name = "typst_ts",
+    srcs = [
+        "typst.test.mts",
+        "node_shims.d.ts",
+    ],
+    tsconfig = {
+        "compilerOptions": {
+            "target": "ES2022",
+            "module": "NodeNext",
+            "moduleResolution": "NodeNext",
+            "strict": True,
+            "noImplicitOverride": True,
+            "noUncheckedIndexedAccess": True,
+            "exactOptionalPropertyTypes": True,
+            "forceConsistentCasingInFileNames": True,
+            "verbatimModuleSyntax": True,
+            "skipLibCheck": True,
+            "declaration": False,
+            "types": [],
+        },
+    },
+    transpiler = "tsc",
+    deps = [
+        "//packages/typescript:typcast",
+    ],
+)
+
+# The runner needs the compiled SDK and the manifest of the package in its
+# runfiles, for the same reason as the contract runner above.
+js_test(
+    name = "typst_ts_test",
+    entry_point = ":typst_ts",
+    data = [
+        "//packages/typescript:package.json",
+        "//packages/typescript:typcast",
+        "//tests/fixtures:document_fixtures",
+        "//tests/fixtures:expected_fixtures",
+    ],
+    no_copy_to_bin = [
+        "//packages/typescript:package.json",
+    ],
+)
+
+# The Python emitter contract runner. It reads the same shared document
+# fixtures and the same golden Typst files as the TypeScript runner.
+py_test(
+    name = "typst_py",
+    size = "small",
+    srcs = [
+        "test_typst.py",
+    ],
+    main = "test_typst.py",
+    data = [
+        "//tests/fixtures:documents",
+        "//tests/fixtures:expected_documents",
+    ],
+    deps = [
+        "//packages/python:typcast",
+    ],
+)

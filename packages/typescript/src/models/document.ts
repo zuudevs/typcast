@@ -21,6 +21,7 @@ import {
   withPath,
 } from "../diagnostics.js";
 import type { Diagnostic } from "../diagnostics.js";
+import { emitTypst } from "../emitter/emitter.js";
 import { canonicalJson } from "../json_writer.js";
 import { validateSchema as validateInstanceSchema } from "../schema/index.js";
 import { checkSchemaVersion, SCHEMA_VERSION } from "../version.js";
@@ -141,6 +142,18 @@ export class Document {
    */
   validateSchema(): readonly Diagnostic[] {
     return validateInstanceSchema(this.toJSON());
+  }
+
+  /**
+   * Returns the Typst source of the document.
+   *
+   * The method validates the document before it emits it, so that a document
+   * that breaks a semantic rule is reported with the diagnostic of the rule
+   * instead of being emitted. The options hold the limits of the validation
+   * run, and they are never stored in the document.
+   */
+  toTypst(options?: TypcastOptions): string {
+    return emitTypst(this, options);
   }
 
   /** Builds a document from a JSON value. */

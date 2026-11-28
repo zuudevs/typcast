@@ -21,14 +21,14 @@ change impact analysis.
 | Document IR | `specifications/document-ir.md` | `IR-001` to `IR-024` | Schema and contract tests. |
 | Nodes | `specifications/nodes.md` | `NODE-001` to `NODE-025` | Golden and emitter tests. |
 | Schema | `specifications/schema.md` | `SCH-001` to `SCH-024` | Schema lint and bundle tests. |
-| SDK API | `specifications/sdk-api.md` | `API-001` to `API-029` | API and parity tests. |
-| Emitter | `specifications/emitter.md` | `EMIT-001` to `EMIT-022` | Byte-level golden tests. |
+| SDK API | `specifications/sdk-api.md` | `API-001` to `API-030` | API and parity tests. |
+| Emitter | `specifications/emitter.md` | `EMIT-001` to `EMIT-024` | Byte-level golden tests. |
 | Compiler | `specifications/compiler.md` | `COMP-001` to `COMP-022` | Compiler integration tests. |
-| Diagnostics | `specifications/diagnostics.md` | `DIAG-001` to `DIAG-019` | Negative and parity tests. |
+| Diagnostics | `specifications/diagnostics.md` | `DIAG-001` to `DIAG-020` | Negative and parity tests. |
 | Assets | `specifications/assets.md` | `ASSET-001` to `ASSET-020` | Path and workspace tests. |
 | Compatibility | `specifications/compatibility.md` | `COMPAT-001` to `COMPAT-019` | CI matrix. |
 | Build | `development/build.md` | `BUILD-001` to `BUILD-022` | Bazel commands. |
-| Testing | `development/testing.md` | `TEST-001` to `TEST-034` | Test inventory. |
+| Testing | `development/testing.md` | `TEST-001` to `TEST-035` | Test inventory. |
 | Benchmarking | `development/benchmarking.md` | `PERF-001` to `PERF-015` | Benchmark job. |
 | CI/CD | `development/ci-cd.md` | `CI-001` to `CI-029` | Workflow review. |
 | Release | `development/release.md` | `REL-001` to `REL-036` | Release checklist. |
@@ -42,7 +42,7 @@ change impact analysis.
 | Goal | Requirements | Verification |
 |---|---|---|
 | Typed cross-language document builder | `PRD-008`, `ARC-001`, `IR-001`, `API-001`, `API-017` | Contract and parity tests. |
-| Deterministic `.typ` output | `PRD-009`, `EMIT-001`, `EMIT-002`, `EMIT-022` | Byte-level golden tests. |
+| Deterministic `.typ` output | `PRD-009`, `EMIT-001`, `EMIT-002`, `EMIT-022`, `EMIT-023`, `EMIT-024`, `API-017`, `API-030` | Byte-level golden tests. |
 | PDF through Typst | `PRD-009`, `COMP-001`, `COMP-004`, `COMP-013`, `REL-024` | Compiler integration and release review. |
 | Two-phase validation | `PRD-013`, `API-006`, `API-008`, `API-028`, `DIAG-001` | Validation and diagnostics tests. |
 | Schema contract validation | `PRD-012`, `SCH-024`, `API-029`, `DIAG-019`, `TEST-034` | Schema, instance, and contract tests. |
@@ -89,6 +89,11 @@ recorded below and in the linked ADRs.
 | `DIAG-019` | The instance validation against the schema contract uses the family `TYPCAST-SCH-*` with the phase `validation`, and the keyword of the broken rule is in the details. | ADR-0027 |
 | `SCH-024` | The schema contract is embedded in both SDKs as a generated source file, and each SDK validates an instance against it without a third-party dependency. | ADR-0027 |
 | `TEST-034` | The schema fixtures are shared by both SDKs, and the schema contract runners compare the diagnostics of every fixture, in the order the validator reports them. | ADR-0027 |
+| `API-030` | Each SDK emits the Typst source of a document with `to_typst()` and `toTypst()`, validates the document again before the emission, and reads no asset and invokes no compiler. | ADR-0028 |
+| `EMIT-023` | A monospace span is emitted as the raw text of Typst, and a value that the raw text cannot hold is rejected with `TYPCAST-EMIT-0003`. | ADR-0028 |
+| `EMIT-024` | A list marker at the start of a line is escaped when the marker could open a list. | ADR-0028 |
+| `DIAG-020` | The emitter reports its failures with the family `TYPCAST-EMIT-*` and the phase `emit`, and both SDKs report the same diagnostic. | ADR-0028 |
+| `TEST-035` | The golden Typst files are shared by both SDKs, and every valid document fixture has one. | ADR-0028 |
 | `DIAG-011` | Warnings follow the closed policy: three warning conditions, never raising, never gating a release. | ADR-0014 |
 | `ASSET-017` | Asset limits are 1024-character paths, 50 MiB per image, 10 MiB per module, 500 MiB per compilation. | ADR-0017 |
 | `COMPAT-008` | The supported Typst range is `>=0.15.0 <0.16.0`, tested with 0.15.1. | ADR-0018 |
@@ -281,6 +286,32 @@ a target for the MVP and is not yet verified in the repository.
 | `API-027` | Both SDKs take the configuration of the validation engine per call, hold the raw size limit only, and raise `ConfigError` with `TYPCAST-CONFIG-0004` for a limit that is not an integer that is finite and not negative. | `//packages/python/tests:validation_tests`; `//packages/typescript:validation_test_run`; the configuration cases of both SDKs. |
 | `API-028` | The builder of both SDKs takes the validation configuration per call, applies the raw size limit of the call to the validation run of the build, and stores no configuration in the document; an argument that is not a configuration raises `ApiUsageError` with `TYPCAST-API-0001` and the path `/build`. | `//packages/python/tests:builder_tests`; `//packages/typescript:builder_test_run`; the configuration cases of both SDKs, and the scenarios `raw-at-limit` and `raw-over-limit` of `//tests/contract:builder_py` and `//tests/contract:builder_ts_test`. |
 | `API-029` | Both SDKs expose `validate_schema(value)` and `validateSchema(value)` and the method `Document.validate_schema()` and `Document.validateSchema()`, report every rule that the value breaks without raising, and keep the check separate from the reader and from the semantic engine. | `//packages/python/tests:schema_tests`; `//packages/typescript:schema_test_run`; the cases of both SDKs, and the fixtures of `//tests/contract:schema_py` and `//tests/contract:schema_ts_test`. |
+| `API-017` | Both SDKs write the same bytes for the same document, because both compare their output with the same golden file. | `//tests/contract:typst_py`; `//tests/contract:typst_ts_test`; the golden files under `tests/fixtures/expected/`. |
+| `API-030` | Both SDKs expose `to_typst(config=None)` and `toTypst(options?)` on the document, return the Typst source as a string, validate the document again before the emission, raise `ValidationError` on error diagnostics, and store no configuration in the document. | `//packages/python/tests:emitter_tests`; `//packages/typescript:emitter_test_run`; the cases of both SDKs, and the runners `//tests/contract:typst_py` and `//tests/contract:typst_ts_test`. |
+| `EMIT-001` | Both emitters write UTF-8 without a byte order mark and with LF line endings. | `//tests/contract:typst_py`; `//tests/contract:typst_ts_test`; the byte checks of both runners. |
+| `EMIT-002` | Both emitters write the same source when they emit the same document twice. | `//tests/contract:typst_py`; `//tests/contract:typst_ts_test`; the determinism case of both runners. |
+| `EMIT-003` | Both emitters write the fixed header at the start of the output. | `//tests/contract:typst_py`; `//tests/contract:typst_ts_test`; the header case of both runners. |
+| `EMIT-004` | The golden files hold no timestamp and no random value. | The golden files under `tests/fixtures/expected/`. |
+| `EMIT-005` | Both emitters write the page setup before the content. | `//packages/python/tests:emitter_tests`; `//packages/typescript:emitter_test_run`; the page-setup cases of both SDKs. |
+| `EMIT-006` | Both emitters map portrait to `flipped: false` and landscape to `flipped: true`. | `//packages/python/tests:emitter_tests`; `//packages/typescript:emitter_test_run`; the orientation cases of both SDKs. |
+| `EMIT-007` | Both emitters write the author and the date only when the document holds them. | `//packages/python/tests:emitter_tests`; `//packages/typescript:emitter_test_run`; the metadata cases of both SDKs. |
+| `EMIT-008` | Both emitters write the module imports before the page setup. | The golden files under `tests/fixtures/expected/`; the module cases of the emitter tests of both SDKs. |
+| `EMIT-009` | Both emitters write the blocks in the order of the document. | The golden files under `tests/fixtures/expected/`. |
+| `EMIT-010` | Both emitters write the spans of a block in the order of the block. | The golden files under `tests/fixtures/expected/`. |
+| `EMIT-011` | Both emitters escape every character of the table of the node catalog in a text span. | `//packages/python/tests:emitter_tests`; `//packages/typescript:emitter_test_run`; the escaping cases of both SDKs, and the golden file `escaping.typ`. |
+| `EMIT-012` | Both emitters write a raw value and a raw span verbatim. | `//packages/python/tests:emitter_tests`; `//packages/typescript:emitter_test_run`; the raw cases of both SDKs, and the golden file `full.typ`. |
+| `EMIT-013` | Both emitters write the header of a table with `table.header`. | `//packages/python/tests:emitter_tests`; `//packages/typescript:emitter_test_run`; the table case of both SDKs, and the golden file `full.typ`. |
+| `EMIT-014` | Both emitters write the alternative text of an image. | `//packages/python/tests:emitter_tests`; `//packages/typescript:emitter_test_run`; the image case of both SDKs, and the golden file `full.typ`. |
+| `EMIT-015` | Both emitters write the caption of an image inside a figure. | The golden file `full.typ`. |
+| `EMIT-016` | Both emitters write a page break as `#pagebreak()`. | The golden file `full.typ`. |
+| `EMIT-017` | Both emitters write an asset path with the separator `/`. | `//packages/python/tests:emitter_tests`; `//packages/typescript:emitter_test_run`; the path case of both SDKs. |
+| `EMIT-018` | Both emitters reject a node of an unknown type with `TYPCAST-EMIT-0002`. | `//packages/python/tests:emitter_tests`; `//packages/typescript:emitter_test_run`; the unknown-type case of both SDKs. |
+| `EMIT-019` | Both emitters raise instead of returning partial output. | `//packages/python/tests:emitter_tests`; `//packages/typescript:emitter_test_run`; the negative cases of both SDKs. |
+| `EMIT-020` | The emitter of each SDK imports no file system API and no process API. | `typcast/emitter/emitter.py`; `packages/typescript/src/emitter/emitter.ts`. |
+| `EMIT-021` | Both emitters end the output with exactly one newline. | `//tests/contract:typst_py`; `//tests/contract:typst_ts_test`; the newline case of both runners. |
+| `EMIT-022` | Both emitters write the same bytes for the same document, because both compare their output with the same golden file. | `//tests/contract:typst_py`; `//tests/contract:typst_ts_test`. |
+| `EMIT-023` | Both emitters write a monospace span as the raw text of Typst and reject a value that the raw text cannot hold with `TYPCAST-EMIT-0003`. | `//packages/python/tests:emitter_tests`; `//packages/typescript:emitter_test_run`; the monospace cases of both SDKs. |
+| `EMIT-024` | Both emitters escape a list marker at the start of a line when the marker could open a list. | `//packages/python/tests:emitter_tests`; `//packages/typescript:emitter_test_run`; the list-marker cases of both SDKs, and the golden file `list-marker.typ`. |
 | `DIAG-001` | Both SDKs expose the documented diagnostic shape. | `typcast.diagnostics`; `packages/typescript/src/diagnostics.ts`; the diagnostic cases of the model tests. |
 | `DIAG-004` | Both SDKs expose the same diagnostic fields, and the contract runners compare the code of every negative fixture. | `typcast.diagnostics`; `packages/typescript/src/diagnostics.ts`; `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`. |
 | `DIAG-005` | `ValidationError` and `SerializationError` of both SDKs inherit from `TypcastError`. | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the error cases. |
@@ -292,6 +323,7 @@ a target for the MVP and is not yet verified in the repository.
 | `DIAG-017` | Both SDKs show a rejected value in one canonical form, with the same escaping and the same limit of 64 Unicode code points. | `//packages/python/tests:model_tests`; `//packages/typescript:model_test_run`; the rejected-value cases, and the fixtures of the manifest that hold a quoted, a control-character, or a long value. |
 | `DIAG-018` | The validation engine of both SDKs reports every problem it finds and reports the diagnostics in the order of the document. | `//packages/python/tests:validation_tests`; `//packages/typescript:validation_test_run`; the order cases of both SDKs, and the fixture `multiple-problems.json` of `//tests/contract:validation_py` and `//tests/contract:validation_ts_test`. |
 | `DIAG-019` | Both SDKs report the violations of the schema contract with the family `TYPCAST-SCH-*` and the phase `validation`, name the keyword of the broken rule in the details, and report the same diagnostics in the same order. | `//packages/python/tests:schema_tests`; `//packages/typescript:schema_test_run`; the diagnostic cases of both SDKs, and the fixtures of `//tests/contract:schema_py` and `//tests/contract:schema_ts_test`. |
+| `DIAG-020` | Both SDKs report the failures of the emitter with the family `TYPCAST-EMIT-*` and the phase `emit`, name the node that they cannot emit in the path and in the details, and report the same diagnostic. | `//packages/python/tests:emitter_tests`; `//packages/typescript:emitter_test_run`; the diagnostic cases of both SDKs. |
 | `DIAG-009` | Every diagnostic message of both SDKs is English. | `typcast.diagnostics`; `packages/typescript/src/diagnostics.ts`. |
 | `DIAG-010` | An application handles an error by its code, and the manifest names the expected code of every negative fixture. | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`; the manifest of the shared fixtures. |
 | `NODE-001` | The model of both SDKs holds the seven block types of the catalog and no other. | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the node-type case. |
@@ -301,7 +333,20 @@ a target for the MVP and is not yet verified in the repository.
 | `NODE-010` | The constructor of both SDKs requires a non-empty alternative text of an image. | `//packages/python/tests:model_tests`; the image cases. |
 | `NODE-011` | The model of both SDKs holds an optional caption, and the canonical JSON omits the field when it is absent. | `//packages/python/tests:model_tests`; the optional-field case. |
 | `NODE-008` | Both SDKs report every table row whose cell count differs from the column count of its table. | `//packages/python/tests:validation_tests`; `//packages/typescript:validation_test_run`; the table-shape cases of both SDKs, and the fixtures `table-row-short.json` and `table-row-long.json` of `//tests/contract:validation_py` and `//tests/contract:validation_ts_test`. |
-| `NODE-023` | Both SDKs enforce the raw size limit at `build()` and report it with `TYPCAST-VAL-0010`. | `//packages/python/tests:validation_tests`; `//packages/typescript:validation_test_run`; the raw-size cases of both SDKs, and the raw cases of `//packages/python/tests:builder_tests` and `//packages/typescript:builder_test_run`, which build a raw node at the limit and one over the limit. The check before emit waits for the emitter. |
+| `NODE-023` | Both SDKs enforce the raw size limit at `build()` and again before the emission, and report it with `TYPCAST-VAL-0010`. | `//packages/python/tests:validation_tests`; `//packages/typescript:validation_test_run`; the raw-size cases of both SDKs, and the raw cases of `//packages/python/tests:builder_tests` and `//packages/typescript:builder_test_run`, which build a raw node at the limit and one over the limit. The check before the emission is covered by `//packages/python/tests:emitter_tests` and `//packages/typescript:emitter_test_run`, which emit a raw node at the limit and one over the limit. |
+| `NODE-005` | The model of both SDKs holds the `ordered` flag of a list, and both emitters write `-` and `+` for the two kinds. | `//packages/python/tests:emitter_tests`; `//packages/typescript:emitter_test_run`; the list cases of both SDKs. |
+| `NODE-007` | The model of both SDKs holds the header and the alignment of a column, and both emitters write `table.header` and the alignment. | `//packages/python/tests:emitter_tests`; `//packages/typescript:emitter_test_run`; the table case of both SDKs. |
+| `NODE-013` | Both emitters write a page break as `#pagebreak()`. | The golden file `tests/fixtures/expected/full.typ`. |
+| `NODE-014` | Both emitters write a raw value and a raw span verbatim. | `//packages/python/tests:emitter_tests`; `//packages/typescript:emitter_test_run`; the raw cases of both SDKs, and the golden file `full.typ`. |
+| `NODE-015` | Both emitters write a raw value and a raw span without escaping them and without parsing them. | `//packages/python/tests:emitter_tests`; `//packages/typescript:emitter_test_run`; the raw cases of both SDKs, and the golden file `full.typ`. |
+| `NODE-016` | Both emitters escape every character of the table of the node catalog in a text span. | `//packages/python/tests:emitter_tests`; `//packages/typescript:emitter_test_run`; the escaping cases of both SDKs, and the golden file `tests/fixtures/expected/escaping.typ`. |
+| `NODE-017` | Both emitters write a nested emphasis recursively. | `//packages/python/tests:emitter_tests`; `//packages/typescript:emitter_test_run`; the nested-emphasis case of both SDKs. |
+| `NODE-018` | Both emitters write the display text and the target of a link. | `//packages/python/tests:emitter_tests`; `//packages/typescript:emitter_test_run`; the link case of both SDKs, and the golden file `full.typ`. |
+| `NODE-019` | Both emitters write a line break as `#linebreak()`. | The golden file `tests/fixtures/expected/full.typ`. |
+| `NODE-020` | Both emitters reject a node of an unknown type with `TYPCAST-EMIT-0002`. | `//packages/python/tests:emitter_tests`; `//packages/typescript:emitter_test_run`; the unknown-type case of both SDKs. |
+| `NODE-021` | Both emitters write the blocks in the order of the document. | The golden files under `tests/fixtures/expected/`. |
+| `NODE-022` | Both emitters write the spans of a block in the order of the block. | The golden files under `tests/fixtures/expected/`. |
+| `TEST-035` | Every valid document fixture has a golden Typst file, and both SDKs compare their output with that file. | `//tests/contract:typst_py`; `//tests/contract:typst_ts_test`; the golden files under `tests/fixtures/expected/`. |
 | `REPO-004` | Both contract runners check the schema version of the fixtures against the version of their own SDK. | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`; the contract-version case. |
 | `REPO-005` | The fixtures under `tests/fixtures/documents/` are language-neutral JSON, and both contract runners read them. | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`. |
 | `TEST-002` | The fixtures under `tests/fixtures/documents/` are language-neutral JSON. | `//tests/contract:contract_py` and `//tests/contract:contract_ts_test`. |

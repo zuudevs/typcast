@@ -24,6 +24,22 @@ js_library(
     ],
 )
 
+# The golden Typst files of the emitter. Every valid document of the shared
+# set has one, and both emitters must write it byte for byte.
+filegroup(
+    name = "expected_documents",
+    srcs = glob([
+        "expected/*.typ",
+    ]),
+)
+
+js_library(
+    name = "expected_fixtures",
+    srcs = [
+        ":expected_documents",
+    ],
+)
+
 # The shared validation fixtures. Both SDKs read the same files, so the
 # manifest and the documents it names are the single source of truth of the
 # cross-language validation contract tests.
