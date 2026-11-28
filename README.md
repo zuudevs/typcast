@@ -5,13 +5,16 @@ the JavaScript/TypeScript ecosystem.
 
 The repository is managed as a Bazel monorepo. The current implementation is an
 early foundation: it includes a CSV-backed JSON template generator, the
-immutable document model and the semantic validation engine of the Python and
+immutable document model, the semantic validation engine, the validation
+against the JSON Schema contract, and the fluent builder of the Python and
 TypeScript SDKs, and build targets for the two packages.
 
 ## Repository layout
 
 - `specs/`: language-independent catalogs and JSON Schema definitions/templates.
 - `tools/codegen/`: Python-based template/code generation tooling.
+- `tools/schemagen/`: generator that embeds the built schema bundle into a
+  source file of an SDK.
 - `tools/publish/`: release-time publisher for the schema bundle.
 - `bazel/`: reusable Starlark build rules.
 - `packages/python/`: Python SDK.
@@ -108,10 +111,10 @@ the root schema, the margin, the node catalog, and the three generated type
 schemas. Every reference in the bundle resolves, and the contract test passes
 without a tracked violation.
 
-Two limits remain. The repository does not validate a document against the
-schema yet, because that needs a JSON Schema implementation that the project
-does not depend on. And no release exists, so the versioned raw URLs are
-illustrative until the first tag is published.
+Two limits remain. The repository does not validate a schema document against
+the JSON Schema meta-schema yet, because that needs a JSON Schema
+implementation that the project does not depend on. And no release exists, so
+the versioned raw URLs are illustrative until the first tag is published.
 
 ## Build outputs
 

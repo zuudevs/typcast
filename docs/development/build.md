@@ -2,7 +2,7 @@
 
 Status: IMPLEMENTED / OPEN
 Scope: Normative for build behavior
-Last updated: 2026-11-27
+Last updated: 2026-11-28
 
 ## Purpose
 
@@ -70,25 +70,25 @@ root.
 
 | Check | Result |
 |---|---|
-| `bazel build //...` | Pass, 87 targets. |
-| `bazel test //...` | Pass, 29 of 29 test targets of the 35 test rules, because the six transitive type-check rules are tagged `manual`: 16 unittest cases, 45 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 47 repository structure cases, 4 release tag cases, 32 documentation gate cases, 4 link check cases, 1 documentation check, 1 schema bundle check, 125 document model cases, 12 contract fixture cases, 28 validation cases, 6 validation contract fixture cases, 71 builder cases, 5 builder contract fixture cases, and the TypeScript model, validation, builder, contract, and type-check targets. |
+| `bazel build //...` | Pass, 109 targets. |
+| `bazel test //...` | Pass, 37 of 37 test targets of the 45 test rules, because the eight transitive type-check rules are tagged `manual`: 16 unittest cases, 12 schema generator cases, 45 publisher cases, 15 version cases, 20 release preparation cases, 6 release rehearsal cases, 47 repository structure cases, 4 release tag cases, 32 documentation gate cases, 4 link check cases, 1 documentation check, 1 schema bundle check, 125 document model cases, 12 contract fixture cases, 28 validation cases, 6 validation contract fixture cases, 71 builder cases, 5 builder contract fixture cases, 10 schema validation cases, 7 schema contract fixture cases, 4 schema stage cases, and the TypeScript model, validation, builder, schema, contract, and type-check targets. |
 | `bazel build //specs/schemas:schema_bundle` | Pass, 6 schema files. |
 | `bazel build //specs/schemas:schema_manifest` | Pass, 6 paths. |
 | `bazel build //specs/schemas:archive` | Pass, 6 members, deterministic gzip tarball. |
 | `bazel test //specs/schemas:schema_tests` | Pass, 6 bundle files, 0 violations. |
 | `bazel test //specs/schemas:release_tag_tests` | Pass, 4 cases. |
-| `bazel test //scripts:docs_checks` | Pass, 59 files, 478 requirements, and 3 workflows checked, 0 errors. |
+| `bazel test //scripts:docs_checks` | Pass, 60 files, 482 requirements, and 3 workflows checked, 0 errors. |
 | `bazel test //scripts/tests:version_tests` | Pass, 15 cases. |
 | `bazel test //scripts/tests:release_tests` | Pass, 20 cases. |
 | `bazel test //scripts/tests:release_flow_tests` | Pass, 6 cases. |
-| `bazel run //scripts:repository_checks` | Pass, 2 spec files, 50 SDK files, 13 gate files, 64 Python modules, 15 test modules, 2 toolchain files, 3 TypeScript files, 2 SDK versions, 25 decision records, 98 Bazel package files, 0 errors. |
+| `bazel run //scripts:repository_checks` | Pass, 2 spec files, 56 SDK files, 13 gate files, 76 Python modules, 19 test modules, 2 toolchain files, 3 TypeScript files, 2 SDK versions, 26 decision records, 114 Bazel package files, 0 errors. |
 | `bazel test //scripts/tests:repository_tests` | Pass, 47 cases. |
 | `bazel test //scripts/tests:docs_tests` | Pass, 32 cases. |
 | `bazel test //scripts/tests:link_tests` | Pass, 4 cases. |
 | `bazel test //tools/publish/tests:publish_tests` | Pass, 45 publisher cases. |
 | `bazel test //packages/python/tests:model_tests` | Pass, 125 cases. |
 | `bazel test //packages/python/tests:validation_tests` | Pass, 28 cases. |
-| `bazel test //packages/python/tests:builder_tests` | Pass, 64 cases. |
+| `bazel test //packages/python/tests:builder_tests` | Pass, 71 cases. |
 | `bazel test //packages/typescript:model_test_run` | Pass. |
 | `bazel test //packages/typescript:validation_test_run` | Pass. |
 | `bazel test //packages/typescript:builder_test_run` | Pass. |
@@ -98,8 +98,14 @@ root.
 | `bazel test //tests/contract:validation_ts_test` | Pass, 4 valid fixtures and 6 invalid fixtures. |
 | `bazel test //tests/contract:builder_py` | Pass, 4 scenarios and 4 cases. |
 | `bazel test //tests/contract:builder_ts_test` | Pass, 4 scenarios. |
+| `bazel test //tools/schemagen/tests:unit_tests` | Pass, 12 cases. |
+| `bazel test //packages/python/tests:schema_tests` | Pass, 10 cases. |
+| `bazel test //packages/typescript:schema_test_run` | Pass. |
+| `bazel test //tests/contract:schema_py` | Pass, 7 cases. |
+| `bazel test //tests/contract:schema_ts_test` | Pass, 2 valid fixtures and 31 invalid fixtures. |
+| `bazel test //tests/schema:schema_py` | Pass, 4 cases. |
 | `bazel run //scripts:check_links` | Pass, 4 external links checked, 0 unreachable. |
-| `bazel query "kind(rule, //...)"` | 99 rules; 35 test targets. |
+| `bazel query "kind(rule, //...)"` | 125 rules; 45 test rules, 8 of them tagged `manual`. |
 | `--test_filter` on the unittest target | Ignored; all 16 cases run. |
 
 The schema bundle contains:
@@ -116,13 +122,16 @@ bazel-bin/specs/schemas/
 
 ## Current targets
 
-`bazel query "kind(rule, //...)"` reports 99 rules. All of them:
+`bazel query "kind(rule, //...)"` reports 125 rules. All of them:
 
 | Target | Kind | Purpose |
 |---|---|---|
 | `//tools/codegen:typcast_codegen` | `py_binary` | Generator CLI. |
 | `//tools/codegen:typcast_codegen_lib` | `py_library` | Generator library. |
 | `//tools/codegen/tests:unit_tests` | `py_test` | Sixteen generator tests. |
+| `//tools/schemagen:typcast_schemagen` | `py_binary` | Schema embedding CLI. |
+| `//tools/schemagen:typcast_schemagen_lib` | `py_library` | Schema embedding library. |
+| `//tools/schemagen/tests:unit_tests` | `py_test` | Twelve schema embedding tests. |
 | `//tools/publish:publish_schemas` | `py_binary` | Publisher CLI. |
 | `//tools/publish:publish_schemas_lib` | `py_library` | Publisher library. |
 | `//tools/publish/tests:publish_tests` | `py_test` | Publisher tests. |
@@ -156,11 +165,14 @@ bazel-bin/specs/schemas/
 | `//specs/schemas:release_tag_tests` | `py_test` | Validate the release tag pattern of the contract. |
 | `//specs/schemas/definitions:bound_schema` | `typcast_schema_copy` | Stage the bound schema. |
 | `//specs/schemas/definitions:node_schema` | `typcast_schema_copy` | Stage the node schema. |
-| `//packages/python:typcast` | `py_library` | Python SDK with the immutable document model, the validation engine, and the fluent builder. |
+| `//packages/python:typcast` | `py_library` | Python SDK with the immutable document model, the validation engine, the fluent builder, and the validation against the schema contract. |
+| `//packages/python:schema_sources` | `typcast_schema_source` | Embed the built schema bundle into a source file of the Python SDK. |
 | `//packages/python/tests:model_tests` | `py_test` | One hundred twenty-five document model unit tests. |
 | `//packages/python/tests:validation_tests` | `py_test` | Twenty-eight validation engine unit tests. |
-| `//packages/python/tests:builder_tests` | `py_test` | Sixty-four fluent builder unit tests. |
-| `//packages/typescript:typcast` | `ts_project` | TypeScript SDK with the immutable document model, the validation engine, and the fluent builder. |
+| `//packages/python/tests:builder_tests` | `py_test` | Seventy-one fluent builder unit tests. |
+| `//packages/python/tests:schema_tests` | `py_test` | Ten schema validation unit tests. |
+| `//packages/typescript:typcast` | `ts_project` | TypeScript SDK with the immutable document model, the validation engine, the fluent builder, and the validation against the schema contract. |
+| `//packages/typescript:schema_sources` | `typcast_schema_source` | Embed the built schema bundle into a source file of the TypeScript SDK. |
 | `//packages/typescript:typcast_types` | `filegroup` | TypeScript declaration outputs. |
 | `//packages/typescript:model_test` | `ts_project` | Compiles the document model unit tests. |
 | `//packages/typescript:model_test_run` | `js_test` | Runs the document model unit tests. |
@@ -168,12 +180,16 @@ bazel-bin/specs/schemas/
 | `//packages/typescript:validation_test_run` | `js_test` | Runs the validation engine unit tests. |
 | `//packages/typescript:builder_test` | `ts_project` | Compiles the fluent builder unit tests. |
 | `//packages/typescript:builder_test_run` | `js_test` | Runs the fluent builder unit tests. |
+| `//packages/typescript:schema_test` | `ts_project` | Compiles the schema validation unit tests. |
+| `//packages/typescript:schema_test_run` | `js_test` | Runs the schema validation unit tests. |
 | `//tests/fixtures:documents` | `filegroup` | The shared document IR fixtures. |
 | `//tests/fixtures:document_fixtures` | `js_library` | The fixtures for the JavaScript toolchain. |
 | `//tests/fixtures:validation_documents` | `filegroup` | The shared validation fixtures. |
 | `//tests/fixtures:validation_fixtures` | `js_library` | The validation fixtures for the JavaScript toolchain. |
 | `//tests/fixtures:builder_documents` | `filegroup` | The shared builder fixtures. |
 | `//tests/fixtures:builder_fixtures` | `js_library` | The builder fixtures for the JavaScript toolchain. |
+| `//tests/fixtures:schema_documents` | `filegroup` | The shared schema fixtures. |
+| `//tests/fixtures:schema_fixtures` | `js_library` | The schema fixtures for the JavaScript toolchain. |
 | `//tests/contract:contract_ts` | `ts_project` | Compiles the TypeScript contract runner. |
 | `//tests/contract:contract_ts_test` | `js_test` | Runs the TypeScript contract runner. |
 | `//tests/contract:contract_py` | `py_test` | Runs the Python contract runner. |
@@ -183,6 +199,10 @@ bazel-bin/specs/schemas/
 | `//tests/contract:builder_ts` | `ts_project` | Compiles the TypeScript builder contract runner. |
 | `//tests/contract:builder_ts_test` | `js_test` | Runs the TypeScript builder contract runner. |
 | `//tests/contract:builder_py` | `py_test` | Runs the Python builder contract runner. |
+| `//tests/contract:schema_ts` | `ts_project` | Compiles the TypeScript schema contract runner. |
+| `//tests/contract:schema_ts_test` | `js_test` | Runs the TypeScript schema contract runner. |
+| `//tests/contract:schema_py` | `py_test` | Runs the Python schema contract runner. |
+| `//tests/schema:schema_py` | `py_test` | Checks the embedded schema contract and the document fixtures against it. |
 
 Two convenience filegroups, `//specs/schemas/templates/api/types:schema_templates`
 and `//specs/catalogs/enums:enum_catalogs`, were removed because no target
@@ -222,6 +242,42 @@ The generator:
 
 The generator does not validate JSON Schema semantics or resolve `$ref` values.
 Those checks belong to the schema test layer.
+
+## Schema embedding pipeline
+
+```mermaid
+flowchart LR
+  B["Schema bundle"] --> E["Schema embedding generator"]
+  E --> P["Python source file"]
+  E --> T["TypeScript source file"]
+  P --> V["Validator of the Python SDK"]
+  T --> W["Validator of the TypeScript SDK"]
+```
+
+The rule `typcast_schema_source` of `bazel/schemagen.bzl` embeds the built
+bundle into a source file of an SDK. The generator `//tools/schemagen` reads
+the files of the bundle and writes a literal, so the SDK reads no file and
+parses no JSON at run time, and a published package carries the contract with
+it.
+
+| Attribute | Meaning |
+|---|---|
+| `srcs` | The label list of the bundle filegroup. |
+| `root` | The directory the paths of the bundle are relative to. |
+| `language` | `python` or `typescript`. |
+| `output` | The path of the generated source file. |
+
+The generator:
+
+- Reads every file of the bundle and rejects a file that is not JSON.
+- Rejects a document that is not a JSON object.
+- Sorts the paths, so the output does not depend on the order of the inputs.
+- Escapes a value, so the literal holds the document unchanged.
+
+A keyword that the contract uses and the validator of an SDK does not
+implement is reported by the stage `//tests/schema:schema_py` and by the unit
+test of the TypeScript SDK, so a contract that gains a keyword fails the build
+instead of passing every instance.
 
 ## Adding a schema
 

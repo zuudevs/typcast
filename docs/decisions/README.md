@@ -1,7 +1,7 @@
 # Architecture decision records
 
 Status: living index
-Last updated: 2026-11-27
+Last updated: 2026-11-28
 
 This directory records the significant decisions behind the Typcast MVP. An ADR
 explains why a decision was made; it does not replace the detailed specification.
@@ -35,6 +35,7 @@ explains why a decision was made; it does not replace the detailed specification
 | [ADR-0023](ADR-0023-schema-bundle-validation.md) | Schema bundle validation and published identity | Accepted |
 | [ADR-0024](ADR-0024-semantic-validation-engine-and-configuration.md) | Semantic validation engine and its configuration | Superseded by ADR-0026 |
 | [ADR-0026](ADR-0026-semantic-validation-engine-configuration-and-build.md) | Semantic validation engine, its configuration, and the build | Accepted |
+| [ADR-0027](ADR-0027-instance-validation-against-the-json-schema-contract.md) | Instance validation against the JSON Schema contract | Accepted |
 
 ## Template
 

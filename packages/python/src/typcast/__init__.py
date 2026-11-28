@@ -21,6 +21,8 @@ from typcast.builder import (
 )
 from typcast.diagnostics import (
     ApiUsageError,
+    CODE_SCHEMA_UNSUPPORTED_KEYWORD,
+    CODE_SCHEMA_VIOLATION,
     ConfigError,
     Diagnostic,
     SerializationError,
@@ -52,6 +54,7 @@ from typcast.models import (
     TableColumn,
     Text,
 )
+from typcast.schema import validate_schema
 from typcast.validations import (
     DEFAULT_MAX_RAW_BYTES,
     TypcastConfig,
@@ -63,6 +66,8 @@ __all__ = [
     "ApiUsageError",
     "Block",
     "Bold",
+    "CODE_SCHEMA_UNSUPPORTED_KEYWORD",
+    "CODE_SCHEMA_VIOLATION",
     "ConfigError",
     "DEFAULT_MAX_RAW_BYTES",
     "Diagnostic",
@@ -104,4 +109,5 @@ __all__ = [
     "raw_inline",
     "text",
     "validate_document",
+    "validate_schema",
 ]

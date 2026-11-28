@@ -79,6 +79,11 @@ export const CODE_ROOT_SHAPE = "TYPCAST-IR-0004";
 // Configuration codes.
 export const CODE_INVALID_RAW_LIMIT = "TYPCAST-CONFIG-0004";
 
+// Schema codes. The family names the validation of an instance against the
+// JSON Schema contract of the project.
+export const CODE_SCHEMA_VIOLATION = "TYPCAST-SCH-0001";
+export const CODE_SCHEMA_UNSUPPORTED_KEYWORD = "TYPCAST-SCH-0002";
+
 /** The number of characters of a value that the message of a diagnostic shows. */
 export const MAX_DIAGNOSTIC_VALUE_LENGTH = 64;
 

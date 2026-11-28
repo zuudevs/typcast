@@ -1,0 +1,615 @@
+{
+  "version": 1,
+  "description": "Shared schema fixtures. Both SDKs read this manifest and the files it names. Every negative fixture names the diagnostics that the validation of the JSON Schema contract must report, in the order the validator reports them.",
+  "valid": [
+    {
+      "file": "valid/minimal.json"
+    },
+    {
+      "file": "valid/every-node.json"
+    }
+  ],
+  "invalid": [
+    {
+      "file": "invalid/unknown-root-field.json",
+      "diagnostics": [
+        {
+          "code": "TYPCAST-SCH-0001",
+          "path": "/theme",
+          "message": "'/theme' is not a known field.",
+          "details": {
+            "keyword": "additionalProperties",
+            "field": "theme"
+          }
+        }
+      ]
+    },
+    {
+      "file": "invalid/missing-metadata.json",
+      "diagnostics": [
+        {
+          "code": "TYPCAST-SCH-0001",
+          "path": "/metadata",
+          "message": "'/metadata' is required.",
+          "details": {
+            "keyword": "required",
+            "field": "metadata"
+          }
+        }
+      ]
+    },
+    {
+      "file": "invalid/metadata-not-an-object.json",
+      "diagnostics": [
+        {
+          "code": "TYPCAST-SCH-0001",
+          "path": "/metadata",
+          "message": "'/metadata' must be a JSON object.",
+          "details": {
+            "keyword": "type",
+            "expected": "object",
+            "value": "Title"
+          }
+        }
+      ]
+    },
+    {
+      "file": "invalid/missing-title.json",
+      "diagnostics": [
+        {
+          "code": "TYPCAST-SCH-0001",
+          "path": "/metadata/title",
+          "message": "'/metadata/title' is required.",
+          "details": {
+            "keyword": "required",
+            "field": "title"
+          }
+        }
+      ]
+    },
+    {
+      "file": "invalid/empty-title.json",
+      "diagnostics": [
+        {
+          "code": "TYPCAST-SCH-0001",
+          "path": "/metadata/title",
+          "message": "'/metadata/title' must not be empty.",
+          "details": {
+            "keyword": "minLength",
+            "minLength": 1
+          }
+        }
+      ]
+    },
+    {
+      "file": "invalid/long-title.json",
+      "diagnostics": [
+        {
+          "code": "TYPCAST-SCH-0001",
+          "path": "/metadata/title",
+          "message": "'/metadata/title' must not hold more than 512 code points.",
+          "details": {
+            "keyword": "maxLength",
+            "maxLength": 512
+          }
+        }
+      ]
+    },
+    {
+      "file": "invalid/invalid-date-format.json",
+      "diagnostics": [
+        {
+          "code": "TYPCAST-SCH-0001",
+          "path": "/metadata/date",
+          "message": "'/metadata/date' must match the pattern ^\\d{4}-\\d{2}-\\d{2}$.",
+          "details": {
+            "keyword": "pattern",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          }
+        }
+      ]
+    },
+    {
+      "file": "invalid/date-trailing-newline.json",
+      "diagnostics": [
+        {
+          "code": "TYPCAST-SCH-0001",
+          "path": "/metadata/date",
+          "message": "'/metadata/date' must match the pattern ^\\d{4}-\\d{2}-\\d{2}$.",
+          "details": {
+            "keyword": "pattern",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          }
+        }
+      ]
+    },
+    {
+      "file": "invalid/invalid-orientation.json",
+      "diagnostics": [
+        {
+          "code": "TYPCAST-SCH-0001",
+          "path": "/page/orientation",
+          "message": "'/page/orientation' must be one of portrait, landscape, got 'diagonal'.",
+          "details": {
+            "keyword": "enum",
+            "allowed": [
+              "portrait",
+              "landscape"
+            ],
+            "value": "diagonal"
+          }
+        }
+      ]
+    },
+    {
+      "file": "invalid/invalid-paper.json",
+      "diagnostics": [
+        {
+          "code": "TYPCAST-SCH-0001",
+          "path": "/page/paper",
+          "message": "'/page/paper' must be one of the 107 allowed values, got 'letter'.",
+          "details": {
+            "keyword": "enum",
+            "allowed": [
+              "a0",
+              "a1",
+              "a2",
+              "a3",
+              "a4",
+              "a5",
+              "a6",
+              "a7",
+              "a8",
+              "a9",
+              "a10",
+              "a11",
+              "iso-b1",
+              "iso-b2",
+              "iso-b3",
+              "iso-b4",
+              "iso-b5",
+              "iso-b6",
+              "iso-b7",
+              "iso-b8",
+              "iso-c3",
+              "iso-c4",
+              "iso-c5",
+              "iso-c6",
+              "iso-c7",
+              "iso-c8",
+              "din-d3",
+              "din-d4",
+              "din-d5",
+              "din-d6",
+              "din-d7",
+              "din-d8",
+              "sis-g5",
+              "sis-e5",
+              "ansi-a",
+              "ansi-b",
+              "ansi-c",
+              "ansi-d",
+              "ansi-e",
+              "arch-a",
+              "arch-b",
+              "arch-c",
+              "arch-d",
+              "arch-e1",
+              "arch-e",
+              "jis-b0",
+              "jis-b1",
+              "jis-b2",
+              "jis-b3",
+              "jis-b4",
+              "jis-b5",
+              "jis-b6",
+              "jis-b7",
+              "jis-b8",
+              "jis-b9",
+              "jis-b10",
+              "jis-b11",
+              "sac-d0",
+              "sac-d1",
+              "sac-d2",
+              "sac-d3",
+              "sac-d4",
+              "sac-d5",
+              "sac-d6",
+              "iso-id-1",
+              "iso-id-2",
+              "iso-id-3",
+              "asia-f4",
+              "jp-shiroku-ban-4",
+              "jp-shiroku-ban-5",
+              "jp-shiroku-ban-6",
+              "jp-kiku-4",
+              "jp-kiku-5",
+              "jp-business-card",
+              "cn-business-card",
+              "eu-business-card",
+              "fr-tellière",
+              "fr-couronne-écriture",
+              "fr-couronne-édition",
+              "fr-raisin",
+              "fr-carré",
+              "fr-jésus",
+              "uk-brief",
+              "uk-draft",
+              "uk-foolscap",
+              "uk-quarto",
+              "uk-crown",
+              "uk-book-a",
+              "uk-book-b",
+              "us-letter",
+              "us-legal",
+              "us-tabloid",
+              "us-executive",
+              "us-foolscap-folio",
+              "us-statement",
+              "us-ledger",
+              "us-oficio",
+              "us-gov-letter",
+              "us-gov-legal",
+              "us-business-card",
+              "us-digest",
+              "us-trade",
+              "newspaper-compact",
+              "newspaper-berliner",
+              "newspaper-broadsheet",
+              "presentation-16-9",
+              "presentation-4-3"
+            ],
+            "value": "letter"
+          }
+        }
+      ]
+    },
+    {
+      "file": "invalid/negative-length.json",
+      "diagnostics": [
+        {
+          "code": "TYPCAST-SCH-0001",
+          "path": "/page/margin/top/value",
+          "message": "'/page/margin/top/value' must not be less than 0.",
+          "details": {
+            "keyword": "minimum",
+            "minimum": 0,
+            "value": -1
+          }
+        }
+      ]
+    },
+    {
+      "file": "invalid/invalid-unit.json",
+      "diagnostics": [
+        {
+          "code": "TYPCAST-SCH-0001",
+          "path": "/page/margin/top/unit",
+          "message": "'/page/margin/top/unit' must be one of pt, mm, cm, in, em, got 'furlong'.",
+          "details": {
+            "keyword": "enum",
+            "allowed": [
+              "pt",
+              "mm",
+              "cm",
+              "in",
+              "em"
+            ],
+            "value": "furlong"
+          }
+        }
+      ]
+    },
+    {
+      "file": "invalid/empty-contents.json",
+      "diagnostics": [
+        {
+          "code": "TYPCAST-SCH-0001",
+          "path": "/contents",
+          "message": "'/contents' must not be empty.",
+          "details": {
+            "keyword": "minItems",
+            "minItems": 1
+          }
+        }
+      ]
+    },
+    {
+      "file": "invalid/contents-not-an-array.json",
+      "diagnostics": [
+        {
+          "code": "TYPCAST-SCH-0001",
+          "path": "/contents",
+          "message": "'/contents' must be a JSON array.",
+          "details": {
+            "keyword": "type",
+            "expected": "array",
+            "value": "object"
+          }
+        }
+      ]
+    },
+    {
+      "file": "invalid/unknown-node-type.json",
+      "diagnostics": [
+        {
+          "code": "TYPCAST-SCH-0001",
+          "path": "/contents/0",
+          "message": "'/contents/0' must match one alternative of the schema, but matches none.",
+          "details": {
+            "keyword": "oneOf",
+            "matched": 0,
+            "allowed": [
+              "heading",
+              "paragraph",
+              "list",
+              "table",
+              "image",
+              "pageBreak",
+              "raw"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "file": "invalid/unknown-node-field.json",
+      "diagnostics": [
+        {
+          "code": "TYPCAST-SCH-0001",
+          "path": "/contents/0/style",
+          "message": "'/contents/0/style' is not a known field.",
+          "details": {
+            "keyword": "additionalProperties",
+            "field": "style"
+          }
+        }
+      ]
+    },
+    {
+      "file": "invalid/empty-paragraph-content.json",
+      "diagnostics": [
+        {
+          "code": "TYPCAST-SCH-0001",
+          "path": "/contents/0/content",
+          "message": "'/contents/0/content' must not be empty.",
+          "details": {
+            "keyword": "minItems",
+            "minItems": 1
+          }
+        }
+      ]
+    },
+    {
+      "file": "invalid/empty-text.json",
+      "diagnostics": [
+        {
+          "code": "TYPCAST-SCH-0001",
+          "path": "/contents/0/content/0/value",
+          "message": "'/contents/0/content/0/value' must not be empty.",
+          "details": {
+            "keyword": "minLength",
+            "minLength": 1
+          }
+        }
+      ]
+    },
+    {
+      "file": "invalid/unknown-span-type.json",
+      "diagnostics": [
+        {
+          "code": "TYPCAST-SCH-0001",
+          "path": "/contents/0/content/0",
+          "message": "'/contents/0/content/0' must match one alternative of the schema, but matches none.",
+          "details": {
+            "keyword": "oneOf",
+            "matched": 0,
+            "allowed": [
+              "text",
+              "bold",
+              "italic",
+              "monospace",
+              "link",
+              "lineBreak",
+              "raw"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "file": "invalid/empty-bold-content.json",
+      "diagnostics": [
+        {
+          "code": "TYPCAST-SCH-0001",
+          "path": "/contents/0/content/0/content",
+          "message": "'/contents/0/content/0/content' must not be empty.",
+          "details": {
+            "keyword": "minItems",
+            "minItems": 1
+          }
+        }
+      ]
+    },
+    {
+      "file": "invalid/heading-level-seven.json",
+      "diagnostics": [
+        {
+          "code": "TYPCAST-SCH-0001",
+          "path": "/contents/0/level",
+          "message": "'/contents/0/level' must not be greater than 6.",
+          "details": {
+            "keyword": "maximum",
+            "maximum": 6,
+            "value": 7
+          }
+        }
+      ]
+    },
+    {
+      "file": "invalid/heading-level-zero.json",
+      "diagnostics": [
+        {
+          "code": "TYPCAST-SCH-0001",
+          "path": "/contents/0/level",
+          "message": "'/contents/0/level' must not be less than 1.",
+          "details": {
+            "keyword": "minimum",
+            "minimum": 1,
+            "value": 0
+          }
+        }
+      ]
+    },
+    {
+      "file": "invalid/list-items-not-an-array.json",
+      "diagnostics": [
+        {
+          "code": "TYPCAST-SCH-0001",
+          "path": "/contents/0/items",
+          "message": "'/contents/0/items' must be a JSON array.",
+          "details": {
+            "keyword": "type",
+            "expected": "array",
+            "value": "Item"
+          }
+        }
+      ]
+    },
+    {
+      "file": "invalid/zero-image-width.json",
+      "diagnostics": [
+        {
+          "code": "TYPCAST-SCH-0001",
+          "path": "/contents/0/width/value",
+          "message": "'/contents/0/width/value' must be greater than 0.",
+          "details": {
+            "keyword": "exclusiveMinimum",
+            "exclusiveMinimum": 0,
+            "value": 0
+          }
+        }
+      ]
+    },
+    {
+      "file": "invalid/image-width-unknown-field.json",
+      "diagnostics": [
+        {
+          "code": "TYPCAST-SCH-0001",
+          "path": "/contents/0/width/scale",
+          "message": "'/contents/0/width/scale' is not a known field.",
+          "details": {
+            "keyword": "additionalProperties",
+            "field": "scale"
+          }
+        }
+      ]
+    },
+    {
+      "file": "invalid/invalid-raw-format.json",
+      "diagnostics": [
+        {
+          "code": "TYPCAST-SCH-0001",
+          "path": "/contents/0/format",
+          "message": "'/contents/0/format' must be one of markup, code, math, got 'typst'.",
+          "details": {
+            "keyword": "enum",
+            "allowed": [
+              "markup",
+              "code",
+              "math"
+            ],
+            "value": "typst"
+          }
+        }
+      ]
+    },
+    {
+      "file": "invalid/invalid-module-alias.json",
+      "diagnostics": [
+        {
+          "code": "TYPCAST-SCH-0001",
+          "path": "/modules/0/alias",
+          "message": "'/modules/0/alias' must match the pattern ^[A-Za-z_][A-Za-z0-9_]*$.",
+          "details": {
+            "keyword": "pattern",
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+          }
+        }
+      ]
+    },
+    {
+      "file": "invalid/module-alias-and-items.json",
+      "diagnostics": [
+        {
+          "code": "TYPCAST-SCH-0001",
+          "path": "/modules/0",
+          "message": "'/modules/0' must not match the schema.",
+          "details": {
+            "keyword": "not"
+          }
+        }
+      ]
+    },
+    {
+      "file": "invalid/invalid-version.json",
+      "diagnostics": [
+        {
+          "code": "TYPCAST-SCH-0001",
+          "path": "/schemaVersion",
+          "message": "'/schemaVersion' must match the pattern ^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?![\\s\\S]).",
+          "details": {
+            "keyword": "pattern",
+            "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?![\\s\\S])"
+          }
+        }
+      ]
+    },
+    {
+      "file": "invalid/version-trailing-newline.json",
+      "diagnostics": [
+        {
+          "code": "TYPCAST-SCH-0001",
+          "path": "/schemaVersion",
+          "message": "'/schemaVersion' must match the pattern ^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?![\\s\\S]).",
+          "details": {
+            "keyword": "pattern",
+            "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?![\\s\\S])"
+          }
+        }
+      ]
+    },
+    {
+      "file": "invalid/multiple-problems.json",
+      "diagnostics": [
+        {
+          "code": "TYPCAST-SCH-0001",
+          "path": "/metadata/title",
+          "message": "'/metadata/title' must not be empty.",
+          "details": {
+            "keyword": "minLength",
+            "minLength": 1
+          }
+        },
+        {
+          "code": "TYPCAST-SCH-0001",
+          "path": "/contents/0/content/0/value",
+          "message": "'/contents/0/content/0/value' must not be empty.",
+          "details": {
+            "keyword": "minLength",
+            "minLength": 1
+          }
+        },
+        {
+          "code": "TYPCAST-SCH-0001",
+          "path": "/theme",
+          "message": "'/theme' is not a known field.",
+          "details": {
+            "keyword": "additionalProperties",
+            "field": "theme"
+          }
+        }
+      ]
+    }
+  ]
+}

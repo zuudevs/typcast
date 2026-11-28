@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "typcast-schemagen"
+version = "0.1.0"
+description = "Build-time embedding of the Typcast JSON Schema contract."
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+typcast-schemagen = "typcast_schemagen.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

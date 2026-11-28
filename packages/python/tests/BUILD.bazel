@@ -42,3 +42,16 @@ py_test(
         "//packages/python:typcast",
     ],
 )
+
+# The unit tests of the validation against the JSON Schema contract.
+py_test(
+    name = "schema_tests",
+    size = "small",
+    srcs = [
+        "test_schema.py",
+    ],
+    main = "test_schema.py",
+    deps = [
+        "//packages/python:typcast",
+    ],
+)

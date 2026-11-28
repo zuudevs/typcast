@@ -81,6 +81,19 @@ class Document:
 
         return validate_document(self, config)
 
+    def validate_schema(self) -> tuple[Diagnostic, ...]:
+        """Returns the diagnostics of the JSON Schema contract of the document.
+
+        The method checks the JSON value of the document against the schema
+        contract that the SDK carries. It reports every rule that the value
+        breaks and raises no error, so that a caller can show all of the
+        problems at once. The check is a layer of its own: the semantic rules
+        of the document stay in `validate`.
+        """
+        from typcast.schema import validate_schema
+
+        return validate_schema(self.to_dict())
+
     @classmethod
     def from_dict(cls, value: Any) -> "Document":
         """Builds a document from a JSON value."""

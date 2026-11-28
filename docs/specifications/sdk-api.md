@@ -2,7 +2,7 @@
 
 Status: CONFIRMED
 Scope: Normative
-Last updated: 2026-11-27
+Last updated: 2026-11-28
 
 ## Purpose
 
@@ -242,6 +242,7 @@ row with the wrong number of cells is rejected at build time.
 | Operation | Python | TypeScript |
 |---|---|---|
 | Validate | `document.validate(config=None)` | `document.validate(options?)` |
+| Validate against the schema contract | `document.validate_schema()` | `document.validateSchema()` |
 | Serialize to canonical JSON | `document.to_json()` | `document.toJSONString()` |
 | Serialize to a JSON value | `document.to_dict()` | `document.toJSON()` |
 | Deserialize from JSON | `Document.from_json(source)` | `Document.fromJSONString(source)` |
@@ -258,10 +259,42 @@ the serialization of a built model writes the document as it is, because
 ADR-0005 keeps the validation in the build step and in the reader.
 
 The current release implements the model types of the list above, the
-serialization rows of this table, `validate()`, the error hierarchy, and the
-fluent builder with its span helpers and its table helpers. `to_typst()`,
-`compile_pdf()`, and `write_pdf()` are part of the contract and are not
-implemented yet.
+serialization rows of this table, `validate()`, `validate_schema()`, the error
+hierarchy, and the fluent builder with its span helpers and its table helpers.
+`to_typst()`, `compile_pdf()`, and `write_pdf()` are part of the contract and
+are not implemented yet.
+
+## Schema validation
+
+The schema contract of the project is the normative data contract of the
+document IR. Each SDK carries it as a generated source file, so a published
+package holds the contract and needs no file of the repository at run time.
+
+| Operation | Python | TypeScript |
+|---|---|---|
+| Validate a JSON value | `validate_schema(value)` | `validateSchema(value)` |
+| Validate a document | `document.validate_schema()` | `document.validateSchema()` |
+
+The function checks any JSON value, and the method checks the JSON value of the
+document. Both return the diagnostics of the rules that the value breaks, they
+report every broken rule at once, and they raise no error.
+
+Behavior:
+
+- The check is opt-in. The reader of the document IR keeps its own error
+  contract, and the builder does not call the schema validation.
+- The check is a layer of its own and is separate from the semantic engine of
+  the next section. The two layers report different problems and can be called
+  independently.
+- A diagnostic of the check uses the family `TYPCAST-SCH-*` with the phase
+  `validation`. `TYPCAST-SCH-0001` names an instance that breaks a rule of the
+  schema, and `TYPCAST-SCH-0002` names a keyword of the schema that the
+  validator does not implement.
+- The details of a diagnostic name the keyword of the broken rule, so that a
+  caller can act on the rule without reading the message.
+- Both SDKs report the same diagnostics for the same value, in the same order.
+
+The decision is recorded in ADR-0027.
 
 ## Validation
 
@@ -421,6 +454,7 @@ collection. A single error may carry multiple diagnostics.
 | API-026 | The package root MUST export the version of the package, and the export MUST match the package manifest. | IMPLEMENTED | `//packages/python/tests:model_tests` and `//packages/typescript:model_test_run`; the version cases, and `//scripts:repository_checks` compares every export with its manifest. |
 | API-027 | The validation configuration MUST be passed per call and MUST NOT be stored in the document; in this release it MUST hold the raw size limit only, and an invalid limit MUST raise `ConfigError` with `TYPCAST-CONFIG-0004`. | IMPLEMENTED | `//packages/python/tests:validation_tests` and `//packages/typescript:validation_test_run`; the configuration cases of both SDKs, and the `ConfigError` case of both SDKs. |
 | API-028 | `build()` MUST take the validation configuration per call, MUST apply its raw size limit to the validation run of the build, and MUST NOT store it in the document; a configuration that is not a configuration object MUST raise `ApiUsageError` with `TYPCAST-API-0001` and the path `/build`. | IMPLEMENTED | `//packages/python/tests:builder_tests` and `//packages/typescript:builder_test_run`; the configuration cases of both SDKs, and the fixtures of `//tests/contract:builder_py` and `//tests/contract:builder_ts_test`. |
+| API-029 | Each SDK MUST expose `validate_schema(value)` and `validateSchema(value)` and the method `Document.validate_schema()` and `Document.validateSchema()`, MUST report every rule that the value breaks without raising, and MUST keep the check separate from the reader and from the semantic engine. | IMPLEMENTED | `//packages/python/tests:schema_tests` and `//packages/typescript:schema_test_run`; the cases of both SDKs, and the fixtures of `//tests/contract:schema_py` and `//tests/contract:schema_ts_test`. |
 
 ## Open questions
 
@@ -441,3 +475,4 @@ collection. A single error may carry multiple diagnostics.
 - [ADR-0015](../decisions/ADR-0015-mutable-builder-contract.md)
 - [ADR-0016](../decisions/ADR-0016-esm-only-npm-package.md)
 - [ADR-0026](../decisions/ADR-0026-semantic-validation-engine-configuration-and-build.md)
+- [ADR-0027](../decisions/ADR-0027-instance-validation-against-the-json-schema-contract.md)

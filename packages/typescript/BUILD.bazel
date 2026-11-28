@@ -1,5 +1,6 @@
 load("@aspect_rules_js//js:defs.bzl", "js_test")
 load("@aspect_rules_ts//ts:defs.bzl", "ts_project")
+load("//bazel:schemagen.bzl", "typcast_schema_source")
 
 package(
     default_visibility = ["//visibility:public"],
@@ -9,6 +10,17 @@ package(
 exports_files([
     "package.json",
 ])
+
+# The JSON Schema contract of the document IR. The rule embeds the bundle
+# that the build produces into a source file of the SDK, so that the package
+# carries the contract and needs no file of the repository at run time.
+typcast_schema_source(
+    name = "schema_sources",
+    language = "typescript",
+    output = "src/schema/schemas.generated.ts",
+    root = "specs/schemas",
+    srcs = ["//specs/schemas:schema_bundle"],
+)
 
 # The manifest is an input of the project on purpose. Under `module` NodeNext
 # and `verbatimModuleSyntax`, TypeScript classifies a `.ts` file as an
@@ -22,6 +34,7 @@ ts_project(
     srcs = glob([
         "src/**/*.ts",
     ]) + [
+        ":schema_sources",
         "package.json",
     ],
     tsconfig = "tsconfig.json",
@@ -146,6 +159,45 @@ ts_project(
 js_test(
     name = "builder_test_run",
     entry_point = ":builder_test",
+    data = [
+        ":package.json",
+        ":typcast",
+    ],
+)
+
+# The unit tests of the validation against the JSON Schema contract. The
+# manifest is an input for the same reason as in the project above.
+ts_project(
+    name = "schema_test",
+    srcs = [
+        "tests/schema.test.ts",
+        "package.json",
+    ],
+    tsconfig = {
+        "compilerOptions": {
+            "target": "ES2022",
+            "module": "NodeNext",
+            "moduleResolution": "NodeNext",
+            "strict": True,
+            "noImplicitOverride": True,
+            "noUncheckedIndexedAccess": True,
+            "exactOptionalPropertyTypes": True,
+            "forceConsistentCasingInFileNames": True,
+            "verbatimModuleSyntax": True,
+            "skipLibCheck": True,
+            "declaration": False,
+            "types": [],
+        },
+    },
+    transpiler = "tsc",
+    deps = [
+        ":typcast",
+    ],
+)
+
+js_test(
+    name = "schema_test_run",
+    entry_point = ":schema_test",
     data = [
         ":package.json",
         ":typcast",

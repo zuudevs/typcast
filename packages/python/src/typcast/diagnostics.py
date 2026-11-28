@@ -51,6 +51,8 @@ __all__ = [
     "CODE_NOT_SERIALIZABLE",
     "CODE_ROOT_SHAPE",
     "CODE_INVALID_RAW_LIMIT",
+    "CODE_SCHEMA_VIOLATION",
+    "CODE_SCHEMA_UNSUPPORTED_KEYWORD",
     "api_diagnostic",
     "config_diagnostic",
     "raise_api",
@@ -101,6 +103,11 @@ CODE_ROOT_SHAPE = "TYPCAST-IR-0004"
 
 # Configuration codes.
 CODE_INVALID_RAW_LIMIT = "TYPCAST-CONFIG-0004"
+
+# Schema codes. The family names the validation of an instance against the
+# JSON Schema contract of the project.
+CODE_SCHEMA_VIOLATION = "TYPCAST-SCH-0001"
+CODE_SCHEMA_UNSUPPORTED_KEYWORD = "TYPCAST-SCH-0002"
 
 
 def _freeze_mapping(value: Mapping[str, Any] | None) -> Mapping[str, Any] | None:

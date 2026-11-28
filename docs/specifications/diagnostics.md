@@ -2,7 +2,7 @@
 
 Status: CONFIRMED
 Scope: Normative
-Last updated: 2026-11-27
+Last updated: 2026-11-28
 
 ## Purpose
 
@@ -106,7 +106,8 @@ The `details` of a diagnostic follow the same rules in both SDKs:
 | Prefix | Family | Raised by |
 |---|---|---|
 | `TYPCAST-API-*` | Public API misuse | Builder and public methods. |
-| `TYPCAST-VAL-*` | Document validation | Schema and semantic validation. |
+| `TYPCAST-VAL-*` | Document validation | Semantic validation. |
+| `TYPCAST-SCH-*` | Schema validation | Validation of an instance against the JSON Schema contract. |
 | `TYPCAST-IR-*` | Serialization and deserialization | JSON and schema version handling. |
 | `TYPCAST-EMIT-*` | Typst emission | Emitter invariants and unsupported nodes. |
 | `TYPCAST-COMPILER-*` | Compiler lifecycle | Discovery, version, execution, timeout, output. |
@@ -155,6 +156,17 @@ path `/max_raw_bytes`.
 | `TYPCAST-VAL-0011` | error | validation | Date is not a valid `YYYY-MM-DD` value. |
 | `TYPCAST-VAL-0012` | error | validation | Image or module path is absolute or unsafe. |
 | `TYPCAST-VAL-0013` | error | validation | Text holds more code points than the contract allows. |
+
+### Schema
+
+| Code | Severity | Phase | Meaning |
+|---|---|---|---|
+| `TYPCAST-SCH-0001` | error | validation | The instance breaks a rule of the JSON Schema contract. |
+| `TYPCAST-SCH-0002` | error | validation | The schema uses a keyword that the validator does not implement. |
+
+The schema validation is a layer of its own. It is called explicitly through
+`validate_schema()` and `validateSchema()`, and the reader of the document IR
+keeps its own error contract. The decision is recorded in ADR-0027.
 
 ### Serialization
 
@@ -223,6 +235,36 @@ order of the contents, the spans in the order of their content, the rows of a
 table in the order of the table, and the modules in the order of their
 declaration. Two SDKs report the same diagnostics in the same order for the
 same document.
+
+## Schema diagnostics
+
+The validation of an instance against the JSON Schema contract reports the
+diagnostics of the family `TYPCAST-SCH-*`. The details of every diagnostic of
+the family name the keyword of the schema that the instance breaks, so that a
+caller can act on the rule without reading the message.
+
+| Code | Path | Details | Message |
+|---|---|---|---|
+| `TYPCAST-SCH-0001` | The location of the instance that breaks the rule. | `keyword` is the keyword of the schema that the instance breaks. The rule adds the values of the keyword: `allowed` for an enumeration, `field` for a missing or an unknown field, `minLength` and `maxLength` for a text, `minItems` for an array, `minimum` and `maximum` for a number, `pattern` for a pattern, `expected` for a type, and `value` for the rejected value. | `'/metadata/title' must not be empty.` |
+| `TYPCAST-SCH-0002` | `null`. | `keyword` is the keyword that the validator does not implement, and `schema` is the document of the bundle that holds it. | `The schema 'validator.schema.json' uses the keyword 'dependentRequired', which the validator does not implement.` |
+
+Rules:
+
+- The schema validation reports every rule that the instance breaks and raises
+  no error.
+- The `path` of a diagnostic is the JSON Pointer of the instance that breaks
+  the rule, and it is `null` when the instance has no location.
+- A message of an enumeration lists the allowed values when there are at most
+  eight of them, and names the number of the values otherwise. The details hold
+  the whole list under `allowed` in both cases. The paper catalog holds 107
+  variants, so the message of a rejected paper names the number of the values
+  and not the values.
+- A keyword that the validator does not implement is never ignored silently.
+  The diagnostic of the family names the keyword and the document that holds
+  it, so that a contract that gains a keyword fails the check instead of
+  passing every instance.
+- Two SDKs report the same diagnostics for the same instance, in the same
+  order.
 
 ## Error classes
 
@@ -322,6 +364,7 @@ parsers of the two runtimes word their reason differently.
 | DIAG-011 | Warnings MUST follow the policy in this document: only the listed conditions warn, warnings never raise, and warnings never fail a release gate. | CONFIRMED | Warning-policy tests and release review. |
 | DIAG-012 | Diagnostic codes MUST be documented in a catalog. | CONFIRMED | This document. |
 | DIAG-018 | The semantic validation engine MUST report every problem it finds and MUST report the diagnostics in the order of the document. | IMPLEMENTED | `//packages/python/tests:validation_tests` and `//packages/typescript:validation_test_run`; the order cases of both SDKs, and the fixtures of `//tests/contract:validation_py` and `//tests/contract:validation_ts_test`. |
+| DIAG-019 | The validation of an instance against the JSON Schema contract MUST use the family `TYPCAST-SCH-*` with the phase `validation`, MUST name the keyword of the broken rule in the details, and MUST report the same diagnostics in both SDKs. | IMPLEMENTED | `//packages/python/tests:schema_tests` and `//packages/typescript:schema_test_run`; the diagnostic cases of both SDKs, and the fixtures of `//tests/contract:schema_py` and `//tests/contract:schema_ts_test`. |
 
 ## Open questions
 
@@ -337,3 +380,4 @@ parsers of the two runtimes word their reason differently.
 - [ADR-0005](../decisions/ADR-0005-two-phase-validation-and-diagnostics.md)
 - [ADR-0014](../decisions/ADR-0014-diagnostic-warning-policy.md)
 - [ADR-0026](../decisions/ADR-0026-semantic-validation-engine-configuration-and-build.md)
+- [ADR-0027](../decisions/ADR-0027-instance-validation-against-the-json-schema-contract.md)

@@ -1,0 +1,25 @@
+load("@rules_python//python:defs.bzl", "py_binary", "py_library")
+
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+py_library(
+    name = "typcast_schemagen_lib",
+    srcs = glob(
+        ["src/typcast_schemagen/**/*.py"],
+        exclude = ["src/typcast_schemagen/__main__.py"],
+    ),
+    imports = ["src"],
+)
+
+py_binary(
+    name = "typcast_schemagen",
+    srcs = [
+        "src/typcast_schemagen/__main__.py",
+    ],
+    main = "src/typcast_schemagen/__main__.py",
+    deps = [
+        ":typcast_schemagen_lib",
+    ],
+)

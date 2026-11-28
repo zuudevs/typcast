@@ -22,6 +22,7 @@ import {
 } from "../diagnostics.js";
 import type { Diagnostic } from "../diagnostics.js";
 import { canonicalJson } from "../json_writer.js";
+import { validateSchema as validateInstanceSchema } from "../schema/index.js";
 import { checkSchemaVersion, SCHEMA_VERSION } from "../version.js";
 import { validateDocument } from "../validations/engine.js";
 import type { TypcastOptions } from "../validations/config.js";
@@ -127,6 +128,19 @@ export class Document {
    */
   validate(options?: TypcastOptions): readonly Diagnostic[] {
     return validateDocument(this, options);
+  }
+
+  /**
+   * Returns the diagnostics of the JSON Schema contract of the document.
+   *
+   * The method checks the JSON value of the document against the schema
+   * contract that the SDK carries. It reports every rule that the value
+   * breaks and throws no error, so that a caller can show all of the problems
+   * at once. The check is a layer of its own: the semantic rules of the
+   * document stay in `validate`.
+   */
+  validateSchema(): readonly Diagnostic[] {
+    return validateInstanceSchema(this.toJSON());
   }
 
   /** Builds a document from a JSON value. */
